@@ -3436,4 +3436,215 @@ textarea.form-control {
     font-weight: 600;
 }
 
+/* Premium Glassmorphic Login Overlay */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(4, 7, 13, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    transition: opacity 0.3s ease;
+}
+
+.login-overlay-box {
+    background: radial-gradient(circle at top right, var(--bg-surface), var(--bg-card));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    width: 400px;
+    max-width: 90%;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: loginBoxEntry 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes loginBoxEntry {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.login-logo-container {
+    background: var(--primary-light);
+    border: 1px solid var(--border-color);
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.login-logo-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--primary);
+}
+
+.login-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.login-header p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.login-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.login-input-group .input-icon {
+    position: absolute;
+    left: 14px;
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.login-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 46px 0 42px;
+    font-size: 0.88rem;
+    font-family: var(--font-sans);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-trans-3);
+    color: var(--text-primary);
+    outline: none;
+    transition: var(--transition-smooth);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.login-input:focus {
+    border-color: var(--primary);
+    background: var(--bg-hover);
+    box-shadow: 0 0 0 3px var(--primary-glow), inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.login-input:focus + .input-icon {
+    color: var(--primary);
+}
+
+.login-eye-btn {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: var(--transition-smooth);
+}
+
+.login-eye-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-trans-5);
+}
+
+.login-eye-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.login-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--error);
+    font-size: 0.78rem;
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    padding: 8px 12px;
+    border-radius: 6px;
+    animation: shakeError 0.3s ease-in-out;
+}
+
+@keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+.login-error-msg svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.login-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.login-btn:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 6px 16px var(--primary-glow);
+    transform: translateY(-1px);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+/* Light theme overrides for Login Overlay */
+.light-theme .login-overlay {
+    background: rgba(245, 247, 250, 0.85);
+}
+
 

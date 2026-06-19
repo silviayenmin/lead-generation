@@ -127,7 +127,8 @@ def run_db_migration(db):
             leads_col = db["leads"]
             for url, lead_data in local_leads.items():
                 lead_data["sourceUrl"] = url
-                leads_col.replace_one({"sourceUrl": url}, lead_data, upsert=True)
+                lead_data["user_email"] = "admin"
+                leads_col.replace_one({"sourceUrl": url, "user_email": "admin"}, lead_data, upsert=True)
                 
             bak_path = leads_json_path + ".bak"
             os.rename(leads_json_path, bak_path)
@@ -145,8 +146,9 @@ def run_db_migration(db):
             
             searches_col = db["searches"]
             for s in local_searches:
+                s["user_email"] = "admin"
                 searches_col.replace_one(
-                    {"keyword": s.get("keyword"), "platform": s.get("platform")},
+                    {"keyword": s.get("keyword"), "platform": s.get("platform"), "user_email": "admin"},
                     s,
                     upsert=True
                 )
@@ -157,7 +159,7 @@ def run_db_migration(db):
         except Exception as e:
             print(f"Error during searches migration to MongoDB: {e}")
 
-def load_db():
+def load_db(user_email: str):
     with _db_lock:
         try:
             db = get_mongo_db()
@@ -165,14 +167,14 @@ def load_db():
             
             leads_col = db["leads"]
             leads = {}
-            for doc in leads_col.find():
+            for doc in leads_col.find({"user_email": user_email}):
                 if "_id" in doc:
                     doc["_id"] = str(doc["_id"])
                 url = doc.get("sourceUrl")
                 if url:
                     leads[url] = doc
                     
-            if not leads:
+            if not leads and user_email == "admin":
                 csv_path = os.path.join("output", "leads.csv")
                 if os.path.exists(csv_path):
                     try:
@@ -183,22 +185,23 @@ def load_db():
                                 if url:
                                     row["crmStatus"] = row.get("crmStatus") or "New"
                                     row["draftEmail"] = row.get("draftEmail") or ""
+                                    row["user_email"] = user_email
                                     leads[url] = row
-                                    leads_col.replace_one({"sourceUrl": url}, row, upsert=True)
+                                    leads_col.replace_one({"sourceUrl": url, "user_email": user_email}, row, upsert=True)
                     except Exception as e:
                         print(f"Error migrating CSV to MongoDB: {e}")
                         
             for url, lead in leads.items():
                 if "platform" not in lead or not lead.get("platform"):
                     lead["platform"] = determine_lead_platform(url)
-                    leads_col.update_one({"sourceUrl": url}, {"$set": {"platform": lead["platform"]}})
+                    leads_col.update_one({"sourceUrl": url, "user_email": user_email}, {"$set": {"platform": lead["platform"]}})
                     
             return leads
         except Exception as e:
             print(f"Error loading database from MongoDB: {e}")
             return {}
 
-def save_db(db_data):
+def save_db(db_data, user_email: str):
     with _db_lock:
         try:
             db = get_mongo_db()
@@ -210,8 +213,9 @@ def save_db(db_data):
                 if "_id" in lead_copy:
                     del lead_copy["_id"]
                 lead_copy["sourceUrl"] = url
+                lead_copy["user_email"] = user_email
                 bulk_ops.append(
-                    pymongo.ReplaceOne({"sourceUrl": url}, lead_copy, upsert=True)
+                    pymongo.ReplaceOne({"sourceUrl": url, "user_email": user_email}, lead_copy, upsert=True)
                 )
                 
             if bulk_ops:
@@ -219,7 +223,7 @@ def save_db(db_data):
         except Exception as e:
             print(f"Error saving database to MongoDB: {e}")
 
-def save_searches(searches):
+def save_searches(searches, user_email: str):
     try:
         db = get_mongo_db()
         searches_col = db["searches"]
@@ -228,22 +232,23 @@ def save_searches(searches):
             s_copy = dict(s)
             if "_id" in s_copy:
                 del s_copy["_id"]
+            s_copy["user_email"] = user_email
             searches_col.replace_one(
-                {"keyword": s_copy.get("keyword"), "platform": s_copy.get("platform")},
+                {"keyword": s_copy.get("keyword"), "platform": s_copy.get("platform"), "user_email": user_email},
                 s_copy,
                 upsert=True
             )
     except Exception as e:
         print(f"Error saving searches to MongoDB: {e}")
 
-def load_searches():
+def load_searches(user_email: str):
     try:
         db = get_mongo_db()
         run_db_migration(db)
         
         searches_col = db["searches"]
         searches = []
-        for doc in searches_col.find():
+        for doc in searches_col.find({"user_email": user_email}):
             if "_id" in doc:
                 doc["_id"] = str(doc["_id"])
             searches.append(doc)
@@ -446,23 +451,128 @@ def enrich_profile_details(author: str) -> dict:
         print(f"Error in enrich_profile_details for {author}: {e}")
     return {}
 
-def delete_lead_from_db(source_url: str) -> bool:
+def delete_lead_from_db(source_url: str, user_email: str) -> bool:
     with _db_lock:
         try:
             db = get_mongo_db()
             leads_col = db["leads"]
-            result = leads_col.delete_one({"sourceUrl": source_url})
+            result = leads_col.delete_one({"sourceUrl": source_url, "user_email": user_email})
             return result.deleted_count > 0
         except Exception as e:
             print(f"Error deleting lead from MongoDB: {e}")
             return False
 
-def delete_search_from_db(search_id: str) -> bool:
+def delete_search_from_db(search_id: str, user_email: str) -> bool:
     try:
         db = get_mongo_db()
         searches_col = db["searches"]
-        result = searches_col.delete_one({"id": search_id})
+        result = searches_col.delete_one({"id": search_id, "user_email": user_email})
         return result.deleted_count > 0
     except Exception as e:
         print(f"Error deleting search from MongoDB: {e}")
         return False
+
+# Multi-User Authentication Helpers
+def hash_password(password: str, salt: bytes = None):
+    if salt is None:
+        salt = os.urandom(16)
+    pw_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return pw_hash.hex(), salt.hex()
+
+def verify_password(password: str, password_hash: str, salt: str) -> bool:
+    try:
+        salt_bytes = bytes.fromhex(salt)
+        new_hash, _ = hash_password(password, salt_bytes)
+        return new_hash == password_hash
+    except Exception:
+        return False
+
+def create_user(email: str, password: str) -> bool:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        
+        email_clean = email.strip().lower()
+        if users_col.find_one({"email": email_clean}):
+            return False
+            
+        pw_hash, salt = hash_password(password)
+        users_col.insert_one({
+            "email": email_clean,
+            "password_hash": pw_hash,
+            "salt": salt,
+            "created_at": datetime.datetime.utcnow().isoformat()
+        })
+        return True
+    except Exception as e:
+        print(f"Error creating user in MongoDB: {e}")
+        return False
+
+def authenticate_user(email: str, password: str):
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        
+        email_clean = email.strip().lower()
+        user = users_col.find_one({"email": email_clean})
+        if not user:
+            return None
+            
+        if verify_password(password, user["password_hash"], user["salt"]):
+            return {"email": user["email"]}
+        return None
+    except Exception as e:
+        print(f"Error authenticating user in MongoDB: {e}")
+        return None
+
+def create_session(email: str) -> str:
+    import secrets
+    try:
+        db = get_mongo_db()
+        sessions_col = db["sessions"]
+        
+        session_token = secrets.token_hex(24)
+        expires_at = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).isoformat()
+        
+        sessions_col.insert_one({
+            "session_token": session_token,
+            "user_email": email.strip().lower(),
+            "expires_at": expires_at
+        })
+        return session_token
+    except Exception as e:
+        print(f"Error creating session in MongoDB: {e}")
+        return ""
+
+def verify_session(token: str):
+    try:
+        db = get_mongo_db()
+        sessions_col = db["sessions"]
+        
+        session = sessions_col.find_one({"session_token": token})
+        if not session:
+            return None
+            
+        expires_at_str = session.get("expires_at")
+        if expires_at_str:
+            try:
+                expires_at = datetime.datetime.fromisoformat(expires_at_str)
+                if datetime.datetime.utcnow() > expires_at:
+                    sessions_col.delete_one({"session_token": token})
+                    return None
+            except Exception:
+                pass
+                
+        return session.get("user_email")
+    except Exception as e:
+        print(f"Error verifying session in MongoDB: {e}")
+        return None
+
+def delete_session(token: str):
+    try:
+        db = get_mongo_db()
+        sessions_col = db["sessions"]
+        sessions_col.delete_one({"session_token": token})
+    except Exception as e:
+        print(f"Error deleting session in MongoDB: {e}")
+

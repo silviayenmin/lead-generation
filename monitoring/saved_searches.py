@@ -7,25 +7,57 @@ from enrichment import ContactEnrichmentManager
 
 SAVED_SEARCHES_PATH = os.path.join("output", "saved_searches.json")
 
-def load_saved_searches() -> list:
-    if not os.path.exists(SAVED_SEARCHES_PATH):
-        return []
+def load_saved_searches(user_email: str) -> list:
     try:
-        with open(SAVED_SEARCHES_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
+        from crm.lead_database import get_mongo_db
+        db = get_mongo_db()
+        col = db["saved_searches"]
+        
+        # Migrate local saved searches JSON if it exists
+        if os.path.exists(SAVED_SEARCHES_PATH):
+            print(f"Automatic Migration: Found local saved searches JSON at {SAVED_SEARCHES_PATH}. Migrating to MongoDB...")
+            try:
+                with open(SAVED_SEARCHES_PATH, "r", encoding="utf-8") as f:
+                    local_searches = json.load(f)
+                for s in local_searches:
+                    s["user_email"] = "admin"
+                    col.replace_one({"id": s.get("id"), "user_email": "admin"}, s, upsert=True)
+                bak_path = SAVED_SEARCHES_PATH + ".bak"
+                os.rename(SAVED_SEARCHES_PATH, bak_path)
+                print(f"Automatic Migration: Saved searches migrated successfully. Local file backed up to {bak_path}")
+            except Exception as e:
+                print(f"Error during saved searches migration to MongoDB: {e}")
+
+        searches = []
+        for doc in col.find({"user_email": user_email}):
+            if "_id" in doc:
+                doc["_id"] = str(doc["_id"])
+            searches.append(doc)
+        return searches
+    except Exception as e:
+        print(f"Error loading saved searches: {e}")
         return []
 
-def save_saved_searches(searches: list):
-    os.makedirs(os.path.dirname(SAVED_SEARCHES_PATH), exist_ok=True)
+def save_saved_searches(searches: list, user_email: str):
     try:
-        with open(SAVED_SEARCHES_PATH, "w", encoding="utf-8") as f:
-            json.dump(searches, f, indent=4, ensure_ascii=False)
+        from crm.lead_database import get_mongo_db
+        db = get_mongo_db()
+        col = db["saved_searches"]
+        for s in searches:
+            s_copy = dict(s)
+            if "_id" in s_copy:
+                del s_copy["_id"]
+            s_copy["user_email"] = user_email
+            col.replace_one(
+                {"id": s_copy["id"], "user_email": user_email},
+                s_copy,
+                upsert=True
+            )
     except Exception as e:
         print(f"Error saving saved searches: {e}")
 
-def add_saved_search(keyword: str, platform: str, timeframe: str, match_type: str = "partial") -> dict:
-    searches = load_saved_searches()
+def add_saved_search(user_email: str, keyword: str, platform: str, timeframe: str, match_type: str = "partial") -> dict:
+    searches = load_saved_searches(user_email)
     
     # Check if already exists
     for s in searches:
@@ -40,18 +72,19 @@ def add_saved_search(keyword: str, platform: str, timeframe: str, match_type: st
         "matchType": match_type,
         "createdAt": datetime.datetime.now().isoformat(),
         "lastRun": None,
-        "leadsFoundCount": 0
+        "leadsFoundCount": 0,
+        "user_email": user_email
     }
     searches.append(new_search)
-    save_saved_searches(searches)
+    save_saved_searches(searches, user_email)
     return new_search
 
-def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
+def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict:
     """
-    Runs all saved searches, qualifies leads, updates the db,
+    Runs all saved searches for a specific user, qualifies leads, updates the db,
     and returns a summary of the monitoring run.
     """
-    saved = load_saved_searches()
+    saved = load_saved_searches(user_email)
     if not saved:
         return {"status": "no_searches", "message": "No saved searches to monitor."}
         
@@ -136,7 +169,7 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
                     # Apply author validation
                     author = validate_author_name(author)
                     lead_data["authorName"] = author
-
+ 
                     # Apply company validation
                     company = validate_company_name(lead_data.get("companyName"))
                     lead_data["companyName"] = company
@@ -199,7 +232,7 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
             "newLeadsAdded": new_leads_in_this_run
         })
         
-    save_saved_searches(saved)
+    save_saved_searches(saved, user_email)
     save_db_callback(db)
     
     return summary

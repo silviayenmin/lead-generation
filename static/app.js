@@ -26,7 +26,15 @@
                 options.headers["X-API-Key"] = apiKey;
             }
         }
-        return ORIGINAL_FETCH(url, options);
+        return ORIGINAL_FETCH(url, options).then(response => {
+            if (response.status === 401 && !urlStr.endsWith("/api/auth/verify")) {
+                localStorage.removeItem("APP_SECRET_KEY");
+                if (typeof showLoginOverlay === "function") {
+                    showLoginOverlay();
+                }
+            }
+            return response;
+        });
     };
 })();
 
@@ -221,8 +229,72 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // Load leads from backend
-    loadExistingLeads();
+    // Check authentication on page load
+    checkAuthentication();
+
+    // Bind login form elements
+    const loginForm = document.getElementById("login-form");
+    if (loginForm) {
+        loginForm.addEventListener("submit", submitLogin);
+    }
+    const registerForm = document.getElementById("register-form");
+    if (registerForm) {
+        registerForm.addEventListener("submit", submitRegister);
+    }
+
+    const togglePwdBtn = document.getElementById("login-toggle-password");
+    const pwdInput = document.getElementById("login-password");
+    const eyeIcon = document.getElementById("login-eye-icon");
+    if (togglePwdBtn && pwdInput && eyeIcon) {
+        togglePwdBtn.addEventListener("click", () => {
+            const isPwd = pwdInput.type === "password";
+            pwdInput.type = isPwd ? "text" : "password";
+            eyeIcon.setAttribute("data-lucide", isPwd ? "eye-off" : "eye");
+            if (window.lucide) window.lucide.createIcons();
+        });
+    }
+
+    const toggleRegPwdBtn = document.getElementById("register-toggle-password");
+    const regPwdInput = document.getElementById("register-password");
+    const regEyeIcon = document.getElementById("register-eye-icon");
+    if (toggleRegPwdBtn && regPwdInput && regEyeIcon) {
+        toggleRegPwdBtn.addEventListener("click", () => {
+            const isPwd = regPwdInput.type === "password";
+            regPwdInput.type = isPwd ? "text" : "password";
+            regEyeIcon.setAttribute("data-lucide", isPwd ? "eye-off" : "eye");
+            if (window.lucide) window.lucide.createIcons();
+        });
+    }
+
+    // Toggle overlay login / register views
+    const linkShowRegister = document.getElementById("link-show-register");
+    const linkShowLogin = document.getElementById("link-show-login");
+    const loginCard = document.getElementById("login-card");
+    const registerCard = document.getElementById("register-card");
+    
+    if (linkShowRegister && loginCard && registerCard) {
+        linkShowRegister.onclick = (e) => {
+            e.preventDefault();
+            loginCard.style.display = "none";
+            registerCard.style.display = "flex";
+            const regEmailInput = document.getElementById("register-email");
+            if (regEmailInput) regEmailInput.focus();
+        };
+    }
+    if (linkShowLogin && loginCard && registerCard) {
+        linkShowLogin.onclick = (e) => {
+            e.preventDefault();
+            registerCard.style.display = "none";
+            loginCard.style.display = "flex";
+            const loginEmailInput = document.getElementById("login-email");
+            if (loginEmailInput) loginEmailInput.focus();
+        };
+    }
+
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", logout);
+    }
     
     // Sidebar collapsible toggle handler
     const sidebar = document.getElementById("sidebar");
@@ -2921,3 +2993,232 @@ async function loadPerformanceAnalytics() {
         console.error("Failed to load performance analytics:", err);
     }
 }
+
+// Authentication Control & Session Functions (Option A)
+async function checkAuthentication() {
+    const apiKey = localStorage.getItem("APP_SECRET_KEY");
+    if (!apiKey) {
+        showLoginOverlay();
+        return;
+    }
+    
+    try {
+        const response = await fetch("/api/auth/verify");
+        if (response.status === 200) {
+            hideLoginOverlay();
+            loadExistingLeads();
+        } else {
+            localStorage.removeItem("APP_SECRET_KEY");
+            showLoginOverlay();
+        }
+    } catch (e) {
+        console.error("Auth check connection error:", e);
+        // Do not force logout on transient network failure, but keep overlay safe
+        showLoginOverlay();
+    }
+}
+
+function showLoginOverlay() {
+    const overlay = document.getElementById("login-overlay");
+    if (overlay) {
+        overlay.style.display = "flex";
+        overlay.style.opacity = "1";
+    }
+    
+    const loginCard = document.getElementById("login-card");
+    const registerCard = document.getElementById("register-card");
+    if (loginCard && registerCard) {
+        loginCard.style.display = "flex";
+        registerCard.style.display = "none";
+    }
+    
+    const emailInput = document.getElementById("login-email");
+    if (emailInput) {
+        emailInput.value = "";
+        emailInput.focus();
+    }
+    const pwdInput = document.getElementById("login-password");
+    if (pwdInput) {
+        pwdInput.value = "";
+    }
+    
+    const errorMsg = document.getElementById("login-error-msg");
+    if (errorMsg) {
+        errorMsg.style.display = "none";
+    }
+    const regErrorMsg = document.getElementById("register-error-msg");
+    if (regErrorMsg) {
+        regErrorMsg.style.display = "none";
+    }
+}
+
+function hideLoginOverlay() {
+    const overlay = document.getElementById("login-overlay");
+    if (overlay) {
+        overlay.style.opacity = "0";
+        setTimeout(() => {
+            overlay.style.display = "none";
+        }, 300);
+    }
+}
+
+async function submitLogin(e) {
+    if (e) e.preventDefault();
+    
+    const emailInput = document.getElementById("login-email");
+    const pwdInput = document.getElementById("login-password");
+    const errorMsg = document.getElementById("login-error-msg");
+    const submitBtn = document.getElementById("login-submit-btn");
+    
+    if (!emailInput || !pwdInput) return;
+    const email = emailInput.value.trim();
+    const password = pwdInput.value.trim();
+    if (!email || !password) return;
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>Signing In...</span><i data-lucide="loader" class="animate-spin"></i>`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+    if (errorMsg) errorMsg.style.display = "none";
+    
+    try {
+        const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        if (response.status === 200) {
+            const data = await response.json();
+            if (data.session_token) {
+                localStorage.setItem("APP_SECRET_KEY", data.session_token);
+                hideLoginOverlay();
+                
+                // Reload dashboard metrics and leads
+                loadExistingLeads();
+                renderArchiveHistory();
+                renderArchiveLeads();
+                if (typeof renderMetricsWidgets === "function") {
+                    renderMetricsWidgets();
+                }
+            } else {
+                throw new Error("Invalid session token payload");
+            }
+        } else {
+            if (errorMsg) {
+                errorMsg.style.display = "flex";
+            }
+            pwdInput.value = "";
+            pwdInput.focus();
+        }
+    } catch (err) {
+        console.error("Login authentication error:", err);
+        if (errorMsg) {
+            errorMsg.style.display = "flex";
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>Sign In</span><i data-lucide="arrow-right"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function submitRegister(e) {
+    if (e) e.preventDefault();
+    
+    const emailInput = document.getElementById("register-email");
+    const pwdInput = document.getElementById("register-password");
+    const errorMsg = document.getElementById("register-error-msg");
+    const errorText = document.getElementById("register-error-text");
+    const submitBtn = document.getElementById("register-submit-btn");
+    
+    if (!emailInput || !pwdInput) return;
+    const email = emailInput.value.trim();
+    const password = pwdInput.value.trim();
+    if (!email || !password) return;
+    
+    if (password.length < 6) {
+        if (errorMsg && errorText) {
+            errorText.innerText = "Password must be at least 6 characters long";
+            errorMsg.style.display = "flex";
+        }
+        pwdInput.focus();
+        return;
+    }
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>Creating Account...</span><i data-lucide="loader" class="animate-spin"></i>`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+    if (errorMsg) errorMsg.style.display = "none";
+    
+    try {
+        const response = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        if (response.status === 200) {
+            const data = await response.json();
+            if (data.session_token) {
+                localStorage.setItem("APP_SECRET_KEY", data.session_token);
+                hideLoginOverlay();
+                
+                // Reload dashboard metrics and leads
+                loadExistingLeads();
+                renderArchiveHistory();
+                renderArchiveLeads();
+                if (typeof renderMetricsWidgets === "function") {
+                    renderMetricsWidgets();
+                }
+            } else {
+                throw new Error("Invalid registration token payload");
+            }
+        } else {
+            const errData = await response.json();
+            if (errorMsg && errorText) {
+                errorText.innerText = errData.detail || "Registration failed. Try a different email.";
+                errorMsg.style.display = "flex";
+            }
+            pwdInput.value = "";
+            pwdInput.focus();
+        }
+    } catch (err) {
+        console.error("Registration error:", err);
+        if (errorMsg && errorText) {
+            errorText.innerText = "Registration failed. Try again later.";
+            errorMsg.style.display = "flex";
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>Create Account</span><i data-lucide="arrow-right"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function logout() {
+    const apiKey = localStorage.getItem("APP_SECRET_KEY");
+    if (apiKey) {
+        try {
+            await fetch("/api/auth/logout", {
+                method: "POST"
+            });
+        } catch (e) {
+            console.error("Logout request failed:", e);
+        }
+    }
+    localStorage.removeItem("APP_SECRET_KEY");
+    showLoginOverlay();
+}
+
