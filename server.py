@@ -68,6 +68,7 @@ class SearchRequest(BaseModel):
     timeframe: Optional[str] = "qdr:m3"  # Default: past 3 months
     limit: Optional[int] = 10
     platform: Optional[str] = "linkedin"
+    match_type: Optional[str] = "partial"
 
 class UpdateCRMRequest(BaseModel):
     sourceUrl: str
@@ -97,6 +98,7 @@ class SavedSearchRequest(BaseModel):
     keyword: str
     platform: str
     timeframe: str
+    match_type: Optional[str] = "partial"
 
 class BulkDeleteRequest(BaseModel):
     urls: List[str]
@@ -124,7 +126,7 @@ async def run_search(payload: SearchRequest):
         adapter = get_adapter(plat)
         for q in intent_queries:
             try:
-                res = adapter.search(q, timeframe=timeframe)
+                res = adapter.search(q, timeframe=timeframe, match_type=payload.match_type or "partial")
                 if res:
                     raw_results.extend(res)
             except Exception as e:
@@ -279,12 +281,13 @@ async def run_search(payload: SearchRequest):
 
     # Save search performance metrics
     searches = load_searches()
-    existing_search = next((s for s in searches if s.get("keyword") == payload.keyword and s.get("platform", "linkedin") == platform), None)
+    existing_search = next((s for s in searches if s.get("keyword") == payload.keyword and s.get("platform", "linkedin") == platform and s.get("matchType", "partial") == (payload.match_type or "partial")), None)
     if existing_search:
         searches.remove(existing_search)
         existing_search["timestamp"] = datetime.datetime.now().isoformat()
         existing_search["timeframe"] = timeframe
         existing_search["limit"] = payload.limit
+        existing_search["matchType"] = payload.match_type or "partial"
         existing_search["resultsFound"] = total_results_found
         existing_search["qualifiedLeadsCount"] = qualified_count
         existing_search["qualificationRate"] = rate
@@ -295,6 +298,7 @@ async def run_search(payload: SearchRequest):
             "id": f"search_{int(time.time())}",
             "keyword": payload.keyword,
             "platform": platform,
+            "matchType": payload.match_type or "partial",
             "timestamp": datetime.datetime.now().isoformat(),
             "timeframe": timeframe,
             "limit": payload.limit,
@@ -490,7 +494,7 @@ async def get_saved_searches_endpoint():
 
 @app.post("/api/saved-searches")
 async def add_saved_search_endpoint(payload: SavedSearchRequest):
-    ns = add_saved_search(payload.keyword, payload.platform, payload.timeframe)
+    ns = add_saved_search(payload.keyword, payload.platform, payload.timeframe, match_type=(payload.match_type or "partial"))
     return {"status": "success", "search": ns}
 
 @app.post("/api/saved-searches/run")

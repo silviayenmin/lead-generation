@@ -1075,9 +1075,15 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
+.wizard-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+}
 
 @media (max-width: 768px) {
-    .wizard-grid-2 {
+    .wizard-grid-2,
+    .wizard-grid-3 {
         grid-template-columns: 1fr;
     }
 }

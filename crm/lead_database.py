@@ -301,13 +301,15 @@ def extract_fallback_author(title: str, url: str) -> str:
             part = url.split("linkedin.com/posts/")[1]
             # Strip query params like ?utm_source=... and trailing slash
             part = part.split("?")[0].strip("/")
-            # Remove -activity- or _activity- suffixes
-            if "-activity-" in part:
+            
+            # Since LinkedIn profile usernames cannot contain underscores,
+            # any underscore in a posts/ path separates the username from the post slug.
+            if "_" in part:
+                username = part.split("_")[0]
+            elif "-activity-" in part:
                 username = part.split("-activity-")[0]
             elif "_activity-" in part:
                 username = part.split("_activity-")[0]
-            elif "_" in part:
-                username = part.split("_")[0]
             else:
                 username = part
         except Exception:

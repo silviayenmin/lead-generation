@@ -455,6 +455,8 @@ async function handleSearchSubmit(e) {
     const timeframe = timeframeSelect.value;
     const limit = parseInt(limitSelect.value);
     const platform = platformSelect ? platformSelect.value : "linkedin";
+    const matchTypeSelect = document.getElementById("match-type");
+    const match_type = matchTypeSelect ? matchTypeSelect.value : "partial";
     
     if (!keyword) return;
     
@@ -482,7 +484,7 @@ async function handleSearchSubmit(e) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ keyword, timeframe, limit, platform })
+            body: JSON.stringify({ keyword, timeframe, limit, platform, match_type })
         });
         
         if (!response.ok) {
@@ -1580,6 +1582,9 @@ function renderArchiveHistory() {
             truncatedKeyword = truncatedKeyword.substring(0, 20) + "...";
         }
         
+        const isExact = search.matchType === "exact";
+        const exactBadgeHtml = isExact ? ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px; background: rgba(3,113,114,0.15); color: var(--secondary);">Exact</span>` : "";
+        
         let displayTimeframe = "All Time";
         if (search.timeframe) {
             if (search.timeframe === "qdr:d") displayTimeframe = "24 Hours";
@@ -1611,7 +1616,7 @@ function renderArchiveHistory() {
         item.innerHTML = `
             <div class="history-item-accent"></div>
             <div class="history-item-header">
-                <span class="history-item-keyword" title="${displayKeyword}">${truncatedKeyword}</span>
+                <span class="history-item-keyword" title="${displayKeyword}">${truncatedKeyword}${exactBadgeHtml}</span>
                 <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
                     <span class="history-item-count">${leadCount}</span>
                     <button class="btn-delete-search" title="Delete Search Query">
@@ -2606,8 +2611,11 @@ async function loadSavedSearches() {
                 } catch(e) {}
             }
             
+            const isExact = search.matchType === "exact";
+            const exactBadgeHtml = isExact ? ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px; background: rgba(3,113,114,0.15); color: var(--secondary);">Exact</span>` : ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px;">Partial</span>`;
+
             row.innerHTML = `
-                <td><strong style="color: var(--text-primary);">${keyword}</strong></td>
+                <td><strong style="color: var(--text-primary);">${keyword}</strong>${exactBadgeHtml}</td>
                 <td><span class="badge badge-neutral">${capPlatform}</span></td>
                 <td><span>${timeframe}</span></td>
                 <td><span>${formattedLastRun}</span></td>
@@ -2636,6 +2644,8 @@ async function saveCurrentSearch() {
     const keyword = keywordInput.value.trim();
     const platform = platformSelect ? platformSelect.value : "linkedin";
     const timeframe = timeframeSelect.value;
+    const matchTypeSelect = document.getElementById("match-type");
+    const match_type = matchTypeSelect ? matchTypeSelect.value : "partial";
     
     if (!keyword) {
         await showCustomAlert("Please enter a keyword first!", "Keyword Required", "danger");
@@ -2653,7 +2663,7 @@ async function saveCurrentSearch() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ keyword, platform, timeframe })
+            body: JSON.stringify({ keyword, platform, timeframe, match_type })
         });
         
         if (response.ok) {
