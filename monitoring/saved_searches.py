@@ -54,7 +54,7 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
     if not saved:
         return {"status": "no_searches", "message": "No saved searches to monitor."}
         
-    from crm.lead_database import check_and_save_lead, extract_fallback_author, enrich_profile_details, determine_lead_platform
+    from crm.lead_database import check_and_save_lead, extract_fallback_author, enrich_profile_details, determine_lead_platform, is_empty_value
     
     summary = {
         "timestamp": datetime.datetime.now().isoformat(),
@@ -124,12 +124,12 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
                     qualified_leads_in_this_run += 1
                     
                     # Fill missing author details
-                    if not lead_data.get("authorName") or lead_data.get("authorName").lower() in ["", "unknown"]:
+                    if is_empty_value(lead_data.get("authorName")):
                         lead_data["authorName"] = extract_fallback_author(title, url)
                         
                     # Basic enrichment if company missing
                     author = lead_data.get("authorName")
-                    if author and author.lower() != "unknown" and (not lead_data.get("companyName") or lead_data.get("companyName").lower() in ["", "none", "unknown"]):
+                    if not is_empty_value(author) and is_empty_value(lead_data.get("companyName")):
                         enriched = enrich_profile_details(author)
                         if enriched:
                             lead_data["companyName"] = enriched.get("companyName", "Unknown")

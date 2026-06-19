@@ -12,20 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from services.serper import search_leads
-from services.ai_agent import analyze_lead
+from qualification.lead_classifier import classify_lead_intent
 from services.csv_exporter import export_to_csv
-
-
-def clean_json_response(response_text):
-    """
-    Extract JSON block from AI response.
-    """
-    text = response_text.strip()
-    start = text.find('{')
-    end = text.rfind('}')
-    if start != -1 and end != -1:
-        return text[start:end+1]
-    return text
 
 
 # -------------------------
@@ -75,23 +63,15 @@ for result in results[:10]:
 
     try:
 
-        ai_output = analyze_lead(
+        lead = classify_lead_intent(
             title,
             snippet
         )
 
         print("\n====================")
         print("AI OUTPUT")
-        print(ai_output)
+        print(json.dumps(lead, indent=2))
         print("====================")
-
-        ai_output = clean_json_response(
-            ai_output
-        )
-
-        lead = json.loads(
-            ai_output
-        )
 
         lead["sourceUrl"] = source_url
 
@@ -102,12 +82,9 @@ for result in results[:10]:
     except Exception as err:
 
         print(
-            f"\nJSON Error: {err}"
+            f"\nError: {err}"
         )
 
-        print(
-            f"Raw Response:\n{ai_output}"
-        )
 
 # -------------------------
 # Export CSV

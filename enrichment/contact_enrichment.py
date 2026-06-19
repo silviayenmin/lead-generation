@@ -1,3 +1,5 @@
+from crm.lead_database import is_empty_value
+
 class BaseEnricher:
     def enrich(self, author_name: str, company_name: str) -> dict:
         raise NotImplementedError
@@ -32,9 +34,10 @@ class EmailGuessingEnricher(BaseEnricher):
         """
         Guesses the email using typical business email patterns based on name and company.
         """
-        if not author_name or author_name.lower() == "unknown" or not company_name or company_name.lower() in ["unknown", "none", ""]:
-            email = f"hello@{company_name.lower().replace(' ', '')}.com" if (company_name and company_name.lower() not in ["unknown", "none", ""]) else "outreach@decisionmaker.com"
+        if is_empty_value(author_name) or is_empty_value(company_name):
+            email = f"hello@{company_name.lower().replace(' ', '')}.com" if not is_empty_value(company_name) else "outreach@decisionmaker.com"
         else:
+
             # Clean company domain name
             domain = company_name.lower().split()[0].replace(",", "").replace(".", "").replace("&", "")
             if not domain or len(domain) < 2:

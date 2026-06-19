@@ -4,8 +4,9 @@ import csv
 import sys
 import time
 import datetime
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+import asyncio
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
@@ -32,12 +33,27 @@ from crm import (
     fetch_title_from_url,
     enrich_profile_details,
     clean_json_response,
-    determine_lead_platform
+    determine_lead_platform,
+    is_empty_value
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
 
 app = FastAPI(title="Silvia Serper Intent Discovery Platform")
+
+APP_SECRET_KEY = os.getenv("APP_SECRET_KEY", "silvia_dev_key")
+
+@app.middleware("http")
+async def api_key_auth_middleware(request: Request, call_next):
+    if request.url.path.startswith("/api/"):
+        api_key = request.headers.get("X-API-Key")
+        if not api_key or api_key != APP_SECRET_KEY:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Invalid or missing API Key"}
+            )
+    response = await call_next(request)
+    return response
 
 # Create output folder if it doesn't exist
 os.makedirs("output", exist_ok=True)
@@ -122,98 +138,105 @@ async def run_search(payload: SearchRequest):
     db = load_db()
     current_search_leads = []
     
-    # Limit number of processed items to keep API costs & time reasonable
+    sem = asyncio.Semaphore(3)
+    
+    async def process_one(result):
+        async with sem:
+            title = result.get("title", "")
+            snippet = result.get("snippet", "")
+            source_url = result.get("link", "")
+            if not source_url:
+                return None
+            try:
+                # 4. Intent Signal Classification (Requirement 8)
+                lead = await asyncio.to_thread(classify_lead_intent, title, snippet)
+                lead["sourceUrl"] = source_url
+                lead["platform"] = determine_lead_platform(source_url)
+                
+                # 5. Lead Intent Scoring Engine (Requirement 3)
+                lead = calculate_lead_score(lead)
+                
+                # Ensure author name is populated (use fallback parser if missing)
+                author = lead.get("authorName")
+                if is_empty_value(author):
+                    author = await asyncio.to_thread(extract_fallback_author, title, source_url)
+                    lead["authorName"] = author
+                    
+                # Secondary Enrichment search if company details are missing
+                company = lead.get("companyName")
+                if not is_empty_value(author) and is_empty_value(company):
+                    enriched_data = await asyncio.to_thread(enrich_profile_details, author)
+                    ec = enriched_data.get("companyName")
+                    ei = enriched_data.get("industry")
+                    el = enriched_data.get("location")
+                    if not is_empty_value(ec):
+                        lead["companyName"] = ec
+                    if not is_empty_value(ei) and is_empty_value(lead.get("industry")):
+                        lead["industry"] = ei
+                    if not is_empty_value(el) and is_empty_value(lead.get("location")):
+                        lead["location"] = el
+
+                # 6. Contact Enrichment / Email Guessing (Requirement 7)
+                enrich_mgr = ContactEnrichmentManager()
+                enrich_details = enrich_mgr.enrich(lead.get("authorName"), lead.get("companyName"))
+                c_info = enrich_details.get("email")
+                if c_info == "hello@company.com" or is_empty_value(c_info):
+                    c_info = None
+                lead["contactInfo"] = c_info
+                lead["contactSource"] = enrich_details.get("contactSource")
+                lead["contactConfidence"] = enrich_details.get("contactConfidence")
+                
+                return {"status": "success", "lead": lead, "source_url": source_url}
+            except Exception as err:
+                print(f"Error classifying lead {title}: {err}")
+                # Fallback
+                fallback_author = await asyncio.to_thread(extract_fallback_author, title, source_url)
+                fallback_lead = {
+                    "authorName": fallback_author if fallback_author != "Unknown" else "Unknown",
+                    "companyName": "Unknown",
+                    "buyingIntent": "Unknown",
+                    "intentType": "General Discussion",
+                    "serviceRequired": "Unknown",
+                    "industry": "Unknown",
+                    "location": "Unknown",
+                    "needDescription": snippet[:100] + "...",
+                    "contactInfo": None,
+                    "contactSource": "guessed",
+                    "contactConfidence": "low",
+                    "confidenceScore": 0,
+                    "leadScore": 10,
+                    "leadCategory": "Low Intent",
+                    "leadStatus": "Unqualified",
+                    "sourceUrl": source_url,
+                    "crmStatus": "New",
+                    "draftEmail": "",
+                    "platform": determine_lead_platform(source_url)
+                }
+                return {"status": "fallback", "lead": fallback_lead, "source_url": source_url}
+
+    # Parallelize AI calls
+    processed_results = await asyncio.gather(*[process_one(r) for r in unique_raw_results[:payload.limit]])
+    
     processed_count = 0
     qualified_count = 0
-    
-    for result in unique_raw_results:
-        if processed_count >= payload.limit:
-            break
-            
-        title = result.get("title", "")
-        snippet = result.get("snippet", "")
-        source_url = result.get("link", "")
-
-        if not source_url:
+    for res in processed_results:
+        if not res:
             continue
-
+        lead = res["lead"]
+        source_url = res["source_url"]
         processed_count += 1
-        print(f"Processing ({processed_count}/{payload.limit}): {title}")
         
-        try:
-            # 4. Intent Signal Classification (Requirement 8)
-            lead = classify_lead_intent(title, snippet)
-            lead["sourceUrl"] = source_url
-            lead["platform"] = determine_lead_platform(source_url)
+        # Preserve CRM stages & draft emails if they exist
+        lead["crmStatus"] = db[source_url].get("crmStatus", "New") if source_url in db else "New"
+        lead["draftEmail"] = db[source_url].get("draftEmail", "") if source_url in db else ""
+        
+        # 7. Duplicate Checking and fingerprint update (Requirement 4)
+        saved_key = check_and_save_lead(lead, db)
+        
+        if lead.get("leadCategory") in ["High Intent", "Medium Intent"]:
+            qualified_count += 1
             
-            # 5. Lead Intent Scoring Engine (Requirement 3)
-            lead = calculate_lead_score(lead)
-            
-            # Ensure author name is populated (use fallback parser if missing)
-            author = lead.get("authorName")
-            if not author or author.lower() in ["", "unknown", "none", "not specified"]:
-                author = extract_fallback_author(title, source_url)
-                lead["authorName"] = author
-                
-            # Secondary Enrichment search if company details are missing
-            company = lead.get("companyName")
-            if author and author.lower() != "unknown" and (not company or company.lower() in ["", "none", "unknown", "linkedin", "not specified"]):
-                enriched_data = enrich_profile_details(author)
-                ec = enriched_data.get("companyName")
-                ei = enriched_data.get("industry")
-                el = enriched_data.get("location")
-                if ec and ec.lower() not in ["none", "unknown", ""]:
-                    lead["companyName"] = ec
-                if ei and ei.lower() not in ["none", "unknown", ""] and (not lead.get("industry") or lead.get("industry").lower() in ["none", "unknown", ""]):
-                    lead["industry"] = ei
-                if el and el.lower() not in ["none", "unknown", ""] and (not lead.get("location") or lead.get("location").lower() in ["none", "unknown", ""]):
-                    lead["location"] = el
-
-            # 6. Contact Enrichment / Email Guessing (Requirement 7)
-            enrich_mgr = ContactEnrichmentManager()
-            enrich_details = enrich_mgr.enrich(lead.get("authorName"), lead.get("companyName"))
-            lead["contactInfo"] = enrich_details.get("email")
-            lead["contactSource"] = enrich_details.get("contactSource")
-            lead["contactConfidence"] = enrich_details.get("contactConfidence")
-            
-            # Preserve CRM stages & draft emails if they exist
-            lead["crmStatus"] = db[source_url].get("crmStatus", "New") if source_url in db else "New"
-            lead["draftEmail"] = db[source_url].get("draftEmail", "") if source_url in db else ""
-            
-            # 7. Duplicate Checking and fingerprint update (Requirement 4)
-            saved_key = check_and_save_lead(lead, db)
-            
-            if lead.get("leadCategory") in ["High Intent", "Medium Intent"]:
-                qualified_count += 1
-                
-            current_search_leads.append(db[saved_key])
-        except Exception as err:
-            print(f"Error classifying lead {title}: {err}")
-            # Fallback
-            fallback_author = extract_fallback_author(title, source_url)
-            fallback_lead = {
-                "authorName": fallback_author if fallback_author != "Unknown" else "Unknown",
-                "companyName": "Unknown",
-                "buyingIntent": "Unknown",
-                "intentType": "General Discussion",
-                "serviceRequired": "Unknown",
-                "industry": "Unknown",
-                "location": "Unknown",
-                "needDescription": snippet[:100] + "...",
-                "contactInfo": "hello@company.com",
-                "contactSource": "guessed",
-                "contactConfidence": "low",
-                "confidenceScore": 0,
-                "leadScore": 10,
-                "leadCategory": "Low Intent",
-                "leadStatus": "Unqualified",
-                "sourceUrl": source_url,
-                "crmStatus": "New",
-                "draftEmail": "",
-                "platform": determine_lead_platform(source_url)
-            }
-            saved_key = check_and_save_lead(fallback_lead, db)
-            current_search_leads.append(db[saved_key])
+        current_search_leads.append(db[saved_key])
 
     # Save to database
     save_db(db)
@@ -250,12 +273,16 @@ async def run_search(payload: SearchRequest):
         searches.insert(0, new_search)
     save_searches(searches)
 
-    # Export to CSV
-    if db:
-        try:
-            export_to_csv(list(db.values()))
-        except Exception as e:
-            print(f"CSV export error: {e}")
+    return {
+        "status": "success",
+        "leads": current_search_leads,
+        "count": len(current_search_leads),
+        "metrics": {
+            "resultsFound": total_results_found,
+            "qualified": qualified_count,
+            "rate": rate
+        }
+    }
 
     return {
         "status": "success",
@@ -314,11 +341,6 @@ async def update_lead_crm(payload: UpdateCRMRequest):
         
     save_db(db)
     
-    try:
-        export_to_csv(list(db.values()))
-    except Exception as e:
-        print(f"CSV export error: {e}")
-        
     return {"status": "success", "lead": db[payload.sourceUrl]}
 
 @app.post("/api/generate-pitch")
@@ -340,7 +362,6 @@ async def generate_lead_pitch(payload: GeneratePitchRequest):
             db[payload.sourceUrl]["crmStatus"] = "Drafted"
             
         save_db(db)
-        export_to_csv(list(db.values()))
         
         return {"status": "success", "pitch": pitch, "crmStatus": db[payload.sourceUrl]["crmStatus"]}
     except Exception as e:
@@ -354,26 +375,26 @@ async def enrich_lead_contact(payload: EnrichContactRequest):
         raise HTTPException(status_code=404, detail="Lead not found")
         
     lead = db[payload.sourceUrl]
-    author = lead.get("authorName", "").strip()
-    if not author or author.lower() in ["unknown", "none", "not specified", ""]:
+    author = lead.get("authorName")
+    if is_empty_value(author):
         title = fetch_title_from_url(payload.sourceUrl)
         author = extract_fallback_author(title, payload.sourceUrl)
         lead["authorName"] = author
         
-    company = lead.get("companyName", "").strip()
+    company = lead.get("companyName")
     
-    if author and author.lower() != "unknown" and (not company or company.lower() in ["", "none", "unknown", "linkedin", "not specified"]):
+    if not is_empty_value(author) and is_empty_value(company):
         enriched = enrich_profile_details(author)
         if enriched:
             ec = enriched.get("companyName")
             ei = enriched.get("industry")
             el = enriched.get("location")
-            if ec and ec.lower() not in ["none", "unknown", ""]:
+            if not is_empty_value(ec):
                 lead["companyName"] = ec
                 company = ec
-            if ei and ei.lower() not in ["none", "unknown", ""]:
+            if not is_empty_value(ei):
                 lead["industry"] = ei
-            if el and el.lower() not in ["none", "unknown", ""]:
+            if not is_empty_value(el):
                 lead["location"] = el
 
     await asyncio.sleep(1.0)
@@ -382,18 +403,16 @@ async def enrich_lead_contact(payload: EnrichContactRequest):
     enrich_mgr = ContactEnrichmentManager()
     enrichment_info = enrich_mgr.enrich(author, company)
     
-    lead["contactInfo"] = enrichment_info.get("email")
+    c_info = enrichment_info.get("email")
+    if c_info == "hello@company.com" or is_empty_value(c_info):
+        c_info = None
+    lead["contactInfo"] = c_info
     lead["contactSource"] = enrichment_info.get("contactSource")
     lead["contactConfidence"] = enrichment_info.get("contactConfidence")
     
     db[payload.sourceUrl] = lead
     save_db(db)
     
-    try:
-        export_to_csv(list(db.values()))
-    except Exception as e:
-        print(f"CSV export error: {e}")
-        
     return {
         "status": "success", 
         "contactInfo": lead["contactInfo"],
@@ -466,6 +485,12 @@ async def get_performance_stats():
 
 @app.get("/api/download")
 async def download_leads():
+    db = load_db()
+    if db:
+        try:
+            export_to_csv(list(db.values()))
+        except Exception as e:
+            print(f"CSV export error: {e}")
     csv_path = os.path.join("output", "leads.csv")
     if not os.path.exists(csv_path):
         raise HTTPException(status_code=404, detail="No leads file generated yet.")

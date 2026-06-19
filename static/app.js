@@ -1,3 +1,35 @@
+// Intercept all fetch requests to automatically append X-API-Key header
+(function() {
+    const ORIGINAL_FETCH = window.fetch;
+    window.fetch = function(url, options = {}) {
+        const urlStr = String(url);
+        if (urlStr.startsWith("/api/")) {
+            if (!options.headers) {
+                options.headers = {};
+            }
+            const apiKey = localStorage.getItem("APP_SECRET_KEY") || "silvia_dev_key";
+            if (options.headers instanceof Headers) {
+                options.headers.set("X-API-Key", apiKey);
+            } else if (Array.isArray(options.headers)) {
+                let keyExists = false;
+                for (let i = 0; i < options.headers.length; i++) {
+                    if (options.headers[i][0] === "X-API-Key") {
+                        options.headers[i][1] = apiKey;
+                        keyExists = true;
+                        break;
+                    }
+                }
+                if (!keyExists) {
+                    options.headers.push(["X-API-Key", apiKey]);
+                }
+            } else {
+                options.headers["X-API-Key"] = apiKey;
+            }
+        }
+        return ORIGINAL_FETCH(url, options);
+    };
+})();
+
 // Theme loading & initialization (runs immediately to prevent unstyled flash)
 function initTheme() {
     if (typeof localStorage === 'undefined' || typeof document === 'undefined') return;
@@ -184,8 +216,23 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Sync sidebar agency name/subtitle on load
+    function updateSidebarAgencyName() {
+        const sidebarAgencyNameEl = document.getElementById("sidebar-user-agency-name");
+        if (sidebarAgencyNameEl) {
+            const agencyNameVal = localStorage.getItem("silvia_agency_name") || localStorage.getItem("agencyName") || "Your Workspace";
+            sidebarAgencyNameEl.innerText = agencyNameVal;
+        }
+        const brandSubtitleEl = document.getElementById("sidebar-brand-subtitle");
+        if (brandSubtitleEl) {
+            const agencyNameVal = localStorage.getItem("silvia_agency_name") || localStorage.getItem("agencyName") || "Your Workspace";
+            brandSubtitleEl.innerText = agencyNameVal;
+        }
+    }
+
     // Outreach Config Settings hydration from localStorage
     if (localStorage.getItem("silvia_agency_name")) agencyNameInput.value = localStorage.getItem("silvia_agency_name");
+    updateSidebarAgencyName();
     if (localStorage.getItem("silvia_agency_info")) agencyInfoInput.value = localStorage.getItem("silvia_agency_info");
     if (localStorage.getItem("silvia_email_tone")) emailToneSelect.value = localStorage.getItem("silvia_email_tone");
     
@@ -193,6 +240,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (agencyNameInput) {
         agencyNameInput.addEventListener("input", () => {
             localStorage.setItem("silvia_agency_name", agencyNameInput.value);
+            localStorage.setItem("agencyName", agencyNameInput.value);
+            updateSidebarAgencyName();
             updateConfigPreview();
         });
     }
@@ -228,6 +277,11 @@ document.addEventListener("DOMContentLoaded", () => {
         archiveCurrentPage = 1;
         renderArchiveLeads();
     });
+
+    const archiveHistorySearch = document.getElementById("archive-history-search");
+    if (archiveHistorySearch) {
+        archiveHistorySearch.addEventListener("input", renderArchiveHistory);
+    }
 
     const btnArchivePrev = document.getElementById("archive-pag-prev");
     const btnArchiveNext = document.getElementById("archive-pag-next");
@@ -482,6 +536,17 @@ function updateGlobalStats(leadsList) {
     const avgScore = count > 0 ? Math.round(totalScore / count) : 0;
     if (statConfidence) statConfidence.innerText = `${avgScore}%`;
 
+    // Hide trend badges when card metric value is 0
+    const trendTotal = document.getElementById("trend-total");
+    const trendQualified = document.getElementById("trend-qualified");
+    const trendActiveOutreach = document.getElementById("trend-active-outreach");
+    const trendConfidence = document.getElementById("trend-confidence");
+
+    if (trendTotal) trendTotal.style.display = leadsList.length === 0 ? "none" : "flex";
+    if (trendQualified) trendQualified.style.display = qualified.length === 0 ? "none" : "flex";
+    if (trendActiveOutreach) trendActiveOutreach.style.display = activeOutreach.length === 0 ? "none" : "flex";
+    if (trendConfidence) trendConfidence.style.display = avgScore === 0 ? "none" : "flex";
+
     // Sidebar Limits update
     const usageLeads = document.getElementById("usage-leads-discovered");
     const usageOutreach = document.getElementById("usage-outreach-count");
@@ -577,6 +642,22 @@ function getCompanyLogoUrl(company) {
 
 // Grid rows list population matching proposal design
 function renderLeads() {
+    const dashboardEmptyState = document.getElementById("dashboard-empty-state");
+    const dashboardWidgetsGrid = document.getElementById("dashboard-widgets-grid");
+    const dashboardLeadsTableCard = document.getElementById("dashboard-leads-table-card");
+
+    if (leadsData.length === 0) {
+        if (dashboardEmptyState) dashboardEmptyState.style.display = "flex";
+        if (dashboardWidgetsGrid) dashboardWidgetsGrid.style.display = "none";
+        if (dashboardLeadsTableCard) dashboardLeadsTableCard.style.display = "none";
+        updateGlobalStats(leadsData);
+        return;
+    } else {
+        if (dashboardEmptyState) dashboardEmptyState.style.display = "none";
+        if (dashboardWidgetsGrid) dashboardWidgetsGrid.style.display = "grid";
+        if (dashboardLeadsTableCard) dashboardLeadsTableCard.style.display = "block";
+    }
+
     if (!leadsTbody) return;
     leadsTbody.innerHTML = "";
     
@@ -680,7 +761,8 @@ function renderLeads() {
         }
         
         const emailVal = lead.contactInfo || "";
-        const isEmailVerified = emailVal && emailVal.includes('@') && lead.contactSource !== 'guessed';
+        const isEmailValid = emailVal && emailVal.includes('@') && emailVal !== 'hello@company.com';
+        const isEmailVerified = isEmailValid && lead.contactSource !== 'guessed';
         const emailBadgeLabel = isEmailVerified ? 'Verified' : (lead.contactSource === 'guessed' ? 'Guessed' : 'Unverified');
         const emailBadgeClass = isEmailVerified ? 'badge-success' : (lead.contactSource === 'guessed' ? 'badge-warning' : 'badge-neutral');
         const emailBadgeIcon = isEmailVerified ? 'check' : (lead.contactSource === 'guessed' ? 'help-circle' : 'help-circle');
@@ -711,14 +793,14 @@ function renderLeads() {
         const logoUrl = getCompanyLogoUrl(displayCompany);
  
         let contactHtml = "";
-        if (emailVal && emailVal.includes('@')) {
+        if (isEmailValid) {
             contactHtml = `
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
                     <i data-lucide="${isEmailVerified ? 'check-circle-2' : 'help-circle'}" style="width: 14px; height: 14px; color: ${isEmailVerified ? 'var(--success)' : 'var(--text-muted)'}; flex-shrink: 0;"></i>
                     <span style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${emailVal}">${emailVal}</span>
                 </div>
             `;
-        } else if (emailVal && emailVal.toLowerCase().includes('linkedin')) {
+        } else if (emailVal && emailVal.toLowerCase().includes('linkedin') && emailVal !== 'hello@company.com') {
             contactHtml = `
                 <a href="${lead.sourceUrl}" target="_blank" style="font-size: 0.78rem; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
                     <i data-lucide="linkedin" style="width: 12px; height: 12px;"></i>
@@ -726,7 +808,7 @@ function renderLeads() {
                 </a>
             `;
         } else {
-            contactHtml = `<span style="color: var(--text-muted); font-size: 0.78rem;">—</span>`;
+            contactHtml = `<span class="no-data">No email found</span>`;
         }
 
         row.innerHTML = `
@@ -992,7 +1074,19 @@ function openDetailModal(lead) {
     modalLocation.value = lead.location || "";
     
     modalNeedDescription.value = lead.needDescription || "";
-    modalContactInfo.value = lead.contactInfo || "";
+    
+    // Check if email is null, undefined, hello@company.com, or empty
+    const emailVal = lead.contactInfo || "";
+    const isEmailValid = emailVal && emailVal.includes('@') && emailVal !== 'hello@company.com';
+    const noEmailSpan = document.getElementById("modal-email-no-data");
+    
+    if (isEmailValid) {
+        modalContactInfo.value = emailVal;
+        if (noEmailSpan) noEmailSpan.style.display = "none";
+    } else {
+        modalContactInfo.value = "";
+        if (noEmailSpan) noEmailSpan.style.display = "block";
+    }
     
     let score = lead.leadScore;
     if (score === undefined || score === null) {
@@ -1394,29 +1488,39 @@ function renderArchiveHistory() {
     if (!archiveHistoryList) return;
     archiveHistoryList.innerHTML = "";
     
-    // Add "All Leads" item first
-    const allItem = document.createElement("div");
-    allItem.className = `history-item ${activeSearchId === "all" ? "active" : ""}`;
-    allItem.addEventListener("click", () => {
-        activeSearchId = "all";
-        archiveCurrentPage = 1;
-        renderArchiveHistory();
-        renderArchiveLeads();
-    });
-    allItem.innerHTML = `
-        <div class="history-item-header">
-            <span class="history-item-keyword">All leads database</span>
-            <span class="history-item-count">${leadsData.length}</span>
-        </div>
-        <div class="history-item-meta">
-            <span>Entire database</span>
-            <span>-</span>
-        </div>
-    `;
-    archiveHistoryList.appendChild(allItem);
+    const searchInput = document.getElementById("archive-history-search");
+    const filterVal = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    
+    // Render "All Leads" item if filter is empty
+    if (!filterVal) {
+        const allItem = document.createElement("div");
+        allItem.className = `history-item ${activeSearchId === "all" ? "active" : ""}`;
+        allItem.addEventListener("click", () => {
+            activeSearchId = "all";
+            archiveCurrentPage = 1;
+            renderArchiveHistory();
+            renderArchiveLeads();
+        });
+        allItem.innerHTML = `
+            <div class="history-item-header">
+                <span class="history-item-keyword">All leads database</span>
+                <span class="history-item-count">${leadsData.length}</span>
+            </div>
+            <div class="history-item-meta">
+                <span>Entire database</span>
+                <span>-</span>
+            </div>
+        `;
+        archiveHistoryList.appendChild(allItem);
+    }
     
     // Add history list items
     searchesData.forEach(search => {
+        const displayKeyword = search.keyword || "Scan Query";
+        if (filterVal && !displayKeyword.toLowerCase().includes(filterVal)) {
+            return;
+        }
+        
         const item = document.createElement("div");
         item.className = `history-item ${activeSearchId === search.id ? "active" : ""}`;
         item.addEventListener("click", () => {
@@ -1437,9 +1541,9 @@ function renderArchiveHistory() {
             }
         }
         
-        let displayKeyword = search.keyword || "Scan Query";
-        if (displayKeyword.length > 20) {
-            displayKeyword = displayKeyword.substring(0, 20) + "...";
+        let truncatedKeyword = displayKeyword;
+        if (truncatedKeyword.length > 20) {
+            truncatedKeyword = truncatedKeyword.substring(0, 20) + "...";
         }
         
         let displayTimeframe = "All Time";
@@ -1456,7 +1560,7 @@ function renderArchiveHistory() {
         
         item.innerHTML = `
             <div class="history-item-header">
-                <span class="history-item-keyword" title="${search.keyword}">${displayKeyword}</span>
+                <span class="history-item-keyword" title="${displayKeyword}">${truncatedKeyword}</span>
                 <span class="history-item-count">${leadCount}</span>
             </div>
             <div class="history-item-meta">
@@ -1515,6 +1619,12 @@ function renderArchiveLeads() {
         return statusMatch && crmMatch && platformMatch;
     });
     
+    // Update the badge count
+    const tableBadge = document.getElementById("archive-table-badge");
+    if (tableBadge) {
+        tableBadge.innerText = `${filtered.length} leads`;
+    }
+    
     const archivePagination = document.getElementById("archive-pagination");
     const archivePagPrev = document.getElementById("archive-pag-prev");
     const archivePagNext = document.getElementById("archive-pag-next");
@@ -1561,7 +1671,6 @@ function renderArchiveLeads() {
         const displayRole = Array.isArray(lead.serviceRequired)
             ? lead.serviceRequired.join(", ")
             : (lead.serviceRequired || lead.industry || "Prospect Partner");
-        const displayIntentType = lead.intentType || "General Intent";
             
         let score = lead.leadScore;
         if (score === undefined || score === null) {
@@ -1581,29 +1690,27 @@ function renderArchiveLeads() {
             displayIntent = displayIntent + " Intent";
         }
         
+        let categoryClass = "badge-neutral";
+        if (cleanIntent === "High") categoryClass = "badge-success";
+        else if (cleanIntent === "Medium") categoryClass = "badge-warning";
+        
         const emailVal = lead.contactInfo || "";
-        const isEmailVerified = emailVal && emailVal.includes('@') && lead.contactSource !== 'guessed';
-        const emailBadgeLabel = isEmailVerified ? 'Verified' : (lead.contactSource === 'guessed' ? 'Guessed' : 'Unverified');
-        const emailBadgeClass = isEmailVerified ? 'badge-success' : (lead.contactSource === 'guessed' ? 'badge-warning' : 'badge-neutral');
-        const emailBadgeIcon = isEmailVerified ? 'check' : (lead.contactSource === 'guessed' ? 'help-circle' : 'help-circle');
+        const isEmailValid = emailVal && emailVal.includes('@') && emailVal !== 'hello@company.com';
+        const isEmailVerified = isEmailValid && lead.contactSource !== 'guessed';
             
         const platform = getLeadPlatform(lead);
-        let platformBadgeColor = "rgba(124, 92, 255, 0.1)";
         let platformColor = "var(--primary)";
         let platformIconName = "linkedin";
         let displayPlatform = "LinkedIn";
         if (platform === "facebook") {
-            platformBadgeColor = "rgba(24, 213, 176, 0.1)";
             platformColor = "var(--secondary)";
             platformIconName = "facebook";
             displayPlatform = "Facebook";
         } else if (platform === "twitter") {
-            platformBadgeColor = "var(--bg-trans-4)";
             platformColor = "#9CA3AF";
             platformIconName = "twitter";
             displayPlatform = "Twitter/X";
         } else if (platform === "reddit") {
-            platformBadgeColor = "rgba(77, 163, 255, 0.1)";
             platformColor = "var(--highlight)";
             platformIconName = "message-square";
             displayPlatform = "Reddit";
@@ -1615,22 +1722,22 @@ function renderArchiveLeads() {
         const isChecked = archiveSelectedUrls.includes(lead.sourceUrl);
 
         let contactHtml = "";
-        if (emailVal && emailVal.includes('@')) {
+        if (isEmailValid) {
             contactHtml = `
-                <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <i data-lucide="${isEmailVerified ? 'check-circle-2' : 'help-circle'}" style="width: 14px; height: 14px; color: ${isEmailVerified ? 'var(--success)' : 'var(--text-muted)'}; flex-shrink: 0;"></i>
-                    <span style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${emailVal}">${emailVal}</span>
+                <div class="badge ${isEmailVerified ? 'badge-success' : 'badge-warning'}" style="gap: 4px; padding: 0.2rem 0.5rem; font-size: 0.72rem; font-weight: 500;">
+                    <i data-lucide="${isEmailVerified ? 'check-circle-2' : 'help-circle'}" style="width: 12px; height: 12px; flex-shrink: 0;"></i>
+                    <span style="max-width: 115px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emailVal}">${emailVal}</span>
                 </div>
             `;
-        } else if (emailVal && emailVal.toLowerCase().includes('linkedin')) {
+        } else if (emailVal && emailVal.toLowerCase().includes('linkedin') && emailVal !== 'hello@company.com') {
             contactHtml = `
-                <a href="${lead.sourceUrl}" target="_blank" style="font-size: 0.78rem; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
-                    <i data-lucide="linkedin" style="width: 12px; height: 12px;"></i>
-                    <span>LinkedIn Profile</span>
+                <a href="${lead.sourceUrl}" target="_blank" class="badge badge-info" style="gap: 4px; padding: 0.2rem 0.5rem; font-size: 0.72rem; font-weight: 500; text-decoration: none; display: inline-flex;">
+                    <i data-lucide="linkedin" style="width: 12px; height: 12px; flex-shrink: 0;"></i>
+                    <span>Profile Link</span>
                 </a>
             `;
         } else {
-            contactHtml = `<span style="color: var(--text-muted); font-size: 0.78rem;">—</span>`;
+            contactHtml = `<span class="no-data" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic;">No contact found</span>`;
         }
 
         row.innerHTML = `
@@ -1657,12 +1764,12 @@ function renderArchiveLeads() {
             </td>
             <td>
                 <div style="display: flex; flex-direction: column; gap: 0.25rem; min-width: 110px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 500; color: var(--text-primary);">
-                        <span>${displayIntent}</span>
-                        <span>${score}%</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                        <span class="badge ${categoryClass}" style="font-size: 0.65rem; padding: 0.05rem 0.35rem;">${displayIntent}</span>
+                        <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-primary);">${score}%</span>
                     </div>
-                    <div style="width: 100%; height: 5px; background: var(--bg-trans-5); border-radius: 3px; overflow: hidden;">
-                        <div style="width: ${score}%; height: 100%; background: var(--primary-gradient); border-radius: 3px;"></div>
+                    <div style="width: 100%; height: 4px; background: var(--bg-trans-5); border-radius: 3px; overflow: hidden;">
+                        <div style="width: ${score}%; height: 100%; background: ${cleanIntent === 'High' ? 'var(--secondary-gradient)' : 'var(--primary-gradient)'}; border-radius: 3px;"></div>
                     </div>
                 </div>
             </td>

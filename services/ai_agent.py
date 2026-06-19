@@ -9,28 +9,6 @@ client = Groq(
 )
 
 
-def analyze_lead(title, snippet):
-    # Load the prompt template from the file
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    prompt_path = os.path.join(base_dir, "prompts", "lead_prompt.txt")
-    with open(prompt_path, "r", encoding="utf-8") as f:
-        template = f.read()
-
-    prompt = template.format(title=title, snippet=snippet)
-
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        response_format={"type": "json_object"},
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        temperature=0
-    )
-
-    return response.choices[0].message.content
 
 
 def generate_pitch(lead, agency_name="Silvia Team", agency_info="premier design & development services", tone="Short & Conversational"):

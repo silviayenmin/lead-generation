@@ -10,6 +10,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+    <div class="mobile-warning" id="mobile-warning">
+      ⚠️ This app is designed for desktop. Some features may not display correctly on small screens.
+      <button type="button" class="close-warning-btn" onclick="document.getElementById('mobile-warning').style.display='none'">✕</button>
+    </div>
     <!-- App Container Layout -->
     <div class="app-layout">
         
@@ -22,7 +26,7 @@
                     </div>
                     <div class="logo-text">
                         <h2>Silvia AI</h2>
-                        <p>Enterprise SaaS CRM</p>
+                        <p id="sidebar-brand-subtitle">Enterprise SaaS CRM</p>
                     </div>
                 </div>
                 <button type="button" class="sidebar-toggle" id="sidebar-toggle" title="Toggle Sidebar">
@@ -30,14 +34,12 @@
                 </button>
             </div>
             
-            <!-- User Info Profile Badge -->
-            <div class="sidebar-user">
-                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" alt="Avatar" class="user-avatar">
+            <!-- Workspace User Info Profile Badge -->
+            <div class="sidebar-user" id="sidebar-user-section">
                 <div class="user-info">
-                    <span class="user-name">Sarah Jenkins</span>
-                    <span class="user-role">Sales Director</span>
+                    <span class="user-name" id="sidebar-user-agency-name">Your Workspace</span>
+                    <span class="user-role">Active Workspace</span>
                 </div>
-                <i data-lucide="chevron-down" class="user-dropdown-icon"></i>
             </div>
             
             <nav class="sidebar-nav">
@@ -89,13 +91,13 @@
             <!-- Top bar header inside main content -->
             <header class="top-bar">
                 <div class="top-bar-left">
-                    <div class="top-bar-search">
+                    <div class="top-bar-search" style="display: none;">
                         <i data-lucide="search" class="search-icon"></i>
                         <input type="text" id="global-search" placeholder="Search leads by name, company, or requirement...">
                     </div>
                 </div>
                 <div class="top-bar-actions">
-                    <button type="button" id="btn-new-scan-trigger" class="btn btn-primary" style="width: auto; padding: 0.45rem 1rem; font-size: 0.8rem; height: 32px;">
+                    <button type="button" id="btn-new-scan-trigger" class="btn btn-primary btn-new-scan-topbar">
                         <i data-lucide="plus"></i> New Scan
                     </button>
                     <button type="button" class="top-bar-btn" id="btn-theme-toggle" title="Toggle Theme">
@@ -105,7 +107,7 @@
                         <i data-lucide="bell"></i>
                         <span class="notification-dot"></span>
                     </button>
-                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" alt="Profile" class="profile-pic">
+                    <div class="profile-pic-placeholder" id="topbar-profile-pic"><i data-lucide="user" class="profile-pic-placeholder-icon"></i></div>
                 </div>
             </header>
 
@@ -119,110 +121,122 @@
                         <div class="stat-card stat-total-card">
                             <div class="stat-card-glow"></div>
                             <div class="stat-card-header">
-                                <span class="stat-label">Total leads</span>
-                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +14%</span>
+                                <div class="stat-label-group">
+                                    <div class="stat-icon-wrapper">
+                                        <i data-lucide="users"></i>
+                                    </div>
+                                    <span class="stat-label">Total leads</span>
+                                </div>
+                                <span class="stat-trend trend-up" id="trend-total"><i data-lucide="trending-up"></i> +14%</span>
                             </div>
                             <span class="stat-value" id="stat-total">0</span>
-                            <!-- Sparkline Chart -->
-                            <svg class="stat-sparkline" viewBox="0 0 100 30">
-                                <path class="sparkline-stroke" d="M0,22 Q12,8 24,18 T48,4 T72,16 T96,8 T100,12"></path>
-                            </svg>
                         </div>
 
                         <div class="stat-card stat-sql-card">
                             <div class="stat-card-glow"></div>
                             <div class="stat-card-header">
-                                <span class="stat-label">SQLs (qualified)</span>
-                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +9%</span>
+                                <div class="stat-label-group">
+                                    <div class="stat-icon-wrapper">
+                                        <i data-lucide="user-check"></i>
+                                    </div>
+                                    <span class="stat-label">Ready to contact</span>
+                                </div>
+                                <span class="stat-trend trend-up" id="trend-qualified"><i data-lucide="trending-up"></i> +9%</span>
                             </div>
                             <span class="stat-value" id="stat-qualified">0</span>
-                            <!-- Sparkline Chart -->
-                            <svg class="stat-sparkline" viewBox="0 0 100 30">
-                                <path class="sparkline-stroke" d="M0,25 Q15,14 30,22 T60,6 T90,20 T100,10"></path>
-                            </svg>
                         </div>
 
                         <div class="stat-card stat-opp-card">
                             <div class="stat-card-glow"></div>
                             <div class="stat-card-header">
-                                <span class="stat-label">Outreach active</span>
-                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +22%</span>
+                                <div class="stat-label-group">
+                                    <div class="stat-icon-wrapper">
+                                        <i data-lucide="send"></i>
+                                    </div>
+                                    <span class="stat-label">Outreach active</span>
+                                </div>
+                                <span class="stat-trend trend-up" id="trend-active-outreach"><i data-lucide="trending-up"></i> +22%</span>
                             </div>
                             <span class="stat-value" id="stat-active-outreach">0</span>
-                            <!-- Sparkline Chart -->
-                            <svg class="stat-sparkline" viewBox="0 0 100 30">
-                                <path class="sparkline-stroke" d="M0,20 Q10,12 25,24 T55,8 T85,14 T100,6"></path>
-                            </svg>
                         </div>
 
                         <div class="stat-card stat-revenue-card">
                             <div class="stat-card-glow"></div>
                             <div class="stat-card-header">
-                                <span class="stat-label">Avg match score</span>
-                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +18%</span>
+                                <div class="stat-label-group">
+                                    <div class="stat-icon-wrapper">
+                                        <i data-lucide="percent"></i>
+                                    </div>
+                                    <span class="stat-label">Avg match score</span>
+                                </div>
+                                <span class="stat-trend trend-up" id="trend-confidence"><i data-lucide="trending-up"></i> +18%</span>
                             </div>
                             <span class="stat-value text-glow-indigo" id="stat-confidence">0%</span>
-                            <!-- Sparkline Chart -->
-                            <svg class="stat-sparkline" viewBox="0 0 100 30">
-                                <path class="sparkline-stroke" d="M0,18 Q18,6 36,15 T72,12 T90,6 T100,10"></path>
-                            </svg>
                         </div>
                     </div>
 
                     <!-- AI Insights text banner -->
-                    <div class="ai-insights-panel" style="margin-bottom: 1.5rem;">
+                    <div class="ai-insights-panel ai-insights-panel-margin">
                         <i data-lucide="sparkles" class="ai-insights-icon"></i>
                         <div class="ai-insights-text" id="ai-insights-text">
                             AI Agent Insight: Social scans identified Facebook Groups and LinkedIn as high-intent lead sources for "React Dev" queries. Average qualification scores rose by 8% this week.
                         </div>
                     </div>
 
+                    <!-- Empty State Hero (Dashboard) -->
+                    <div id="dashboard-empty-state" class="empty-state-hero" style="display: none;">
+                        <i data-lucide="radar"></i>
+                        <h3>No leads yet</h3>
+                        <p>Go to Lead Discovery and run your first scan to populate the dashboard.</p>
+                        <button type="button" onclick="switchTab('discovery')" class="btn btn-primary">Start first scan</button>
+                    </div>
+
                     <!-- Widgets Row: 50% Outreach Funnel, 50% AI Recommendations -->
-                    <div class="dashboard-grid-container">
+                    <div class="dashboard-grid-container" id="dashboard-widgets-grid">
                         <!-- Lead Pipeline Funnel -->
                         <div class="card chart-card">
                             <div class="card-title">
                                 <i data-lucide="bar-chart-3"></i>
                                 <span>Outreach funnel</span>
-                            </div>
-                            <div class="funnel-container">
-                                <div class="funnel-stage">
-                                    <div class="funnel-bar" style="width: 100%"></div>
-                                    <span class="funnel-label">Total Discovered</span>
-                                    <span class="funnel-value" id="funnel-val-total">0</span>
-                                </div>
-                                <div class="funnel-stage">
-                                    <div class="funnel-bar" id="funnel-bar-qualified" style="width: 70%"></div>
-                                    <span class="funnel-label">Qualified (SQLs)</span>
-                                    <span class="funnel-value" id="funnel-val-qualified">0</span>
-                                </div>
-                                <div class="funnel-stage">
-                                    <div class="funnel-bar" id="funnel-bar-outreach" style="width: 40%"></div>
-                                    <span class="funnel-label">Outreach Initiated</span>
-                                    <span class="funnel-value" id="funnel-val-outreach">0</span>
-                                </div>
-                                <div class="funnel-stage">
-                                    <div class="funnel-bar" id="funnel-bar-replied" style="width: 15%"></div>
-                                    <span class="funnel-label">Replied / Hot</span>
-                                    <span class="funnel-value" id="funnel-val-replied">0</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- AI Recommended Leads Panel -->
-                        <div class="card chart-card">
-                            <div class="card-title">
-                                <i data-lucide="sparkles"></i>
-                                <span>AI recommended leads</span>
-                            </div>
-                            <div class="rec-leads-list" id="rec-leads-list">
-                                <!-- Populated via JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Leads database table card (Full Width) -->
-                    <div class="card table-card" style="margin-bottom: 1.5rem; width: 100%;">
+                             </div>
+                             <div class="funnel-container">
+                                 <div class="funnel-stage">
+                                     <div class="funnel-bar" style="width: 100%"></div>
+                                     <span class="funnel-label">Total Discovered</span>
+                                     <span class="funnel-value" id="funnel-val-total">0</span>
+                                 </div>
+                                 <div class="funnel-stage">
+                                     <div class="funnel-bar" id="funnel-bar-qualified" style="width: 70%"></div>
+                                     <span class="funnel-label">Ready to contact</span>
+                                     <span class="funnel-value" id="funnel-val-qualified">0</span>
+                                 </div>
+                                 <div class="funnel-stage">
+                                     <div class="funnel-bar" id="funnel-bar-outreach" style="width: 40%"></div>
+                                     <span class="funnel-label">Outreach Initiated</span>
+                                     <span class="funnel-value" id="funnel-val-outreach">0</span>
+                                 </div>
+                                 <div class="funnel-stage">
+                                     <div class="funnel-bar" id="funnel-bar-replied" style="width: 15%"></div>
+                                     <span class="funnel-label">Replied / Hot</span>
+                                     <span class="funnel-value" id="funnel-val-replied">0</span>
+                                 </div>
+                             </div>
+                         </div>
+ 
+                         <!-- AI Recommended Leads Panel -->
+                         <div class="card chart-card">
+                             <div class="card-title">
+                                 <i data-lucide="sparkles"></i>
+                                 <span>AI recommended leads</span>
+                             </div>
+                             <div class="rec-leads-list" id="rec-leads-list">
+                                 <!-- Populated via JavaScript -->
+                             </div>
+                         </div>
+                     </div>
+ 
+                     <!-- Leads database table card (Full Width) -->
+                     <div class="card table-card dashboard-leads-table-panel" id="dashboard-leads-table-card">
                         <div class="table-toolbar">
                             <div class="toolbar-title">Intent qualified leads (top 5)</div>
                             <div class="table-filters">
@@ -259,9 +273,9 @@
 
                         <!-- Empty Grid Indicator -->
                         <div id="empty-state" class="empty-container" style="display: none;">
-                            <i data-lucide="folder-open" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                            <i data-lucide="folder-open"></i>
                             <h3>No lead data found</h3>
-                            <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 320px; margin-top: 0.25rem;">Perform a scan inside Lead Discovery to populate results.</p>
+                            <p>Perform a scan inside Lead Discovery to populate results.</p>
                         </div>
 
                         <!-- Spreadsheet Data Grid -->
@@ -287,36 +301,6 @@
                             <button class="pag-btn" disabled><i data-lucide="chevron-left"></i></button>
                             <span class="pag-text">Showing Top 5 leads</span>
                             <button class="pag-btn" disabled><i data-lucide="chevron-right"></i></button>
-                        </div>
-                    </div>
-                    
-                    <!-- Search Channel Performance Table -->
-                    <div class="card performance-card" style="width: 100%;">
-                        <div class="card-title">
-                            <i data-lucide="bar-chart-2"></i>
-                            <span>Search performance & channel analytics (top 5)</span>
-                        </div>
-                        <div class="table-responsive" style="margin-top: 1rem;">
-                            <table class="table" style="width: 100%;">
-                                <thead>
-                                    <tr>
-                                        <th>Search keyword</th>
-                                        <th>Platform</th>
-                                        <th>Last scanned</th>
-                                        <th>Results scanned</th>
-                                        <th>Qualified leads</th>
-                                        <th>Conversion rate</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="performance-tbody">
-                                    <!-- Populated via JavaScript -->
-                                </tbody>
-                            </table>
-                            <div id="performance-empty-state" class="empty-container" style="padding: 2rem; display: none;">
-                                <i data-lucide="bar-chart-2" style="width: 36px; height: 36px; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
-                                <h4>No performance data</h4>
-                                <p style="color: var(--text-muted); font-size: 0.85rem;">Scans run in Lead Discovery will populate here automatically.</p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -362,7 +346,7 @@
                                         <i data-lucide="search" class="input-icon"></i>
                                         <input type="text" id="keyword" class="form-control" placeholder="e.g. looking for ui/ux designer, contract react developer" required>
                                     </div>
-                                    <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
+                                    <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
                                 </div>
                                 <div class="wizard-grid-2">
                                     <div class="form-group">
@@ -384,9 +368,9 @@
 
                             <!-- Step 2: Select Platform Sources -->
                             <div class="wizard-step-panel" data-step="2">
-                                <div class="form-group" style="margin-bottom: 0.5rem;">
+                                <div class="form-group wizard-group-margin-sm">
                                     <label>Select target data sources</label>
-                                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.75rem;">Choose social networks to scan for buying signals.</span>
+                                    <span class="wizard-help-text-margin">Choose social networks to scan for buying signals.</span>
                                 </div>
                                 
                                 <div class="platform-options-grid">
@@ -441,10 +425,10 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group" style="margin-top: 0.5rem;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div class="form-group wizard-group-margin-top-sm">
+                                    <div class="wizard-flex-header">
                                         <label for="wizard-intent-score-min">Minimum AI intent threshold</label>
-                                        <span id="wizard-intent-score-val" style="font-size: 0.75rem; font-weight: 700; color: var(--primary);">40% Match</span>
+                                        <span id="wizard-intent-score-val" class="wizard-intent-score-val">40% Match</span>
                                     </div>
                                     <input type="range" id="wizard-intent-score-min" class="custom-range-slider" min="10" max="90" value="40">
                                     <div class="slider-labels">
@@ -456,23 +440,23 @@
 
                             <!-- Step 4: AI Qualification & Estimate -->
                             <div class="wizard-step-panel" data-step="4">
-                                <div class="form-group" style="margin-bottom: 1.25rem;">
-                                    <label>Scan verification summary</label>
-                                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.75rem;">Confirm details to launch Llama-3.3 parsing scan.</span>
+                                <div class="form-group estimate-leads-margin">
+                                    <label>Review & launch</label>
+                                    <span class="wizard-help-text-margin">Confirm details to launch Llama-3.3 parsing scan.</span>
                                 </div>
 
-                                <div class="estimate-leads-panel" style="margin-bottom: 1.25rem;">
+                                <div class="estimate-leads-panel estimate-leads-margin">
                                     <div class="estimate-count" id="wizard-estimate-count">10 - 25</div>
                                     <div class="estimate-label">Estimated qualified lead targets</div>
-                                    <span style="font-size: 0.65rem; color: var(--text-muted); max-width: 250px;">Based on your filter metrics, matching history, and domain indexes.</span>
+                                    <span class="estimate-help-text">Based on your filter metrics, matching history, and domain indexes.</span>
                                 </div>
 
-                                <div class="form-actions-row" style="display: flex; gap: 0.75rem; width: 100%;">
-                                    <button type="submit" id="btn-search" class="btn btn-primary" style="flex: 2;">
+                                <div class="form-actions-row wizard-actions-row">
+                                    <button type="submit" id="btn-search" class="btn btn-primary btn-wizard-submit">
                                         <i data-lucide="sparkles"></i>
                                         <span>Launch AI scan</span>
                                     </button>
-                                    <button type="button" id="btn-save-search" class="btn btn-secondary" style="flex: 1;">
+                                    <button type="button" id="btn-save-search" class="btn btn-secondary btn-wizard-save">
                                         <i data-lucide="bookmark"></i>
                                         <span>Save scraper</span>
                                     </button>
@@ -481,10 +465,10 @@
 
                             <!-- Stepper Buttons Footer -->
                             <div class="wizard-actions">
-                                <button type="button" id="btn-wizard-back" class="btn btn-secondary" style="width: auto; padding: 0.5rem 1.25rem;" disabled>
+                                <button type="button" id="btn-wizard-back" class="btn btn-secondary btn-wizard-back" disabled>
                                     <i data-lucide="arrow-left"></i> Back
                                 </button>
-                                <button type="button" id="btn-wizard-continue" class="btn btn-primary" style="width: auto; padding: 0.5rem 1.25rem;">
+                                <button type="button" id="btn-wizard-continue" class="btn btn-primary btn-wizard-continue">
                                     Continue <i data-lucide="arrow-right"></i>
                                 </button>
                             </div>
@@ -527,14 +511,14 @@
                     </div>
                     
                     <!-- Scan Loader Progress Panel -->
-                    <div id="loading-state" class="loading-container card" style="display: none; margin-top: 1.5rem;">
-                        <div class="pulsing-ai-indicator" style="margin-bottom: 1rem;">
+                    <div id="loading-state" class="loading-container card loading-state-panel" style="display: none;">
+                        <div class="pulsing-ai-indicator loading-ai-indicator">
                             <div class="pulsing-dot"></div>
                             <span>Silvia AI scraper engaged...</span>
                         </div>
-                        <div id="loading-status-text" class="loading-text" style="font-weight: 500; color: var(--text-primary);">Querying LinkedIn posts via Google Serper API...</div>
-                        <div style="width: 100%; max-width: 400px; background: var(--bg-trans-5); height: 5px; border-radius: 3px; overflow: hidden; margin-top: 1rem;">
-                            <div id="loading-progress" style="width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.4s ease;"></div>
+                        <div id="loading-status-text" class="loading-text loading-status-text">Querying LinkedIn posts via Google Serper API...</div>
+                        <div class="loading-bar-container">
+                            <div id="loading-progress" class="loading-bar-progress" style="width: 0%;"></div>
                         </div>
                     </div>
                 </div>
@@ -612,9 +596,15 @@
                         
                         <!-- Left panel: Search History list -->
                         <div class="card history-card">
-                            <div class="card-title">
+                            <div class="card-title" style="margin-bottom: 0.5rem;">
                                 <i data-lucide="history"></i>
                                 <span>Search query index</span>
+                            </div>
+                            <div class="history-search-container">
+                                <div class="history-search-box">
+                                    <i data-lucide="search"></i>
+                                    <input type="text" id="archive-history-search" class="history-search-input" placeholder="Filter queries...">
+                                </div>
                             </div>
                             <div class="history-list" id="archive-history-list">
                                 <!-- Populated from searchesData via app.js -->
@@ -624,18 +614,12 @@
                         <!-- Right panel: Leads table for selected search -->
                         <div class="card table-card archive-table-card">
                             
-                            <!-- Header saved views selectors -->
-                            <div class="archive-views-row">
-                                <div class="saved-views-buttons">
-                                    <button type="button" class="view-pill-btn active" id="archive-view-all">All scraped</button>
-                                    <button type="button" class="view-pill-btn" id="archive-view-high">High intent only</button>
-                                    <button type="button" class="view-pill-btn" id="archive-view-fb">Facebook leads</button>
-                                    <button type="button" class="view-pill-btn" id="archive-view-replied">Replied stage</button>
+                            <!-- Header Info & Selectors combined -->
+                            <div class="archive-header-row">
+                                <div class="archive-title-group">
+                                    <h3 id="archive-table-title">All leads database</h3>
+                                    <span class="archive-badge" id="archive-table-badge">0 leads</span>
                                 </div>
-                            </div>
-
-                            <div class="table-toolbar">
-                                <div class="toolbar-title" id="archive-table-title">All leads database</div>
                                 <div class="table-filters">
                                     <select id="archive-filter-platform" class="filter-select">
                                         <option value="all">All Sources</option>
@@ -668,11 +652,22 @@
                                 </div>
                             </div>
 
+                            <!-- Quick Filter Pills Row -->
+                            <div class="archive-quick-filters">
+                                <span class="quick-filter-label">Quick Filters:</span>
+                                <div class="saved-views-buttons">
+                                    <button type="button" class="view-pill-btn active" id="archive-view-all">All scraped</button>
+                                    <button type="button" class="view-pill-btn" id="archive-view-high">High intent only</button>
+                                    <button type="button" class="view-pill-btn" id="archive-view-fb">Facebook leads</button>
+                                    <button type="button" class="view-pill-btn" id="archive-view-replied">Replied stage</button>
+                                </div>
+                            </div>
+
                             <!-- Empty Archive Indicator -->
                             <div id="archive-empty-state" class="empty-container" style="display: none;">
-                                <i data-lucide="folder-open" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                                <i data-lucide="folder-open"></i>
                                 <h3>No lead data found</h3>
-                                <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 320px; margin-top: 0.25rem;">Select another search query or perform a new scan.</p>
+                                <p>Select another search query or perform a new scan.</p>
                             </div>
 
                             <!-- Spreadsheet Data Grid -->
@@ -802,18 +797,18 @@
                 
                 <div class="modal-header-author">
                     <label for="modal-author-name">Poster full name</label>
-                    <input type="text" id="modal-author-name" class="form-control modal-dense-input" placeholder="Poster Name" style="padding-left: 0.75rem;">
+                    <input type="text" id="modal-author-name" class="form-control modal-dense-input input-padding-left-sm" placeholder="Poster Name">
                 </div>
             </div>
             
             <div class="modal-body">
                 <div class="detail-section">
                     <label for="modal-company-name">Target company name</label>
-                    <input type="text" id="modal-company-name" class="form-control modal-dense-input" placeholder="Company Name" style="padding-left: 0.75rem;">
+                    <input type="text" id="modal-company-name" class="form-control modal-dense-input input-padding-left-sm" placeholder="Company Name">
                 </div>
                 
                 <div class="detail-section-row">
-                    <div style="flex: 1;">
+                    <div class="flex-1">
                         <label for="modal-buying-intent">Buying intent level</label>
                         <select id="modal-buying-intent" class="filter-select select-dense">
                             <option value="High">High</option>
@@ -824,8 +819,8 @@
                             <option value="Unknown">Unknown</option>
                         </select>
                     </div>
-                    <div style="flex: 1;">
-                        <label for="modal-intent-type">Classified intent type</label>
+                    <div class="flex-1">
+                        <label for="modal-intent-type">Signal type</label>
                         <select id="modal-intent-type" class="filter-select select-dense">
                             <option value="Looking For Service">Looking For Service</option>
                             <option value="Recommendation Request">Recommendation Request</option>
@@ -837,9 +832,9 @@
                     </div>
                 </div>
 
-                <div class="detail-section-row" style="margin-top: 0.5rem;">
-                    <div style="flex: 1;">
-                        <label for="modal-crm-status">Outreach CRM stage</label>
+                <div class="detail-section-row margin-top-sm">
+                    <div class="flex-1">
+                        <label for="modal-crm-status">Pipeline stage</label>
                         <select id="modal-crm-status" class="filter-select select-dense">
                             <option value="New">New</option>
                             <option value="New Discovery">New Discovery</option>
@@ -849,58 +844,59 @@
                             <option value="Disqualified">Disqualified</option>
                         </select>
                     </div>
-                    <div style="flex: 1;">
-                        <label for="modal-contact-confidence-fake">Contact source data</label>
-                        <div class="contact-meta-row" style="display: flex; gap: 0.4rem; align-items: center; height: 33px; font-size: 0.78rem; color: var(--text-secondary); background: var(--bg-trans-2); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.4rem 0.65rem;">
-                            <span id="modal-contact-source" style="font-weight: 600; color: var(--text-primary);">guessed</span>
-                            <span style="color: var(--text-muted);">•</span>
-                            <span id="modal-contact-confidence" style="font-weight: 600; color: var(--text-primary);">low</span>
+                    <div class="flex-1">
+                        <label for="modal-contact-confidence-fake">Email source</label>
+                        <div class="contact-meta-row contact-meta-flex">
+                            <span id="modal-contact-source" class="contact-meta-value">guessed</span>
+                            <span class="contact-meta-dot">•</span>
+                            <span id="modal-contact-confidence" class="contact-meta-value">low</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <label for="modal-service-required">Extracted service required</label>
-                    <input type="text" id="modal-service-required" class="form-control modal-dense-input" placeholder="e.g. Design Consulting, React Web Dev" style="padding-left: 0.75rem;">
+                    <input type="text" id="modal-service-required" class="form-control modal-dense-input input-padding-left-sm" placeholder="e.g. Design Consulting, React Web Dev">
                 </div>
 
                 <div class="detail-section-row">
-                    <div style="flex: 1;">
+                    <div class="flex-1">
                         <label for="modal-industry">Classified industry</label>
-                        <input type="text" id="modal-industry" class="form-control modal-dense-input" placeholder="e.g. E-Commerce" style="padding-left: 0.75rem;">
+                        <input type="text" id="modal-industry" class="form-control modal-dense-input input-padding-left-sm" placeholder="e.g. E-Commerce">
                     </div>
-                    <div style="flex: 1;">
+                    <div class="flex-1">
                         <label for="modal-location">Lead location</label>
-                        <input type="text" id="modal-location" class="form-control modal-dense-input" placeholder="e.g. London, UK" style="padding-left: 0.75rem;">
+                        <input type="text" id="modal-location" class="form-control modal-dense-input input-padding-left-sm" placeholder="e.g. London, UK">
                     </div>
                 </div>
 
                 <div class="detail-section">
-                    <label for="modal-need-description">AI lead need summary</label>
-                    <textarea id="modal-need-description" class="form-control textarea-dense" placeholder="Lead requirements details..." style="padding-left: 0.75rem; padding-right: 0.75rem;"></textarea>
+                    <label for="modal-need-description">What they need</label>
+                    <textarea id="modal-need-description" class="form-control textarea-dense input-padding-x-sm" placeholder="Lead requirements details..."></textarea>
                 </div>
 
                 <div class="detail-section contact-info-section">
                     <div class="contact-label-wrapper">
-                        <label for="modal-contact-info">Verified business email</label>
+                        <label for="modal-contact-info">Contact email</label>
                         <button type="button" id="btn-enrich-contact" class="btn btn-secondary btn-enrich" title="Verify contact business email">
                             <i data-lucide="search"></i>
                             <span>Find email</span>
                         </button>
                     </div>
-                    <input type="text" id="modal-contact-info" class="form-control modal-dense-input" placeholder="Click Find email to search decision-maker domain." style="padding-left: 0.75rem;">
-                    <div id="enrich-loader" style="display: none; font-size: 0.72rem; color: var(--primary); margin-top: 0.3rem; align-items: center; gap: 0.25rem;">
+                    <input type="text" id="modal-contact-info" class="form-control modal-dense-input input-padding-left-sm" placeholder="Click Find email to search decision-maker domain.">
+                    <span id="modal-email-no-data" class="no-data" style="margin-top: 0.25rem; display: none;">No email found</span>
+                    <div id="enrich-loader" class="enrich-loader-panel">
                         <span class="spinner spinner-tiny"></span>
                         <span>Searching LinkedIn domains for decision-maker...</span>
                     </div>
                 </div>
 
                 <div class="detail-section score-section">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <div class="score-label" style="font-size:0.75rem; font-weight:600;">Match intent score:</div>
+                    <div class="score-header-flex">
+                        <div class="score-label label-small-bold">Lead score:</div>
                         <span id="modal-lead-category" class="badge badge-success">High Intent</span>
                     </div>
-                    <div class="score-indicator-box" style="margin-top: 0.35rem;">
+                    <div class="score-indicator-box margin-top-xs">
                         <span class="score-number" id="modal-lead-score">0</span>
                         <span class="score-pct">/ 100</span>
                     </div>
@@ -908,35 +904,35 @@
 
                 <div class="detail-section pitch-outreach-section">
                     <div class="pitch-label-wrapper">
-                        <label style="font-size:0.75rem; font-weight:600;">Outreach pitch draft</label>
+                        <label class="label-small-bold">Outreach pitch draft</label>
                         <button id="btn-generate-pitch" class="btn btn-primary btn-generate">
                             <i data-lucide="sparkles"></i> Generate AI pitch
                         </button>
                     </div>
                     
-                    <div id="email-loader" style="display: none; padding: 1rem; text-align: center; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed var(--border-color);">
-                        <div class="spinner spinner-medium" style="margin: 0 auto;"></div>
-                        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.5rem;">Drafting pitch via Llama 3.3...</div>
+                    <div id="email-loader" class="email-loader-panel">
+                        <div class="spinner spinner-medium spinner-centered"></div>
+                        <div class="email-loader-text">Drafting pitch via Llama 3.3...</div>
                     </div>
                     
-                    <textarea id="modal-email-body" class="form-control textarea-email" placeholder="Personalized pitch text..." style="padding-left: 0.75rem; padding-right: 0.75rem;"></textarea>
+                    <textarea id="modal-email-body" class="form-control textarea-email input-padding-x-sm" placeholder="Personalized pitch text..."></textarea>
                     <div id="email-body-placeholder" class="email-placeholder">Click 'Generate AI pitch' to write email automatically based on lead need & agency settings.</div>
                 </div>
 
                 <div class="drawer-action-buttons">
                     <div class="drawer-buttons-row">
-                        <a href="#" id="modal-btn-linkedin" class="btn btn-primary" target="_blank" style="flex: 1;">
+                        <a href="#" id="modal-btn-linkedin" class="btn btn-primary flex-1" target="_blank">
                             <i data-lucide="external-link"></i> <span>View source</span>
                         </a>
-                        <button id="modal-btn-send" class="btn btn-success-outline" style="flex: 1;" disabled>
+                        <button id="modal-btn-send" class="btn btn-success-outline flex-1" disabled>
                             <i data-lucide="send"></i> <span>Send pitch</span>
                         </button>
                     </div>
                     <div class="drawer-buttons-row">
-                        <button id="modal-btn-copy" class="btn btn-secondary" style="flex: 1;">
+                        <button id="modal-btn-copy" class="btn btn-secondary flex-1">
                             <i data-lucide="copy"></i> <span>Copy details</span>
                         </button>
-                        <button id="modal-btn-copy-email" class="btn btn-secondary" style="flex: 1;" disabled>
+                        <button id="modal-btn-copy-email" class="btn btn-secondary flex-1" disabled>
                             <i data-lucide="mail"></i> <span>Copy email</span>
                         </button>
                     </div>
