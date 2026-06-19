@@ -22,7 +22,7 @@ load_dotenv()
 from search import get_adapter, IntentQueryGenerator
 from qualification import classify_lead_intent, calculate_lead_score
 from enrichment import ContactEnrichmentManager
-from monitoring import load_saved_searches, save_saved_searches, add_saved_search, run_monitoring_for_all
+from monitoring import load_saved_searches, save_saved_searches, add_saved_search, run_monitoring_for_user
 from crm import (
     load_db,
     save_db,
@@ -37,8 +37,12 @@ from crm import (
     is_empty_value,
     validate_author_name,
     validate_company_name,
-    delete_lead_from_db,
-    delete_search_from_db
+    delete_search_from_db,
+    create_user,
+    authenticate_user,
+    create_session,
+    verify_session,
+    delete_session
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
@@ -50,8 +54,22 @@ APP_SECRET_KEY = os.getenv("APP_SECRET_KEY", "silvia_dev_key")
 @app.middleware("http")
 async def api_key_auth_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/"):
+        # Bypass authorization for public login and signup endpoints
+        if request.url.path in ["/api/auth/login", "/api/auth/register"]:
+            return await call_next(request)
+            
         api_key = request.headers.get("X-API-Key")
-        if not api_key or api_key != APP_SECRET_KEY:
+        if not api_key:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Invalid or missing API Key"}
+            )
+            
+        # Verify against MongoDB sessions or global secret key fallback
+        user_email = verify_session(api_key)
+        if api_key == APP_SECRET_KEY or user_email:
+            request.state.user = user_email or "admin"
+        else:
             return JSONResponse(
                 status_code=401,
                 content={"detail": "Invalid or missing API Key"}
@@ -62,6 +80,14 @@ async def api_key_auth_middleware(request: Request, call_next):
 # Create output folder if it doesn't exist
 os.makedirs("output", exist_ok=True)
 os.makedirs("static", exist_ok=True)
+
+class AuthRegisterRequest(BaseModel):
+    email: str
+    password: str
+
+class AuthLoginRequest(BaseModel):
+    email: str
+    password: str
 
 class SearchRequest(BaseModel):
     keyword: str
@@ -104,10 +130,11 @@ class BulkDeleteRequest(BaseModel):
     urls: List[str]
 
 @app.post("/api/search")
-async def run_search(payload: SearchRequest):
+async def run_search(payload: SearchRequest, request: Request):
     if not payload.keyword.strip():
         raise HTTPException(status_code=400, detail="Keyword is required")
 
+    user_email = request.state.user
     platform = (payload.platform or "linkedin").lower().strip()
     timeframe = payload.timeframe or "qdr:m3"
     
@@ -144,7 +171,7 @@ async def run_search(payload: SearchRequest):
     total_results_found = len(unique_raw_results)
     print(f"[Search] Merged results: {total_results_found} unique posts/threads found.")
     
-    db = load_db()
+    db = load_db(user_email)
     current_search_leads = []
     
     sem = asyncio.Semaphore(3)
@@ -274,13 +301,13 @@ async def run_search(payload: SearchRequest):
         current_search_leads.append(db[saved_key])
 
     # Save to database
-    save_db(db)
+    save_db(db, user_email)
 
     # Calculate qualification rate (Requirement 2 / 9)
     rate = int((qualified_count / processed_count) * 100) if processed_count > 0 else 0
 
     # Save search performance metrics
-    searches = load_searches()
+    searches = load_searches(user_email)
     existing_search = next((s for s in searches if s.get("keyword") == payload.keyword and s.get("platform", "linkedin") == platform and s.get("matchType", "partial") == (payload.match_type or "partial")), None)
     if existing_search:
         searches.remove(existing_search)
@@ -308,18 +335,7 @@ async def run_search(payload: SearchRequest):
             "leadUrls": [l.get("sourceUrl") for l in current_search_leads if l.get("sourceUrl")]
         }
         searches.insert(0, new_search)
-    save_searches(searches)
-
-    return {
-        "status": "success",
-        "leads": current_search_leads,
-        "count": len(current_search_leads),
-        "metrics": {
-            "resultsFound": total_results_found,
-            "qualified": qualified_count,
-            "rate": rate
-        }
-    }
+    save_searches(searches, user_email)
 
     return {
         "status": "success",
@@ -333,45 +349,51 @@ async def run_search(payload: SearchRequest):
     }
 
 @app.get("/api/leads")
-async def get_current_leads():
-    db = load_db()
+async def get_current_leads(request: Request):
+    user_email = request.state.user
+    db = load_db(user_email)
     leads_list = list(db.values())
     return {"leads": leads_list, "count": len(leads_list)}
 
 @app.get("/api/searches")
-async def get_searches():
-    searches = load_searches()
+async def get_searches(request: Request):
+    user_email = request.state.user
+    searches = load_searches(user_email)
     return {"searches": searches}
 
 @app.delete("/api/leads")
-async def delete_lead(sourceUrl: str):
-    success = delete_lead_from_db(sourceUrl)
+async def delete_lead(sourceUrl: str, request: Request):
+    user_email = request.state.user
+    success = delete_lead_from_db(sourceUrl, user_email)
     if success:
         return {"status": "success", "message": "Lead deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Lead not found")
 
 @app.delete("/api/searches/{search_id}")
-async def delete_search(search_id: str):
+async def delete_search(search_id: str, request: Request):
+    user_email = request.state.user
     if search_id == "all":
         raise HTTPException(status_code=400, detail="Cannot delete default database view")
-    success = delete_search_from_db(search_id)
+    success = delete_search_from_db(search_id, user_email)
     if success:
         return {"status": "success", "message": "Search query deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Search query not found")
 
 @app.post("/api/leads/bulk-delete")
-async def bulk_delete_leads(payload: BulkDeleteRequest):
+async def bulk_delete_leads(payload: BulkDeleteRequest, request: Request):
+    user_email = request.state.user
     success_count = 0
     for url in payload.urls:
-        if delete_lead_from_db(url):
+        if delete_lead_from_db(url, user_email):
             success_count += 1
     return {"status": "success", "message": f"Successfully deleted {success_count} leads"}
 
 @app.post("/api/leads/update")
-async def update_lead_crm(payload: UpdateCRMRequest):
-    db = load_db()
+async def update_lead_crm(payload: UpdateCRMRequest, request: Request):
+    user_email = request.state.user
+    db = load_db(user_email)
     if payload.sourceUrl not in db:
         raise HTTPException(status_code=404, detail="Lead not found")
         
@@ -402,13 +424,14 @@ async def update_lead_crm(payload: UpdateCRMRequest):
     # Recalculate score after user modifications
     db[payload.sourceUrl] = calculate_lead_score(db[payload.sourceUrl])
         
-    save_db(db)
+    save_db(db, user_email)
     
     return {"status": "success", "lead": db[payload.sourceUrl]}
 
 @app.post("/api/generate-pitch")
-async def generate_lead_pitch(payload: GeneratePitchRequest):
-    db = load_db()
+async def generate_lead_pitch(payload: GeneratePitchRequest, request: Request):
+    user_email = request.state.user
+    db = load_db(user_email)
     if payload.sourceUrl not in db:
         raise HTTPException(status_code=404, detail="Lead not found")
         
@@ -424,16 +447,17 @@ async def generate_lead_pitch(payload: GeneratePitchRequest):
         if db[payload.sourceUrl]["crmStatus"] == "New":
             db[payload.sourceUrl]["crmStatus"] = "Drafted"
             
-        save_db(db)
+        save_db(db, user_email)
         
         return {"status": "success", "pitch": pitch, "crmStatus": db[payload.sourceUrl]["crmStatus"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate pitch: {str(e)}")
 
 @app.post("/api/enrich-contact")
-async def enrich_lead_contact(payload: EnrichContactRequest):
+async def enrich_lead_contact(payload: EnrichContactRequest, request: Request):
     import asyncio
-    db = load_db()
+    user_email = request.state.user
+    db = load_db(user_email)
     if payload.sourceUrl not in db:
         raise HTTPException(status_code=404, detail="Lead not found")
         
@@ -474,7 +498,7 @@ async def enrich_lead_contact(payload: EnrichContactRequest):
     lead["contactConfidence"] = enrichment_info.get("contactConfidence")
     
     db[payload.sourceUrl] = lead
-    save_db(db)
+    save_db(db, user_email)
     
     return {
         "status": "success", 
@@ -489,25 +513,29 @@ async def enrich_lead_contact(payload: EnrichContactRequest):
 
 # Saved Searches & Monitoring Endpoints (Requirement 5)
 @app.get("/api/saved-searches")
-async def get_saved_searches_endpoint():
-    return {"searches": load_saved_searches()}
+async def get_saved_searches_endpoint(request: Request):
+    user_email = request.state.user
+    return {"searches": load_saved_searches(user_email)}
 
 @app.post("/api/saved-searches")
-async def add_saved_search_endpoint(payload: SavedSearchRequest):
-    ns = add_saved_search(payload.keyword, payload.platform, payload.timeframe, match_type=(payload.match_type or "partial"))
+async def add_saved_search_endpoint(payload: SavedSearchRequest, request: Request):
+    user_email = request.state.user
+    ns = add_saved_search(user_email, payload.keyword, payload.platform, payload.timeframe, match_type=(payload.match_type or "partial"))
     return {"status": "success", "search": ns}
 
 @app.post("/api/saved-searches/run")
-async def run_monitoring_endpoint():
-    db = load_db()
-    summary = run_monitoring_for_all(db, save_db)
+async def run_monitoring_endpoint(request: Request):
+    user_email = request.state.user
+    db = load_db(user_email)
+    summary = run_monitoring_for_user(user_email, db, lambda d: save_db(d, user_email))
     return {"status": "success", "summary": summary}
 
 # Lead Quality Analytics Endpoints (Requirement 2 & 9)
 @app.get("/api/performance")
-async def get_performance_stats():
-    db = load_db()
-    searches = load_searches()
+async def get_performance_stats(request: Request):
+    user_email = request.state.user
+    db = load_db(user_email)
+    searches = load_searches(user_email)
     
     total_results_found = 0
     high_intent = 0
@@ -547,21 +575,60 @@ async def get_performance_stats():
     }
 
 @app.get("/api/download")
-async def download_leads():
-    db = load_db()
+async def download_leads(request: Request):
+    user_email = request.state.user
+    db = load_db(user_email)
+    
+    import hashlib
+    email_hash = hashlib.md5(user_email.encode("utf-8")).hexdigest()
+    user_csv_path = os.path.join("output", f"leads_{email_hash}.csv")
+    
     if db:
         try:
-            export_to_csv(list(db.values()))
+            export_to_csv(list(db.values()), filepath=user_csv_path)
         except Exception as e:
             print(f"CSV export error: {e}")
-    csv_path = os.path.join("output", "leads.csv")
-    if not os.path.exists(csv_path):
+            
+    if not os.path.exists(user_csv_path):
         raise HTTPException(status_code=404, detail="No leads file generated yet.")
+        
     return FileResponse(
-        csv_path, 
+        user_csv_path, 
         media_type="text/csv", 
         filename="leads_intent_campaign.csv"
     )
+
+@app.post("/api/auth/register")
+async def register_endpoint(payload: AuthRegisterRequest):
+    if not payload.email or not payload.password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    if len(payload.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+    success = create_user(payload.email, payload.password)
+    if not success:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+    token = create_session(payload.email)
+    return {"status": "success", "session_token": token, "email": payload.email}
+
+@app.post("/api/auth/login")
+async def login_endpoint(payload: AuthLoginRequest):
+    user = authenticate_user(payload.email, payload.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = create_session(user["email"])
+    return {"status": "success", "session_token": token, "email": user["email"]}
+
+@app.post("/api/auth/logout")
+async def logout_endpoint(request: Request):
+    api_key = request.headers.get("X-API-Key")
+    if api_key:
+        delete_session(api_key)
+    return {"status": "success"}
+
+@app.get("/api/auth/verify")
+async def verify_auth_token(request: Request):
+    user = getattr(request.state, "user", None)
+    return {"status": "authenticated", "user": user}
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():

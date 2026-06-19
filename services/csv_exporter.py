@@ -1,6 +1,6 @@
 import csv
 
-def export_to_csv(leads):
+def export_to_csv(leads, filepath="output/leads.csv"):
     fieldnames = [
         "authorName",
         "companyName",
@@ -18,7 +18,7 @@ def export_to_csv(leads):
     ]
 
     with open(
-        "output/leads.csv",
+        filepath,
         "w",
         newline="",
         encoding="utf-8"

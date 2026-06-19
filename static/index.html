@@ -10,6 +10,79 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+    <!-- Login/Signup Screen Overlay -->
+    <div id="login-overlay" class="login-overlay" style="display: none;">
+        <!-- Login Card -->
+        <div class="login-overlay-box" id="login-card">
+            <div class="login-header">
+                <div class="login-logo-container">
+                    <i data-lucide="shield-check" class="login-logo-icon"></i>
+                </div>
+                <h2>Workspace Login</h2>
+                <p>Log in with your email and password to manage qualified leads and discover new intents.</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="login-input-group">
+                    <i data-lucide="mail" class="input-icon"></i>
+                    <input type="email" id="login-email" class="login-input" placeholder="Email Address..." required autocomplete="email">
+                </div>
+                <div class="login-input-group">
+                    <i data-lucide="lock" class="input-icon"></i>
+                    <input type="password" id="login-password" class="login-input" placeholder="Password..." required autocomplete="current-password">
+                    <button type="button" id="login-toggle-password" class="login-eye-btn" title="Toggle password visibility">
+                        <i data-lucide="eye" id="login-eye-icon"></i>
+                    </button>
+                </div>
+                <div id="login-error-msg" class="login-error-msg" style="display: none;">
+                    <i data-lucide="alert-circle"></i>
+                    <span>Invalid email or password</span>
+                </div>
+                <button type="submit" id="login-submit-btn" class="login-btn">
+                    <span>Sign In</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                Don't have an account? <a href="#" id="link-show-register" style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--primary-hover)'" onmouseout="this.style.color='var(--primary)'">Create Account</a>
+            </div>
+        </div>
+
+        <!-- Registration Card -->
+        <div class="login-overlay-box" id="register-card" style="display: none;">
+            <div class="login-header">
+                <div class="login-logo-container">
+                    <i data-lucide="user-plus" class="login-logo-icon"></i>
+                </div>
+                <h2>Create Account</h2>
+                <p>Register a workspace account to access research tools and export qualified intent leads.</p>
+            </div>
+            <form id="register-form" class="login-form">
+                <div class="login-input-group">
+                    <i data-lucide="mail" class="input-icon"></i>
+                    <input type="email" id="register-email" class="login-input" placeholder="Email Address..." required autocomplete="email">
+                </div>
+                <div class="login-input-group">
+                    <i data-lucide="lock" class="input-icon"></i>
+                    <input type="password" id="register-password" class="login-input" placeholder="Create Password (min 6 characters)..." required autocomplete="new-password">
+                    <button type="button" id="register-toggle-password" class="login-eye-btn" title="Toggle password visibility">
+                        <i data-lucide="eye" id="register-eye-icon"></i>
+                    </button>
+                </div>
+                <div id="register-error-msg" class="login-error-msg" style="display: none;">
+                    <i data-lucide="alert-circle"></i>
+                    <span id="register-error-text">Registration failed. Try a different email.</span>
+                </div>
+                <button type="submit" id="register-submit-btn" class="login-btn">
+                    <span>Create Account</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                Already have an account? <a href="#" id="link-show-login" style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--primary-hover)'" onmouseout="this.style.color='var(--primary)'">Log In</a>
+            </div>
+        </div>
+    </div>
+
     <div class="mobile-warning" id="mobile-warning">
       ⚠️ This app is designed for desktop. Some features may not display correctly on small screens.
       <button type="button" class="close-warning-btn" onclick="document.getElementById('mobile-warning').style.display='none'">✕</button>
@@ -78,9 +151,12 @@
                 </div>
             </div>
             
-            <div class="sidebar-footer">
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <button type="button" id="btn-export-csv-sidebar" class="btn btn-secondary sidebar-export-btn">
                     <i data-lucide="download"></i> <span>Download CSV</span>
+                </button>
+                <button type="button" id="btn-logout" class="btn btn-glow-outline sidebar-logout-btn" style="border-color: rgba(239, 68, 68, 0.2); color: var(--error); background: rgba(239, 68, 68, 0.02);" title="Logout Session">
+                    <i data-lucide="log-out"></i> <span>Logout</span>
                 </button>
             </div>
         </aside>

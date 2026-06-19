@@ -13,6 +13,11 @@ from .lead_database import (
     validate_author_name,
     validate_company_name,
     delete_lead_from_db,
-    delete_search_from_db
+    delete_search_from_db,
+    create_user,
+    authenticate_user,
+    create_session,
+    verify_session,
+    delete_session
 )
 
