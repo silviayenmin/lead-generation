@@ -3,12 +3,24 @@ import json
 from services.ai_agent import client
 
 def clean_json_response(response_text):
-    text = response_text.strip()
-    start = text.find('{')
-    end = text.rfind('}')
+    cleaned = response_text.strip()
+    
+    # Remove markdown formatting wraps
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+        
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+        
+    cleaned = cleaned.strip()
+    
+    start = cleaned.find('{')
+    end = cleaned.rfind('}')
     if start != -1 and end != -1:
-        return text[start:end+1]
-    return text
+        return cleaned[start:end+1]
+    return cleaned
 
 def classify_lead_intent(title: str, snippet: str) -> dict:
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,5 +43,10 @@ def classify_lead_intent(title: str, snippet: str) -> dict:
     )
 
     raw_content = response.choices[0].message.content
-    cleaned = clean_json_response(raw_content)
-    return json.loads(cleaned)
+    try:
+        cleaned = clean_json_response(raw_content)
+        return json.loads(cleaned)
+    except Exception as e:
+        print(f"[JSON Parsing Error] Failed parsing lead intent LLM response: {e}")
+        print(f"[JSON Parsing Error] Raw response was: {raw_content}")
+        return {}

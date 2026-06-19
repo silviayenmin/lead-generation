@@ -375,15 +375,24 @@
                                 
                                 <div class="platform-options-grid">
                                     <div class="platform-option-card active" data-platform="linkedin">
-                                        <i data-lucide="linkedin"></i>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
+                                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                                            <rect x="2" y="9" width="4" height="12"></rect>
+                                            <circle cx="4" cy="4" r="2"></circle>
+                                        </svg>
                                         <span class="platform-option-label">LinkedIn</span>
                                     </div>
                                     <div class="platform-option-card" data-platform="facebook">
-                                        <i data-lucide="facebook"></i>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
+                                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                                        </svg>
                                         <span class="platform-option-label">Facebook</span>
                                     </div>
                                     <div class="platform-option-card" data-platform="twitter">
-                                        <i data-lucide="twitter"></i>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
+                                            <path d="M4 4l11.733 16h4.267l-11.733 -16z"></path>
+                                            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"></path>
+                                        </svg>
                                         <span class="platform-option-label">Twitter / X</span>
                                     </div>
                                     <div class="platform-option-card" data-platform="reddit">
@@ -591,27 +600,67 @@
                         <p>Examine historical search record index, modify layouts, or execute bulk stage changes.</p>
                     </div>
 
-                    <!-- Layout: Search history on the left, lead list on the right -->
-                    <div class="archive-layout-grid">
-                        
-                        <!-- Left panel: Search History list -->
-                        <div class="card history-card">
-                            <div class="card-title" style="margin-bottom: 0.5rem;">
-                                <i data-lucide="history"></i>
-                                <span>Search query index</span>
+                    <!-- Archive mini-dashboard metrics -->
+                    <div class="archive-metrics-grid" id="archive-metrics-grid">
+                        <div class="archive-metric-card">
+                            <div class="metric-card-icon" style="background: rgba(3, 113, 114, 0.1); color: var(--primary);">
+                                <i data-lucide="database"></i>
                             </div>
-                            <div class="history-search-container">
+                            <div class="metric-card-info">
+                                <span class="metric-card-label">Total Leads</span>
+                                <span class="metric-card-value" id="archive-stat-total">0</span>
+                            </div>
+                        </div>
+                        <div class="archive-metric-card">
+                            <div class="metric-card-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
+                                <i data-lucide="trending-up"></i>
+                            </div>
+                            <div class="metric-card-info">
+                                <span class="metric-card-label">High Intent Leads</span>
+                                <span class="metric-card-value" id="archive-stat-high">0 (0%)</span>
+                            </div>
+                        </div>
+                        <div class="archive-metric-card">
+                            <div class="metric-card-icon" style="background: rgba(77, 163, 255, 0.1); color: var(--highlight);">
+                                <i data-lucide="search"></i>
+                            </div>
+                            <div class="metric-card-info">
+                                <span class="metric-card-label">Search Queries</span>
+                                <span class="metric-card-value" id="archive-stat-queries">0</span>
+                            </div>
+                        </div>
+                        <div class="archive-metric-card">
+                            <div class="metric-card-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                                <i data-lucide="check-circle-2"></i>
+                            </div>
+                            <div class="metric-card-info">
+                                <span class="metric-card-label">Contact Find Rate</span>
+                                <span class="metric-card-value" id="archive-stat-contacts">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layout: Stacked (Search history on top, leads table full width below) -->
+                    <div class="archive-stacked-layout">
+                        
+                        <!-- Top panel: Search History list -->
+                        <div class="card history-top-card">
+                            <div class="history-top-header">
+                                <div class="card-title" style="margin-bottom: 0;">
+                                    <i data-lucide="history"></i>
+                                    <span>Search query index</span>
+                                </div>
                                 <div class="history-search-box">
                                     <i data-lucide="search"></i>
                                     <input type="text" id="archive-history-search" class="history-search-input" placeholder="Filter queries...">
                                 </div>
                             </div>
-                            <div class="history-list" id="archive-history-list">
+                            <div class="history-horizontal-list" id="archive-history-list">
                                 <!-- Populated from searchesData via app.js -->
                             </div>
                         </div>
 
-                        <!-- Right panel: Leads table for selected search -->
+                        <!-- Bottom panel: Leads table for selected search -->
                         <div class="card table-card archive-table-card">
                             
                             <!-- Header Info & Selectors combined -->
@@ -658,6 +707,7 @@
                                 <div class="saved-views-buttons">
                                     <button type="button" class="view-pill-btn active" id="archive-view-all">All scraped</button>
                                     <button type="button" class="view-pill-btn" id="archive-view-high">High intent only</button>
+                                    <button type="button" class="view-pill-btn" id="archive-view-li">LinkedIn leads</button>
                                     <button type="button" class="view-pill-btn" id="archive-view-fb">Facebook leads</button>
                                     <button type="button" class="view-pill-btn" id="archive-view-replied">Replied stage</button>
                                 </div>
@@ -780,8 +830,11 @@
             <button type="button" class="bulk-action-btn" id="btn-bulk-stage-draft">
                 <i data-lucide="edit-3" style="width:12px; height:12px;"></i> Move to drafted
             </button>
-            <button type="button" class="bulk-action-btn danger" id="btn-bulk-stage-disqualify">
-                <i data-lucide="trash-2" style="width:12px; height:12px;"></i> Disqualify
+            <button type="button" class="bulk-action-btn" id="btn-bulk-stage-disqualify" style="border-color: var(--border-color); color: var(--text-secondary);">
+                <i data-lucide="x-circle" style="width:12px; height:12px;"></i> Disqualify
+            </button>
+            <button type="button" class="bulk-action-btn danger" id="btn-bulk-delete" style="background: var(--error-bg); border-color: var(--error-border); color: var(--error);">
+                <i data-lucide="trash-2" style="width:12px; height:12px;"></i> Delete Selected
             </button>
         </div>
     </div>

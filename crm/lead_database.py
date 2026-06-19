@@ -254,12 +254,24 @@ def load_searches():
         return []
 
 def clean_json_response(response_text):
-    text = response_text.strip()
-    start = text.find('{')
-    end = text.rfind('}')
+    cleaned = response_text.strip()
+    
+    # Remove markdown formatting wraps
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+        
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+        
+    cleaned = cleaned.strip()
+    
+    start = cleaned.find('{')
+    end = cleaned.rfind('}')
     if start != -1 and end != -1:
-        return text[start:end+1]
-    return text
+        return cleaned[start:end+1]
+    return cleaned
 
 def extract_fallback_author(title: str, url: str) -> str:
     if title:
@@ -287,13 +299,23 @@ def extract_fallback_author(title: str, url: str) -> str:
     if "linkedin.com/posts/" in url:
         try:
             part = url.split("linkedin.com/posts/")[1]
-            username = part.split("_")[0]
+            # Strip query params like ?utm_source=... and trailing slash
+            part = part.split("?")[0].strip("/")
+            # Remove -activity- or _activity- suffixes
+            if "-activity-" in part:
+                username = part.split("-activity-")[0]
+            elif "_activity-" in part:
+                username = part.split("_activity-")[0]
+            elif "_" in part:
+                username = part.split("_")[0]
+            else:
+                username = part
         except Exception:
             pass
     elif "linkedin.com/in/" in url:
         try:
             part = url.split("linkedin.com/in/")[1]
-            username = part.split("/")[0]
+            username = part.split("/")[0].split("?")[0]
         except Exception:
             pass
 
@@ -324,6 +346,54 @@ def extract_fallback_author(title: str, url: str) -> str:
             return " ".join(cleaned_words)
             
     return "Unknown"
+
+def validate_author_name(author: str) -> str:
+    if not author or is_empty_value(author):
+        return "Unknown"
+    
+    author_clean = str(author).strip()
+    
+    # 1. Reject names with question marks
+    if "?" in author_clean:
+        return "Unknown"
+        
+    # 2. Reject names with more than 3 words
+    if len(author_clean.split()) > 3:
+        return "Unknown"
+        
+    # 3. Reject names containing specific phrases (case-insensitive)
+    lower_author = author_clean.lower()
+    reject_phrases = [
+        "looking for", "need", "wanted", "hiring", 
+        "seeking", "requirement", "opportunity"
+    ]
+    for phrase in reject_phrases:
+        if phrase in lower_author:
+            return "Unknown"
+            
+    return author_clean
+
+def validate_company_name(company: str) -> str:
+    if not company or is_empty_value(company):
+        return "Not Specified"
+    
+    company_clean = str(company).strip()
+    
+    # 1. Reject names with more than 4 words
+    if len(company_clean.split()) > 4:
+        return "Not Specified"
+        
+    # 2. Reject names containing specific phrases (case-insensitive)
+    lower_company = company_clean.lower()
+    reject_phrases = [
+        "looking for", "need", "wanted", "hiring", 
+        "seeking", "requirement", "opportunity"
+    ]
+    for phrase in reject_phrases:
+        if phrase in lower_company:
+            return "Not Specified"
+            
+    return company_clean
 
 def fetch_title_from_url(url: str) -> str:
     try:
@@ -373,3 +443,24 @@ def enrich_profile_details(author: str) -> dict:
     except Exception as e:
         print(f"Error in enrich_profile_details for {author}: {e}")
     return {}
+
+def delete_lead_from_db(source_url: str) -> bool:
+    with _db_lock:
+        try:
+            db = get_mongo_db()
+            leads_col = db["leads"]
+            result = leads_col.delete_one({"sourceUrl": source_url})
+            return result.deleted_count > 0
+        except Exception as e:
+            print(f"Error deleting lead from MongoDB: {e}")
+            return False
+
+def delete_search_from_db(search_id: str) -> bool:
+    try:
+        db = get_mongo_db()
+        searches_col = db["searches"]
+        result = searches_col.delete_one({"id": search_id})
+        return result.deleted_count > 0
+    except Exception as e:
+        print(f"Error deleting search from MongoDB: {e}")
+        return False

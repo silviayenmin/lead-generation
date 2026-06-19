@@ -159,6 +159,38 @@ const monitoringEmptyState = document.getElementById("monitoring-empty-state");
 const performanceTbody = document.getElementById("performance-tbody");
 const performanceEmptyState = document.getElementById("performance-empty-state");
 
+// Premium Platform Custom SVG Icons (to bypass missing Lucide brand icons)
+function getPlatformIconSvg(platform, size = 14, style = "") {
+    const cleanPlatform = String(platform || "").toLowerCase().trim();
+    if (cleanPlatform === "linkedin") {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+            <rect x="2" y="9" width="4" height="12"></rect>
+            <circle cx="4" cy="4" r="2"></circle>
+        </svg>`;
+    } else if (cleanPlatform === "facebook") {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+        </svg>`;
+    } else if (cleanPlatform === "twitter" || cleanPlatform === "twitter-x" || cleanPlatform === "x") {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
+            <path d="M4 4l11.733 16h4.267l-11.733 -16z"></path>
+            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"></path>
+        </svg>`;
+    } else if (cleanPlatform === "reddit") {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>`;
+    } else {
+        // Default globe icon for general web
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>`;
+    }
+}
+
 // Page Initialization
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize Lucide Icons
@@ -803,7 +835,7 @@ function renderLeads() {
         } else if (emailVal && emailVal.toLowerCase().includes('linkedin') && emailVal !== 'hello@company.com') {
             contactHtml = `
                 <a href="${lead.sourceUrl}" target="_blank" style="font-size: 0.78rem; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
-                    <i data-lucide="linkedin" style="width: 12px; height: 12px;"></i>
+                    ${getPlatformIconSvg("linkedin", 12)}
                     <span>LinkedIn Profile</span>
                 </a>
             `;
@@ -811,6 +843,7 @@ function renderLeads() {
             contactHtml = `<span class="no-data">No email found</span>`;
         }
 
+        const recPlatformSvg = getPlatformIconSvg(platform, 13, `color: ${platformColor}; flex-shrink: 0;`);
         row.innerHTML = `
             <td>
                 <div class="contact-cell">
@@ -818,7 +851,7 @@ function renderLeads() {
                     <div class="contact-name-info">
                         <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.15rem;">
                             <span class="contact-full-name">${displayAuthor}</span>
-                            <i data-lucide="${platformIconName}" style="width: 13px; height: 13px; color: ${platformColor}; flex-shrink: 0;" title="${displayPlatform}"></i>
+                            ${recPlatformSvg}
                         </div>
                         <span class="contact-role">${displayRole}</span>
                     </div>
@@ -1116,13 +1149,13 @@ function openDetailModal(lead) {
     
     // Update platform button visual dynamically based on source url
     if (lead.sourceUrl.includes("facebook.com")) {
-        modalBtnLinkedin.innerHTML = `<i data-lucide="facebook"></i> View Facebook`;
+        modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("facebook", 14)} View Facebook`;
     } else if (lead.sourceUrl.includes("twitter.com") || lead.sourceUrl.includes("x.com")) {
-        modalBtnLinkedin.innerHTML = `<i data-lucide="twitter"></i> View Twitter/X`;
+        modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("twitter", 14)} View Twitter/X`;
     } else if (lead.sourceUrl.includes("reddit.com")) {
-        modalBtnLinkedin.innerHTML = `<i data-lucide="message-square"></i> View Reddit`;
+        modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("reddit", 14)} View Reddit`;
     } else {
-        modalBtnLinkedin.innerHTML = `<i data-lucide="linkedin"></i> View LinkedIn`;
+        modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("linkedin", 14)} View LinkedIn`;
     }
     
     modalCrmStatus.value = lead.crmStatus || "New";
@@ -1502,13 +1535,14 @@ function renderArchiveHistory() {
             renderArchiveLeads();
         });
         allItem.innerHTML = `
+            <div class="history-item-accent"></div>
             <div class="history-item-header">
                 <span class="history-item-keyword">All leads database</span>
                 <span class="history-item-count">${leadsData.length}</span>
             </div>
             <div class="history-item-meta">
-                <span>Entire database</span>
-                <span>-</span>
+                <span><i data-lucide="globe"></i>Entire database</span>
+                <span><i data-lucide="layers"></i>All Web</span>
             </div>
         `;
         archiveHistoryList.appendChild(allItem);
@@ -1530,7 +1564,7 @@ function renderArchiveHistory() {
             renderArchiveLeads();
         });
         
-        const leadCount = search.leadUrls ? search.leadUrls.length : 0;
+        const leadCount = search.leadUrls ? search.leadUrls.filter(url => leadsData.some(l => l.sourceUrl === url)).length : 0;
         let formattedDate = "Recent";
         if (search.timestamp) {
             try {
@@ -1556,20 +1590,249 @@ function renderArchiveHistory() {
         }
         
         const platform = search.platform || "linkedin";
+        let platformIconName = "linkedin";
+        let platformColor = "var(--primary)";
+        if (platform === "facebook") {
+            platformIconName = "facebook";
+            platformColor = "var(--secondary)";
+        } else if (platform === "twitter") {
+            platformIconName = "twitter";
+            platformColor = "#9CA3AF";
+        } else if (platform === "reddit") {
+            platformIconName = "message-square";
+            platformColor = "var(--highlight)";
+        }
+        
         const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
+        if (platform === "all") {
+            platformIconName = "globe";
+        }
         
         item.innerHTML = `
+            <div class="history-item-accent"></div>
             <div class="history-item-header">
                 <span class="history-item-keyword" title="${displayKeyword}">${truncatedKeyword}</span>
-                <span class="history-item-count">${leadCount}</span>
+                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                    <span class="history-item-count">${leadCount}</span>
+                    <button class="btn-delete-search" title="Delete Search Query">
+                        <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                    </button>
+                </div>
             </div>
             <div class="history-item-meta">
-                <span>${formattedDate}</span>
-                <span>${capPlatform} • ${displayTimeframe}</span>
+                <span><i data-lucide="clock"></i>${formattedDate}</span>
+                <span style="display: inline-flex; align-items: center; gap: 4px;">${getPlatformIconSvg(platform, 11, `color: ${platformColor}; flex-shrink: 0;`)}${capPlatform}</span>
             </div>
         `;
+
+        const deleteBtn = item.querySelector(".btn-delete-search");
+        if (deleteBtn) {
+            deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                confirmDeleteSearch(search.id);
+            });
+        }
+
         archiveHistoryList.appendChild(item);
     });
+    
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
+
+// Premium custom themed confirmation dialog replacement
+function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
+    return new Promise((resolve) => {
+        // Create container overlay
+        const overlay = document.createElement("div");
+        overlay.className = "custom-confirm-overlay";
+        
+        // Define theme icon
+        let iconName = "alert-triangle";
+        if (type === "danger") {
+            iconName = "trash-2";
+        } else if (type === "primary") {
+            iconName = "check-circle";
+        }
+        
+        // Modal box HTML
+        overlay.innerHTML = `
+            <div class="custom-confirm-box" onclick="event.stopPropagation()">
+                <div class="custom-confirm-title">
+                    <i data-lucide="${iconName}"></i>
+                    <span>${title}</span>
+                </div>
+                <div class="custom-confirm-message">${message}</div>
+                <div class="custom-confirm-buttons">
+                    <button type="button" class="custom-confirm-btn cancel" id="custom-confirm-btn-cancel">Cancel</button>
+                    <button type="button" class="custom-confirm-btn ${type}" id="custom-confirm-btn-ok">OK</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Parse the Lucide icon inside the modal
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+        
+        // Trigger reflow then activate animation
+        overlay.offsetHeight; // force reflow
+        overlay.classList.add("active");
+        
+        const btnCancel = overlay.querySelector("#custom-confirm-btn-cancel");
+        const btnOk = overlay.querySelector("#custom-confirm-btn-ok");
+        
+        const closeConfirm = (result) => {
+            overlay.classList.remove("active");
+            overlay.addEventListener("transitionend", () => {
+                overlay.remove();
+            }, { once: true });
+            resolve(result);
+        };
+        
+        btnCancel.addEventListener("click", () => closeConfirm(false));
+        btnOk.addEventListener("click", () => closeConfirm(true));
+        
+        // Close on overlay background click
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) {
+                closeConfirm(false);
+            }
+        });
+    });
+}
+
+// Premium custom themed alert modal
+function showCustomAlert(message, title = "Notification", type = "primary") {
+    return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "custom-confirm-overlay";
+        
+        let iconName = "info";
+        if (type === "primary") iconName = "info";
+        else if (type === "danger") iconName = "alert-circle";
+        
+        overlay.innerHTML = `
+            <div class="custom-confirm-box" onclick="event.stopPropagation()">
+                <div class="custom-confirm-title">
+                    <i data-lucide="${iconName}"></i>
+                    <span>${title}</span>
+                </div>
+                <div class="custom-confirm-message">${message}</div>
+                <div class="custom-confirm-buttons">
+                    <button type="button" class="custom-confirm-btn ${type}" id="custom-confirm-btn-ok">OK</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+        
+        overlay.offsetHeight;
+        overlay.classList.add("active");
+        
+        const btnOk = overlay.querySelector("#custom-confirm-btn-ok");
+        
+        const closeAlert = () => {
+            overlay.classList.remove("active");
+            overlay.addEventListener("transitionend", () => {
+                overlay.remove();
+            }, { once: true });
+            resolve();
+        };
+        
+        btnOk.addEventListener("click", closeAlert);
+        
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) {
+                closeAlert();
+            }
+        });
+    });
+}
+
+// Confirm and delete a search query history item
+async function confirmDeleteSearch(searchId) {
+    const confirmed = await showCustomConfirm(
+        "Are you sure you want to delete this search query history? This won't delete the leads associated with it, but they will no longer be grouped under this query.",
+        "Delete Search Query",
+        "danger"
+    );
+    if (!confirmed) {
+        return;
+    }
+    try {
+        const response = await fetch(`/api/searches/${searchId}`, {
+            method: "DELETE"
+        });
+        const result = await response.json();
+        if (response.ok && result.status === "success") {
+            // Filter searchesData locally to remove the deleted search
+            searchesData = searchesData.filter(s => s.id !== searchId);
+            
+            // Reset activeSearchId to "all" if the deleted search was the active one
+            if (activeSearchId === searchId) {
+                activeSearchId = "all";
+                archiveCurrentPage = 1;
+            }
+            
+            // Refresh the UI
+            renderArchiveHistory();
+            renderArchiveLeads();
+        } else {
+            await showCustomAlert("Failed to delete search: " + (result.detail || result.message || "Unknown error"), "Deletion Failed", "danger");
+        }
+    } catch (error) {
+        console.error("Failed to delete search query:", error);
+        await showCustomAlert("An error occurred while deleting search query.", "Error", "danger");
+    }
+}
+
+// Confirm and delete a single lead
+async function confirmDeleteLead(sourceUrl) {
+    const confirmed = await showCustomConfirm(
+        "Are you sure you want to delete this lead? This action cannot be undone.",
+        "Delete Lead",
+        "danger"
+    );
+    if (!confirmed) {
+        return;
+    }
+    try {
+        const response = await fetch(`/api/leads?sourceUrl=${encodeURIComponent(sourceUrl)}`, {
+            method: "DELETE"
+        });
+        const result = await response.json();
+        if (response.ok && result.status === "success") {
+            // Remove from local data
+            leadsData = leadsData.filter(l => l.sourceUrl !== sourceUrl);
+            
+            // Also remove from selection if it was selected
+            archiveSelectedUrls = archiveSelectedUrls.filter(u => u !== sourceUrl);
+            updateBulkActionsBar();
+            
+            // Update global dashboard components
+            updateGlobalStats(leadsData);
+            if (typeof loadPerformanceAnalytics === "function") loadPerformanceAnalytics();
+            if (typeof renderRecommendedLeads === "function") renderRecommendedLeads();
+            if (typeof renderRecentActivity === "function") renderRecentActivity();
+            
+            // Re-render
+            renderArchiveLeads();
+            renderArchiveHistory();
+        } else {
+            await showCustomAlert("Failed to delete lead: " + (result.detail || result.message || "Unknown error"), "Deletion Failed", "danger");
+        }
+    } catch (error) {
+        console.error("Failed to delete lead:", error);
+        await showCustomAlert("An error occurred while deleting the lead.", "Error", "danger");
+    }
 }
 
 // Render leads table specifically for Search Archive
@@ -1603,6 +1866,8 @@ function renderArchiveLeads() {
             if ((lead.leadCategory || "") !== "High Intent") return false;
         } else if (archiveViewFilter === "facebook") {
             if (getLeadPlatform(lead) !== "facebook") return false;
+        } else if (archiveViewFilter === "linkedin") {
+            if (getLeadPlatform(lead) !== "linkedin") return false;
         } else if (archiveViewFilter === "replied") {
             if ((lead.crmStatus || "").toLowerCase() !== "replied") return false;
         }
@@ -1618,6 +1883,30 @@ function renderArchiveLeads() {
         
         return statusMatch && crmMatch && platformMatch;
     });
+    
+    // Update dynamic dashboard metrics
+    const statTotalEl = document.getElementById("archive-stat-total");
+    const statHighEl = document.getElementById("archive-stat-high");
+    const statQueriesEl = document.getElementById("archive-stat-queries");
+    const statContactsEl = document.getElementById("archive-stat-contacts");
+
+    if (statTotalEl) statTotalEl.innerText = filtered.length;
+    if (statHighEl) {
+        const highIntentLeads = filtered.filter(l => (l.leadCategory || l.buyingIntent || '').toLowerCase().includes('high')).length;
+        const highPct = filtered.length > 0 ? Math.round((highIntentLeads / filtered.length) * 100) : 0;
+        statHighEl.innerText = `${highIntentLeads} (${highPct}%)`;
+    }
+    if (statQueriesEl) statQueriesEl.innerText = searchesData.length;
+    if (statContactsEl) {
+        const contactsFound = filtered.filter(l => {
+            const info = l.contactInfo || '';
+            const isEmailValid = info && info.includes('@') && info !== 'hello@company.com';
+            const isLinkedIn = info && info.toLowerCase().includes('linkedin') && info !== 'hello@company.com';
+            return isEmailValid || isLinkedIn;
+        }).length;
+        const contactPct = filtered.length > 0 ? Math.round((contactsFound / filtered.length) * 100) : 0;
+        statContactsEl.innerText = `${contactPct}%`;
+    }
     
     // Update the badge count
     const tableBadge = document.getElementById("archive-table-badge");
@@ -1732,7 +2021,7 @@ function renderArchiveLeads() {
         } else if (emailVal && emailVal.toLowerCase().includes('linkedin') && emailVal !== 'hello@company.com') {
             contactHtml = `
                 <a href="${lead.sourceUrl}" target="_blank" class="badge badge-info" style="gap: 4px; padding: 0.2rem 0.5rem; font-size: 0.72rem; font-weight: 500; text-decoration: none; display: inline-flex;">
-                    <i data-lucide="linkedin" style="width: 12px; height: 12px; flex-shrink: 0;"></i>
+                    ${getPlatformIconSvg("linkedin", 12, "flex-shrink: 0;")}
                     <span>Profile Link</span>
                 </a>
             `;
@@ -1740,6 +2029,7 @@ function renderArchiveLeads() {
             contactHtml = `<span class="no-data" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic;">No contact found</span>`;
         }
 
+        const leadPlatSvg = getPlatformIconSvg(platform, 13, `color: ${platformColor}; flex-shrink: 0;`);
         row.innerHTML = `
             <td style="padding: 0.5rem 0.75rem;">
                 <input type="checkbox" class="custom-checkbox archive-lead-checkbox" value="${lead.sourceUrl}" ${isChecked ? "checked" : ""}>
@@ -1750,7 +2040,7 @@ function renderArchiveLeads() {
                     <div class="contact-name-info">
                         <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.15rem;">
                             <span class="contact-full-name">${displayAuthor}</span>
-                            <i data-lucide="${platformIconName}" style="width: 13px; height: 13px; color: ${platformColor}; flex-shrink: 0;" title="${displayPlatform}"></i>
+                            ${leadPlatSvg}
                         </div>
                         <span class="contact-role">${displayRole}</span>
                     </div>
@@ -1784,12 +2074,19 @@ function renderArchiveLeads() {
                     <button class="action-btn btn-row-copy" title="Copy Lead details">
                         <i data-lucide="copy" style="width: 13px; height: 13px;"></i>
                     </button>
+                    <button class="action-btn btn-row-delete" title="Delete Lead">
+                        <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
+                    </button>
                 </div>
             </td>
         `;
         
         row.querySelector(".btn-row-copy").addEventListener("click", () => {
             copyToClipboard(getFormattedLeadSummary(lead));
+        });
+
+        row.querySelector(".btn-row-delete").addEventListener("click", () => {
+            confirmDeleteLead(lead.sourceUrl);
         });
 
         // Checkbox listener
@@ -1860,11 +2157,11 @@ function initWizard() {
     }
 
     if (btnContinue) {
-        btnContinue.addEventListener("click", () => {
+        btnContinue.addEventListener("click", async () => {
             if (wizardCurrentStep === 1) {
                 const keyword = document.getElementById("keyword").value.trim();
                 if (!keyword) {
-                    alert("Please specify an audience search keyword query!");
+                    await showCustomAlert("Please specify an audience search keyword query!", "Keyword Required", "danger");
                     return;
                 }
             }
@@ -1916,10 +2213,11 @@ function initWizard() {
 function initArchiveViews() {
     const viewAllBtn = document.getElementById("archive-view-all");
     const viewHighBtn = document.getElementById("archive-view-high");
+    const viewLiBtn = document.getElementById("archive-view-li");
     const viewFbBtn = document.getElementById("archive-view-fb");
     const viewRepliedBtn = document.getElementById("archive-view-replied");
     
-    const viewsPills = [viewAllBtn, viewHighBtn, viewFbBtn, viewRepliedBtn];
+    const viewsPills = [viewAllBtn, viewHighBtn, viewLiBtn, viewFbBtn, viewRepliedBtn];
     
     function setArchiveViewFilter(mode, activeBtn) {
         archiveViewFilter = mode;
@@ -1933,6 +2231,7 @@ function initArchiveViews() {
     
     if (viewAllBtn) viewAllBtn.addEventListener("click", () => setArchiveViewFilter("all", viewAllBtn));
     if (viewHighBtn) viewHighBtn.addEventListener("click", () => setArchiveViewFilter("high", viewHighBtn));
+    if (viewLiBtn) viewLiBtn.addEventListener("click", () => setArchiveViewFilter("linkedin", viewLiBtn));
     if (viewFbBtn) viewFbBtn.addEventListener("click", () => setArchiveViewFilter("facebook", viewFbBtn));
     if (viewRepliedBtn) viewRepliedBtn.addEventListener("click", () => setArchiveViewFilter("replied", viewRepliedBtn));
 
@@ -1986,6 +2285,57 @@ function initArchiveViews() {
     if (btnBulkDisqualify) {
         btnBulkDisqualify.addEventListener("click", () => handleBulkAction("Disqualified"));
     }
+
+    const btnBulkDelete = document.getElementById("btn-bulk-delete");
+    if (btnBulkDelete) {
+        btnBulkDelete.addEventListener("click", async () => {
+            if (archiveSelectedUrls.length === 0) return;
+            const confirmed = await showCustomConfirm(
+                `Are you sure you want to delete ${archiveSelectedUrls.length} selected lead(s)? This action cannot be undone.`,
+                "Delete Selected Leads",
+                "danger"
+            );
+            if (!confirmed) {
+                return;
+            }
+            try {
+                const response = await fetch("/api/leads/bulk-delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ urls: archiveSelectedUrls })
+                });
+                const result = await response.json();
+                if (response.ok && result.status === "success") {
+                    await showCustomAlert(`Successfully deleted ${archiveSelectedUrls.length} leads.`, "Success", "primary");
+                    
+                    // Remove deleted URLs from leadsData locally
+                    leadsData = leadsData.filter(l => !archiveSelectedUrls.includes(l.sourceUrl));
+                    
+                    // Clear selection arrays
+                    archiveSelectedUrls = [];
+                    const selectAllCheckbox = document.getElementById("archive-select-all-checkbox");
+                    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                    
+                    // Hide bulk actions bar
+                    updateBulkActionsBar();
+                    
+                    // Update global UI state
+                    updateGlobalStats(leadsData);
+                    if (typeof loadPerformanceAnalytics === "function") loadPerformanceAnalytics();
+                    if (typeof renderRecommendedLeads === "function") renderRecommendedLeads();
+                    if (typeof renderRecentActivity === "function") renderRecentActivity();
+                    
+                    // Re-render
+                    renderArchiveLeads();
+                    renderArchiveHistory();
+                } else {
+                    await showCustomAlert("Bulk delete failed: " + (result.detail || result.message || "Unknown error"), "Error", "danger");
+                }
+            } catch (err) {
+                await showCustomAlert("Bulk delete action failed: " + err.message, "Error", "danger");
+            }
+        });
+    }
 }
 
 async function handleBulkAction(targetStage) {
@@ -2006,14 +2356,14 @@ async function handleBulkAction(targetStage) {
     
     try {
         await Promise.all(promises);
-        alert(`Bulk updated ${archiveSelectedUrls.length} leads to stage "${targetStage}"!`);
+        await showCustomAlert(`Bulk updated ${archiveSelectedUrls.length} leads to stage "${targetStage}"!`, "Bulk Action Success", "primary");
         archiveSelectedUrls = [];
         const selectAllCheckbox = document.getElementById("archive-select-all-checkbox");
         if (selectAllCheckbox) selectAllCheckbox.checked = false;
         updateBulkActionsBar();
         await loadExistingLeads();
     } catch (err) {
-        alert("Bulk action failed: " + err.message);
+        await showCustomAlert("Bulk action failed: " + err.message, "Bulk Action Failed", "danger");
     }
 }
 
@@ -2269,8 +2619,8 @@ async function loadSavedSearches() {
                 </td>
             `;
             
-            row.querySelector(".btn-delete-saved").addEventListener("click", () => {
-                alert("Saved searches can be modified in config or run automatically!");
+            row.querySelector(".btn-delete-saved").addEventListener("click", async () => {
+                await showCustomAlert("Saved searches can be modified in config or run automatically!", "Information", "primary");
             });
             
             savedSearchesTbody.appendChild(row);
@@ -2288,7 +2638,7 @@ async function saveCurrentSearch() {
     const timeframe = timeframeSelect.value;
     
     if (!keyword) {
-        alert("Please enter a keyword first!");
+        await showCustomAlert("Please enter a keyword first!", "Keyword Required", "danger");
         return;
     }
     
@@ -2307,7 +2657,7 @@ async function saveCurrentSearch() {
         });
         
         if (response.ok) {
-            alert("Search configuration successfully saved to active monitoring database!");
+            await showCustomAlert("Search configuration successfully saved to active monitoring database!", "Search Saved", "primary");
             keywordInput.value = "";
             loadSavedSearches();
             // Reset stepper wizard
@@ -2320,7 +2670,7 @@ async function saveCurrentSearch() {
             throw new Error("API rejected saved search request");
         }
     } catch (err) {
-        alert("Failed to save search: " + err.message);
+        await showCustomAlert("Failed to save search: " + err.message, "Error", "danger");
     } finally {
         btnSaveSearch.disabled = false;
         btnSaveSearch.innerHTML = origHtml;
@@ -2348,7 +2698,7 @@ async function runActiveMonitoring() {
             const newFound = summary.newLeadsFound || 0;
             const runCount = summary.searchesRun || 0;
             
-            alert(`Monitoring run completed successfully!\nRan ${runCount} saved searches.\nFound ${newFound} new qualified leads (marked as 'New Discovery').`);
+            await showCustomAlert(`Monitoring run completed successfully!\nRan ${runCount} saved searches.\nFound ${newFound} new qualified leads (marked as 'New Discovery').`, "Monitoring Complete", "primary");
             
             // Reload all leads database and saved searches
             await loadExistingLeads();
@@ -2357,7 +2707,7 @@ async function runActiveMonitoring() {
             throw new Error("Monitoring API execution rejected");
         }
     } catch (err) {
-        alert("Monitoring run failed: " + err.message);
+        await showCustomAlert("Monitoring run failed: " + err.message, "Error", "danger");
     } finally {
         btnRunMonitoring.disabled = false;
         btnRunMonitoring.innerHTML = origHtml;
