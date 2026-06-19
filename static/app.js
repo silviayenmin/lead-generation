@@ -381,6 +381,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialize Outreach Config Live Preview tabs
     initConfigPreviewTabs();
+
+    // Bind Grid view queries modal trigger
+    const btnOpenQueriesModal = document.getElementById("btn-open-queries-modal");
+    if (btnOpenQueriesModal) {
+        btnOpenQueriesModal.addEventListener("click", openQueriesModal);
+    }
 });
 
 // View Tabs Switcher
@@ -511,7 +517,7 @@ async function handleSearchSubmit(e) {
     } catch (error) {
         clearInterval(interval);
         setSearchLoading(false);
-        alert(`Lead scraper error: ${error.message}`);
+        await showCustomAlert(`Lead scraper error: ${error.message}`, "Scan Error", "danger");
         console.error(error);
     }
 }
@@ -1302,7 +1308,7 @@ async function generateAiPitch() {
     } catch (e) {
         emailLoader.style.display = "none";
         emailBodyPlaceholder.style.display = "block";
-        alert("Pitch generator error: " + e.message);
+        await showCustomAlert("Pitch generator error: " + e.message, "Generation Error", "danger");
     } finally {
         btnGeneratePitch.disabled = false;
     }
@@ -1363,16 +1369,16 @@ function copyLeadSummary() {
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        alert("Copied to clipboard!");
+        showCustomAlert("Copied to clipboard!", "Copied", "primary");
     }).catch(err => {
         console.error("Clipboard write error:", err);
     });
 }
 
 // Campaign outreach CSV exporter
-function exportCampaignCSV() {
+async function exportCampaignCSV() {
     if (leadsData.length === 0) {
-        alert("No lead details to export!");
+        await showCustomAlert("No lead details to export!", "Export Error", "danger");
         return;
     }
     
@@ -1474,7 +1480,7 @@ async function enrichContactEmail() {
         if (viewArchive && viewArchive.classList.contains("active")) renderArchiveLeads();
         updateGlobalStats(leadsData);
     } catch (err) {
-        alert("Enrichment lookup failed: " + err.message);
+        await showCustomAlert("Enrichment lookup failed: " + err.message, "Lookup Failed", "danger");
     } finally {
         btnEnrich.disabled = false;
         enrichLoader.style.display = "none";
@@ -1550,12 +1556,23 @@ function renderArchiveHistory() {
         archiveHistoryList.appendChild(allItem);
     }
     
-    // Add history list items
-    searchesData.forEach(search => {
+    // Filter history list items
+    const filteredSearches = searchesData.filter(search => {
         const displayKeyword = search.keyword || "Scan Query";
-        if (filterVal && !displayKeyword.toLowerCase().includes(filterVal)) {
-            return;
-        }
+        return !filterVal || displayKeyword.toLowerCase().includes(filterVal);
+    });
+    
+    let visibleSearches = filteredSearches;
+    let showMoreCard = false;
+    
+    if (!filterVal && filteredSearches.length > 10) {
+        visibleSearches = filteredSearches.slice(0, 10);
+        showMoreCard = true;
+    }
+    
+    // Add history list items
+    visibleSearches.forEach(search => {
+        const displayKeyword = search.keyword || "Scan Query";
         
         const item = document.createElement("div");
         item.className = `history-item ${activeSearchId === search.id ? "active" : ""}`;
@@ -1583,7 +1600,7 @@ function renderArchiveHistory() {
         }
         
         const isExact = search.matchType === "exact";
-        const exactBadgeHtml = isExact ? ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px; background: rgba(3,113,114,0.15); color: var(--secondary);">Exact</span>` : "";
+        const exactBadgeHtml = isExact ? `<span class="badge-exact">Exact</span>` : "";
         
         let displayTimeframe = "All Time";
         if (search.timeframe) {
@@ -1595,23 +1612,7 @@ function renderArchiveHistory() {
         }
         
         const platform = search.platform || "linkedin";
-        let platformIconName = "linkedin";
-        let platformColor = "var(--primary)";
-        if (platform === "facebook") {
-            platformIconName = "facebook";
-            platformColor = "var(--secondary)";
-        } else if (platform === "twitter") {
-            platformIconName = "twitter";
-            platformColor = "#9CA3AF";
-        } else if (platform === "reddit") {
-            platformIconName = "message-square";
-            platformColor = "var(--highlight)";
-        }
-        
         const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
-        if (platform === "all") {
-            platformIconName = "globe";
-        }
         
         item.innerHTML = `
             <div class="history-item-accent"></div>
@@ -1626,7 +1627,7 @@ function renderArchiveHistory() {
             </div>
             <div class="history-item-meta">
                 <span><i data-lucide="clock"></i>${formattedDate}</span>
-                <span style="display: inline-flex; align-items: center; gap: 4px;">${getPlatformIconSvg(platform, 11, `color: ${platformColor}; flex-shrink: 0;`)}${capPlatform}</span>
+                <span class="badge-platform badge-platform-${platform}">${getPlatformIconSvg(platform, 10)}${capPlatform}</span>
             </div>
         `;
 
@@ -1639,6 +1640,145 @@ function renderArchiveHistory() {
         }
 
         archiveHistoryList.appendChild(item);
+    });
+    
+    // Add "View More" card if searches exceed 10
+    if (showMoreCard) {
+        const moreCard = document.createElement("div");
+        moreCard.className = "history-item-more";
+        moreCard.innerHTML = `
+            <i data-lucide="layout-grid"></i>
+            <span>+ ${filteredSearches.length - 10} More</span>
+        `;
+        moreCard.addEventListener("click", openQueriesModal);
+        archiveHistoryList.appendChild(moreCard);
+    }
+    
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
+
+// Grid Queries Modal Control
+function openQueriesModal() {
+    const modal = document.getElementById("queries-modal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    
+    // Force a minor delay for CSS scale transform animation activation
+    setTimeout(() => {
+        modal.classList.add("active");
+    }, 10);
+    
+    renderModalQueries();
+    
+    // Bind modal close buttons
+    const closeBtn = document.getElementById("queries-modal-close");
+    if (closeBtn) {
+        closeBtn.onclick = closeQueriesModal;
+    }
+    
+    // Close on overlay background click
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeQueriesModal();
+        }
+    };
+    
+    // Bind search filter input
+    const searchInput = document.getElementById("modal-queries-search");
+    if (searchInput) {
+        searchInput.value = "";
+        searchInput.oninput = renderModalQueries;
+        searchInput.focus();
+    }
+}
+
+function closeQueriesModal() {
+    const modal = document.getElementById("queries-modal");
+    if (!modal) return;
+    modal.classList.remove("active");
+    setTimeout(() => {
+        modal.style.display = "none";
+    }, 200);
+}
+
+function renderModalQueries() {
+    const gridContainer = document.getElementById("modal-queries-grid");
+    if (!gridContainer) return;
+    gridContainer.innerHTML = "";
+    
+    const searchInput = document.getElementById("modal-queries-search");
+    const filterVal = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    
+    searchesData.forEach(search => {
+        const displayKeyword = search.keyword || "Scan Query";
+        if (filterVal && !displayKeyword.toLowerCase().includes(filterVal)) {
+            return;
+        }
+        
+        const card = document.createElement("div");
+        card.className = `history-item ${activeSearchId === search.id ? "active" : ""}`;
+        card.style.margin = "0";
+        card.style.width = "auto";
+        card.style.minWidth = "0";
+        card.addEventListener("click", () => {
+            activeSearchId = search.id;
+            archiveCurrentPage = 1;
+            closeQueriesModal();
+            renderArchiveHistory();
+            renderArchiveLeads();
+        });
+        
+        const leadCount = search.leadUrls ? search.leadUrls.filter(url => leadsData.some(l => l.sourceUrl === url)).length : 0;
+        let formattedDate = "Recent";
+        if (search.timestamp) {
+            try {
+                const date = new Date(search.timestamp);
+                formattedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        let truncatedKeyword = displayKeyword;
+        if (truncatedKeyword.length > 20) {
+            truncatedKeyword = truncatedKeyword.substring(0, 20) + "...";
+        }
+        
+        const isExact = search.matchType === "exact";
+        const exactBadgeHtml = isExact ? `<span class="badge-exact">Exact</span>` : "";
+        
+        const platform = search.platform || "linkedin";
+        const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
+        
+        card.innerHTML = `
+            <div class="history-item-accent"></div>
+            <div class="history-item-header">
+                <span class="history-item-keyword" title="${displayKeyword}">${truncatedKeyword}${exactBadgeHtml}</span>
+                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                    <span class="history-item-count">${leadCount}</span>
+                    <button class="btn-delete-search" title="Delete Search Query">
+                        <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="history-item-meta">
+                <span><i data-lucide="clock"></i>${formattedDate}</span>
+                <span class="badge-platform badge-platform-${platform}">${getPlatformIconSvg(platform, 10)}${capPlatform}</span>
+            </div>
+        `;
+        
+        const deleteBtn = card.querySelector(".btn-delete-search");
+        if (deleteBtn) {
+            deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                closeQueriesModal();
+                confirmDeleteSearch(search.id);
+            });
+        }
+        
+        gridContainer.appendChild(card);
     });
     
     if (window.lucide) {
