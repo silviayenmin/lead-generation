@@ -661,9 +661,14 @@
                                     <i data-lucide="history"></i>
                                     <span>Search query index</span>
                                 </div>
-                                <div class="history-search-box">
-                                    <i data-lucide="search"></i>
-                                    <input type="text" id="archive-history-search" class="history-search-input" placeholder="Filter queries...">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div class="history-search-box">
+                                        <i data-lucide="search"></i>
+                                        <input type="text" id="archive-history-search" class="history-search-input" placeholder="Filter queries...">
+                                    </div>
+                                    <button type="button" id="btn-open-queries-modal" class="btn btn-glow-outline" style="width: auto; padding: 0 0.65rem; font-size: 0.8rem; height: 32px; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; border-color: var(--border-color); background: rgba(255,255,255,0.02);" title="View all saved queries in a grid">
+                                        <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i> View All
+                                    </button>
                                 </div>
                             </div>
                             <div class="history-horizontal-list" id="archive-history-list">
@@ -1001,6 +1006,30 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid View Modal Overlay -->
+    <div id="queries-modal" class="custom-confirm-overlay" style="z-index: 1200; display: none;">
+        <div class="custom-confirm-box queries-modal-box" onclick="event.stopPropagation()">
+            <div class="queries-modal-header">
+                <div class="queries-modal-title">
+                    <i data-lucide="layout-grid"></i>
+                    <span>All Saved Queries</span>
+                </div>
+                <button type="button" id="queries-modal-close" class="queries-modal-close" title="Close Modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="queries-modal-search-wrapper">
+                <div class="queries-modal-search-box">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="modal-queries-search" class="queries-modal-search-input" placeholder="Search all queries...">
+                </div>
+            </div>
+            <div class="queries-grid-container" id="modal-queries-grid">
+                <!-- Grid cards populated via Javascript -->
             </div>
         </div>
     </div>
