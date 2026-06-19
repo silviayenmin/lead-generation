@@ -405,7 +405,7 @@
 
                             <!-- Step 3: Configure Intent Filters -->
                             <div class="wizard-step-panel" data-step="3">
-                                <div class="wizard-grid-2">
+                                <div class="wizard-grid-3">
                                     <div class="form-group">
                                         <label for="timeframe">Post recency</label>
                                         <div class="input-wrapper">
@@ -429,6 +429,17 @@
                                                 <option value="10" selected>10 Results</option>
                                                 <option value="15">15 Results</option>
                                                 <option value="20">20 Results</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="match-type">Search match type</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="sliders" class="input-icon"></i>
+                                            <select id="match-type" class="form-control">
+                                                <option value="partial" selected>Partial Match (Broader)</option>
+                                                <option value="exact">Exact Match (Strict)</option>
                                             </select>
                                         </div>
                                     </div>

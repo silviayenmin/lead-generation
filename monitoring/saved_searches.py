@@ -24,12 +24,12 @@ def save_saved_searches(searches: list):
     except Exception as e:
         print(f"Error saving saved searches: {e}")
 
-def add_saved_search(keyword: str, platform: str, timeframe: str) -> dict:
+def add_saved_search(keyword: str, platform: str, timeframe: str, match_type: str = "partial") -> dict:
     searches = load_saved_searches()
     
     # Check if already exists
     for s in searches:
-        if s.get("keyword") == keyword and s.get("platform") == platform and s.get("timeframe") == timeframe:
+        if s.get("keyword") == keyword and s.get("platform") == platform and s.get("timeframe") == timeframe and s.get("matchType", "partial") == match_type:
             return s
             
     new_search = {
@@ -37,6 +37,7 @@ def add_saved_search(keyword: str, platform: str, timeframe: str) -> dict:
         "keyword": keyword,
         "platform": platform,
         "timeframe": timeframe,
+        "matchType": match_type,
         "createdAt": datetime.datetime.now().isoformat(),
         "lastRun": None,
         "leadsFoundCount": 0
@@ -70,6 +71,7 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
         keyword = s.get("keyword")
         platform = s.get("platform", "linkedin")
         timeframe = s.get("timeframe", "qdr:m3")
+        match_type = s.get("matchType", "partial")
         
         # Generate Intent Queries
         intent_queries = IntentQueryGenerator.generate(keyword)
@@ -83,7 +85,7 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
             adapter = get_adapter(plat)
             for query in intent_queries:
                 try:
-                    res = adapter.search(query, timeframe=timeframe)
+                    res = adapter.search(query, timeframe=timeframe, match_type=match_type)
                     if res:
                         raw_results.extend(res)
                 except Exception as ex:
