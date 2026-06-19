@@ -34,7 +34,11 @@ from crm import (
     enrich_profile_details,
     clean_json_response,
     determine_lead_platform,
-    is_empty_value
+    is_empty_value,
+    validate_author_name,
+    validate_company_name,
+    delete_lead_from_db,
+    delete_search_from_db
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
@@ -93,6 +97,9 @@ class SavedSearchRequest(BaseModel):
     keyword: str
     platform: str
     timeframe: str
+
+class BulkDeleteRequest(BaseModel):
+    urls: List[str]
 
 @app.post("/api/search")
 async def run_search(payload: SearchRequest):
@@ -160,22 +167,28 @@ async def run_search(payload: SearchRequest):
                 author = lead.get("authorName")
                 if is_empty_value(author):
                     author = await asyncio.to_thread(extract_fallback_author, title, source_url)
-                    lead["authorName"] = author
+                
+                # Apply author name validation
+                author = validate_author_name(author)
+                lead["authorName"] = author
+                
+                # Apply company name validation
+                company = validate_company_name(lead.get("companyName"))
+                lead["companyName"] = company
                     
                 # Secondary Enrichment search if company details are missing
-                company = lead.get("companyName")
                 if not is_empty_value(author) and is_empty_value(company):
                     enriched_data = await asyncio.to_thread(enrich_profile_details, author)
                     ec = enriched_data.get("companyName")
                     ei = enriched_data.get("industry")
                     el = enriched_data.get("location")
                     if not is_empty_value(ec):
-                        lead["companyName"] = ec
+                        lead["companyName"] = validate_company_name(ec)
                     if not is_empty_value(ei) and is_empty_value(lead.get("industry")):
                         lead["industry"] = ei
                     if not is_empty_value(el) and is_empty_value(lead.get("location")):
                         lead["location"] = el
-
+ 
                 # 6. Contact Enrichment / Email Guessing (Requirement 7)
                 enrich_mgr = ContactEnrichmentManager()
                 enrich_details = enrich_mgr.enrich(lead.get("authorName"), lead.get("companyName"))
@@ -186,14 +199,24 @@ async def run_search(payload: SearchRequest):
                 lead["contactSource"] = enrich_details.get("contactSource")
                 lead["contactConfidence"] = enrich_details.get("contactConfidence")
                 
+                # Print debug information (Requirement 5)
+                print("\n" + "="*50)
+                print(f"Original Title: {title}")
+                print(f"Original Snippet: {snippet}")
+                print(f"Extracted Author: {lead.get('authorName')}")
+                print(f"Extracted Company: {lead.get('companyName')}")
+                print(f"Confidence Score: {lead.get('confidenceScore') or lead.get('leadScore') or 0}%")
+                print("="*50 + "\n")
+                
                 return {"status": "success", "lead": lead, "source_url": source_url}
             except Exception as err:
                 print(f"Error classifying lead {title}: {err}")
                 # Fallback
                 fallback_author = await asyncio.to_thread(extract_fallback_author, title, source_url)
+                fallback_author = validate_author_name(fallback_author)
                 fallback_lead = {
-                    "authorName": fallback_author if fallback_author != "Unknown" else "Unknown",
-                    "companyName": "Unknown",
+                    "authorName": fallback_author,
+                    "companyName": "Not Specified",
                     "buyingIntent": "Unknown",
                     "intentType": "General Discussion",
                     "serviceRequired": "Unknown",
@@ -212,6 +235,16 @@ async def run_search(payload: SearchRequest):
                     "draftEmail": "",
                     "platform": determine_lead_platform(source_url)
                 }
+                
+                # Print fallback debug info
+                print("\n" + "="*50)
+                print(f"Original Title: {title}")
+                print(f"Original Snippet: {snippet}")
+                print(f"Extracted Author: {fallback_author}")
+                print(f"Extracted Company: Not Specified")
+                print(f"Confidence Score: 0%")
+                print("="*50 + "\n")
+                
                 return {"status": "fallback", "lead": fallback_lead, "source_url": source_url}
 
     # Parallelize AI calls
@@ -305,6 +338,32 @@ async def get_current_leads():
 async def get_searches():
     searches = load_searches()
     return {"searches": searches}
+
+@app.delete("/api/leads")
+async def delete_lead(sourceUrl: str):
+    success = delete_lead_from_db(sourceUrl)
+    if success:
+        return {"status": "success", "message": "Lead deleted successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+@app.delete("/api/searches/{search_id}")
+async def delete_search(search_id: str):
+    if search_id == "all":
+        raise HTTPException(status_code=400, detail="Cannot delete default database view")
+    success = delete_search_from_db(search_id)
+    if success:
+        return {"status": "success", "message": "Search query deleted successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Search query not found")
+
+@app.post("/api/leads/bulk-delete")
+async def bulk_delete_leads(payload: BulkDeleteRequest):
+    success_count = 0
+    for url in payload.urls:
+        if delete_lead_from_db(url):
+            success_count += 1
+    return {"status": "success", "message": f"Successfully deleted {success_count} leads"}
 
 @app.post("/api/leads/update")
 async def update_lead_crm(payload: UpdateCRMRequest):

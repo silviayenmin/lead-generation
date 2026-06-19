@@ -54,7 +54,10 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
     if not saved:
         return {"status": "no_searches", "message": "No saved searches to monitor."}
         
-    from crm.lead_database import check_and_save_lead, extract_fallback_author, enrich_profile_details, determine_lead_platform, is_empty_value
+    from crm.lead_database import (
+        check_and_save_lead, extract_fallback_author, enrich_profile_details, 
+        determine_lead_platform, is_empty_value, validate_author_name, validate_company_name
+    )
     
     summary = {
         "timestamp": datetime.datetime.now().isoformat(),
@@ -124,17 +127,36 @@ def run_monitoring_for_all(db: dict, save_db_callback) -> dict:
                     qualified_leads_in_this_run += 1
                     
                     # Fill missing author details
-                    if is_empty_value(lead_data.get("authorName")):
-                        lead_data["authorName"] = extract_fallback_author(title, url)
+                    author = lead_data.get("authorName")
+                    if is_empty_value(author):
+                        author = extract_fallback_author(title, url)
+                    
+                    # Apply author validation
+                    author = validate_author_name(author)
+                    lead_data["authorName"] = author
+
+                    # Apply company validation
+                    company = validate_company_name(lead_data.get("companyName"))
+                    lead_data["companyName"] = company
                         
                     # Basic enrichment if company missing
-                    author = lead_data.get("authorName")
-                    if not is_empty_value(author) and is_empty_value(lead_data.get("companyName")):
+                    if not is_empty_value(author) and is_empty_value(company):
                         enriched = enrich_profile_details(author)
                         if enriched:
-                            lead_data["companyName"] = enriched.get("companyName", "Unknown")
+                            ec = enriched.get("companyName")
+                            if ec and not is_empty_value(ec):
+                                lead_data["companyName"] = validate_company_name(ec)
                             lead_data["industry"] = enriched.get("industry", "Unknown")
                             lead_data["location"] = enriched.get("location", "Unknown")
+                            
+                    # Print debug information (Requirement 5)
+                    print("\n" + "="*50)
+                    print(f"Original Title: {title}")
+                    print(f"Original Snippet: {snippet}")
+                    print(f"Extracted Author: {lead_data.get('authorName')}")
+                    print(f"Extracted Company: {lead_data.get('companyName')}")
+                    print(f"Confidence Score: {lead_data.get('confidenceScore') or lead_data.get('leadScore') or 0}%")
+                    print("="*50 + "\n")
                             
                     # Enrich contact info using default guessing
                     enrich_mgr = ContactEnrichmentManager()
