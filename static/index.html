@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silvia AI - Premium Lead Intelligence Portal</title>
+    <!-- CSS Reference -->
+    <link rel="stylesheet" href="/static/style.css?v=20260619_v14">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- App Container Layout -->
+    <div class="app-layout">
+        
+        <!-- Left Navigation Sidebar (Collapsible) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-wrapper">
+                    <div class="logo-icon">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h2>Silvia AI</h2>
+                        <p>Enterprise SaaS CRM</p>
+                    </div>
+                </div>
+                <button type="button" class="sidebar-toggle" id="sidebar-toggle" title="Toggle Sidebar">
+                    <i data-lucide="chevron-left" id="toggle-icon"></i>
+                </button>
+            </div>
+            
+            <!-- User Info Profile Badge -->
+            <div class="sidebar-user">
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" alt="Avatar" class="user-avatar">
+                <div class="user-info">
+                    <span class="user-name">Sarah Jenkins</span>
+                    <span class="user-role">Sales Director</span>
+                </div>
+                <i data-lucide="chevron-down" class="user-dropdown-icon"></i>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button type="button" class="nav-item active" id="tab-btn-dashboard" data-tab="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button type="button" class="nav-item" id="tab-btn-discovery" data-tab="discovery">
+                    <i data-lucide="search"></i>
+                    <span>Lead Discovery</span>
+                </button>
+                <button type="button" class="nav-item" id="tab-btn-pipeline" data-tab="pipeline">
+                    <i data-lucide="kanban"></i>
+                    <span>Outreach Pipeline</span>
+                </button>
+                <button type="button" class="nav-item" id="tab-btn-archive" data-tab="archive">
+                    <i data-lucide="archive"></i>
+                    <span>Search Archive</span>
+                </button>
+                <button type="button" class="nav-item" id="tab-btn-settings" data-tab="settings">
+                    <i data-lucide="settings"></i>
+                    <span>Outreach Config</span>
+                </button>
+            </nav>
+            
+            <!-- Workspace Usage Summary Widget -->
+            <div class="sidebar-usage-widget" id="sidebar-usage-widget">
+                <div class="usage-title">Usage & Quotas</div>
+                <div class="usage-item">
+                    <span class="usage-label">Discovered Leads</span>
+                    <span class="usage-value" id="usage-leads-discovered">0</span>
+                </div>
+                <div class="usage-item">
+                    <span class="usage-label">AI Pitches Drafted</span>
+                    <span class="usage-value" id="usage-outreach-count">0</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button type="button" id="btn-export-csv-sidebar" class="btn btn-secondary sidebar-export-btn">
+                    <i data-lucide="download"></i> <span>Download CSV</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-view">
+            
+            <!-- Top bar header inside main content -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <div class="top-bar-search">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="global-search" placeholder="Search leads by name, company, or requirement...">
+                    </div>
+                </div>
+                <div class="top-bar-actions">
+                    <button type="button" id="btn-new-scan-trigger" class="btn btn-primary" style="width: auto; padding: 0.45rem 1rem; font-size: 0.8rem; height: 32px;">
+                        <i data-lucide="plus"></i> New Scan
+                    </button>
+                    <button type="button" class="top-bar-btn" id="btn-theme-toggle" title="Toggle Theme">
+                        <i data-lucide="sun" id="theme-toggle-icon"></i>
+                    </button>
+                    <button type="button" class="top-bar-btn" title="Notifications">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150" alt="Profile" class="profile-pic">
+                </div>
+            </header>
+
+            <div class="views-container">
+                
+                <!-- View 1: Dashboard (Matches Design Proposal) -->
+                <div id="view-dashboard" class="tab-view active">
+                    
+                    <!-- Stats Grid Row -->
+                    <div class="stats-row">
+                        <div class="stat-card stat-total-card">
+                            <div class="stat-card-glow"></div>
+                            <div class="stat-card-header">
+                                <span class="stat-label">Total leads</span>
+                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +14%</span>
+                            </div>
+                            <span class="stat-value" id="stat-total">0</span>
+                            <!-- Sparkline Chart -->
+                            <svg class="stat-sparkline" viewBox="0 0 100 30">
+                                <path class="sparkline-stroke" d="M0,22 Q12,8 24,18 T48,4 T72,16 T96,8 T100,12"></path>
+                            </svg>
+                        </div>
+
+                        <div class="stat-card stat-sql-card">
+                            <div class="stat-card-glow"></div>
+                            <div class="stat-card-header">
+                                <span class="stat-label">SQLs (qualified)</span>
+                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +9%</span>
+                            </div>
+                            <span class="stat-value" id="stat-qualified">0</span>
+                            <!-- Sparkline Chart -->
+                            <svg class="stat-sparkline" viewBox="0 0 100 30">
+                                <path class="sparkline-stroke" d="M0,25 Q15,14 30,22 T60,6 T90,20 T100,10"></path>
+                            </svg>
+                        </div>
+
+                        <div class="stat-card stat-opp-card">
+                            <div class="stat-card-glow"></div>
+                            <div class="stat-card-header">
+                                <span class="stat-label">Outreach active</span>
+                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +22%</span>
+                            </div>
+                            <span class="stat-value" id="stat-active-outreach">0</span>
+                            <!-- Sparkline Chart -->
+                            <svg class="stat-sparkline" viewBox="0 0 100 30">
+                                <path class="sparkline-stroke" d="M0,20 Q10,12 25,24 T55,8 T85,14 T100,6"></path>
+                            </svg>
+                        </div>
+
+                        <div class="stat-card stat-revenue-card">
+                            <div class="stat-card-glow"></div>
+                            <div class="stat-card-header">
+                                <span class="stat-label">Avg match score</span>
+                                <span class="stat-trend trend-up"><i data-lucide="trending-up"></i> +18%</span>
+                            </div>
+                            <span class="stat-value text-glow-indigo" id="stat-confidence">0%</span>
+                            <!-- Sparkline Chart -->
+                            <svg class="stat-sparkline" viewBox="0 0 100 30">
+                                <path class="sparkline-stroke" d="M0,18 Q18,6 36,15 T72,12 T90,6 T100,10"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- AI Insights text banner -->
+                    <div class="ai-insights-panel" style="margin-bottom: 1.5rem;">
+                        <i data-lucide="sparkles" class="ai-insights-icon"></i>
+                        <div class="ai-insights-text" id="ai-insights-text">
+                            AI Agent Insight: Social scans identified Facebook Groups and LinkedIn as high-intent lead sources for "React Dev" queries. Average qualification scores rose by 8% this week.
+                        </div>
+                    </div>
+
+                    <!-- Widgets Row: 50% Outreach Funnel, 50% AI Recommendations -->
+                    <div class="dashboard-grid-container">
+                        <!-- Lead Pipeline Funnel -->
+                        <div class="card chart-card">
+                            <div class="card-title">
+                                <i data-lucide="bar-chart-3"></i>
+                                <span>Outreach funnel</span>
+                            </div>
+                            <div class="funnel-container">
+                                <div class="funnel-stage">
+                                    <div class="funnel-bar" style="width: 100%"></div>
+                                    <span class="funnel-label">Total Discovered</span>
+                                    <span class="funnel-value" id="funnel-val-total">0</span>
+                                </div>
+                                <div class="funnel-stage">
+                                    <div class="funnel-bar" id="funnel-bar-qualified" style="width: 70%"></div>
+                                    <span class="funnel-label">Qualified (SQLs)</span>
+                                    <span class="funnel-value" id="funnel-val-qualified">0</span>
+                                </div>
+                                <div class="funnel-stage">
+                                    <div class="funnel-bar" id="funnel-bar-outreach" style="width: 40%"></div>
+                                    <span class="funnel-label">Outreach Initiated</span>
+                                    <span class="funnel-value" id="funnel-val-outreach">0</span>
+                                </div>
+                                <div class="funnel-stage">
+                                    <div class="funnel-bar" id="funnel-bar-replied" style="width: 15%"></div>
+                                    <span class="funnel-label">Replied / Hot</span>
+                                    <span class="funnel-value" id="funnel-val-replied">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Recommended Leads Panel -->
+                        <div class="card chart-card">
+                            <div class="card-title">
+                                <i data-lucide="sparkles"></i>
+                                <span>AI recommended leads</span>
+                            </div>
+                            <div class="rec-leads-list" id="rec-leads-list">
+                                <!-- Populated via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leads database table card (Full Width) -->
+                    <div class="card table-card" style="margin-bottom: 1.5rem; width: 100%;">
+                        <div class="table-toolbar">
+                            <div class="toolbar-title">Intent qualified leads (top 5)</div>
+                            <div class="table-filters">
+                                <select id="filter-platform" class="filter-select">
+                                    <option value="all">All Sources</option>
+                                    <option value="linkedin">LinkedIn</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="twitter">Twitter / X</option>
+                                    <option value="reddit">Reddit</option>
+                                </select>
+
+                                <select id="filter-status" class="filter-select">
+                                    <option value="all">All Intent Scores</option>
+                                    <option value="Qualified">Qualified</option>
+                                    <option value="Warm Lead">Warm Lead</option>
+                                    <option value="Prospect">Prospect</option>
+                                    <option value="Potential Lead">Potential Lead</option>
+                                    <option value="Informational">Informational</option>
+                                    <option value="Unqualified">Unqualified</option>
+                                    <option value="Not a Lead">Not a Lead</option>
+                                </select>
+
+                                <select id="filter-crm" class="filter-select">
+                                    <option value="all">All Stages</option>
+                                    <option value="New">New</option>
+                                    <option value="New Discovery">New Discovery</option>
+                                    <option value="Drafted">Drafted</option>
+                                    <option value="Emailed">Emailed</option>
+                                    <option value="Replied">Replied</option>
+                                    <option value="Disqualified">Disqualified</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Empty Grid Indicator -->
+                        <div id="empty-state" class="empty-container" style="display: none;">
+                            <i data-lucide="folder-open" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                            <h3>No lead data found</h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 320px; margin-top: 0.25rem;">Perform a scan inside Lead Discovery to populate results.</p>
+                        </div>
+
+                        <!-- Spreadsheet Data Grid -->
+                        <div id="table-wrapper" class="table-responsive" style="display: none;">
+                            <table class="table" style="table-layout: fixed; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 35%;">Lead / title</th>
+                                        <th style="width: 25%;">Company / org</th>
+                                        <th style="width: 18%;">Match score</th>
+                                        <th style="width: 15%;">Verified contact</th>
+                                        <th style="width: 7%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leads-tbody">
+                                    <!-- Rendered from app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div class="pagination">
+                            <button class="pag-btn" disabled><i data-lucide="chevron-left"></i></button>
+                            <span class="pag-text">Showing Top 5 leads</span>
+                            <button class="pag-btn" disabled><i data-lucide="chevron-right"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Channel Performance Table -->
+                    <div class="card performance-card" style="width: 100%;">
+                        <div class="card-title">
+                            <i data-lucide="bar-chart-2"></i>
+                            <span>Search performance & channel analytics (top 5)</span>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 1rem;">
+                            <table class="table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Search keyword</th>
+                                        <th>Platform</th>
+                                        <th>Last scanned</th>
+                                        <th>Results scanned</th>
+                                        <th>Qualified leads</th>
+                                        <th>Conversion rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="performance-tbody">
+                                    <!-- Populated via JavaScript -->
+                                </tbody>
+                            </table>
+                            <div id="performance-empty-state" class="empty-container" style="padding: 2rem; display: none;">
+                                <i data-lucide="bar-chart-2" style="width: 36px; height: 36px; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+                                <h4>No performance data</h4>
+                                <p style="color: var(--text-muted); font-size: 0.85rem;">Scans run in Lead Discovery will populate here automatically.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 2: Lead Discovery (Redesigned into a Guided Stepper Wizard) -->
+                <div id="view-discovery" class="tab-view">
+                    <div class="view-header">
+                        <h2>Lead Discovery</h2>
+                        <p>Guided AI scanner targeting buying signals across LinkedIn, Facebook, Twitter, and Reddit.</p>
+                    </div>
+                    
+                    <div class="discovery-wizard-card">
+                        
+                        <!-- Stepper progress indicator header -->
+                        <div class="stepper-header">
+                            <div class="stepper-line"></div>
+                            <div class="stepper-progress-fill" id="wizard-progress-fill"></div>
+                            <div class="stepper-node active" data-step="1">
+                                <div class="stepper-circle">1</div>
+                                <span class="stepper-label">Audience</span>
+                            </div>
+                            <div class="stepper-node" data-step="2">
+                                <div class="stepper-circle">2</div>
+                                <span class="stepper-label">Sources</span>
+                            </div>
+                            <div class="stepper-node" data-step="3">
+                                <div class="stepper-circle">3</div>
+                                <span class="stepper-label">Filters</span>
+                            </div>
+                            <div class="stepper-node" data-step="4">
+                                <div class="stepper-circle">4</div>
+                                <span class="stepper-label">Qualify</span>
+                            </div>
+                        </div>
+
+                        <form id="search-form">
+                            
+                            <!-- Step 1: Define Audience -->
+                            <div class="wizard-step-panel active" data-step="1">
+                                <div class="form-group">
+                                    <label for="keyword">Search keyword / intent query</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="search" class="input-icon"></i>
+                                        <input type="text" id="keyword" class="form-control" placeholder="e.g. looking for ui/ux designer, contract react developer" required>
+                                    </div>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
+                                </div>
+                                <div class="wizard-grid-2">
+                                    <div class="form-group">
+                                        <label for="wizard-industry">Target industry (optional)</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="building" class="input-icon"></i>
+                                            <input type="text" id="wizard-industry" class="form-control" placeholder="e.g. E-commerce, FinTech">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="wizard-location">Target location (optional)</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="map-pin" class="input-icon"></i>
+                                            <input type="text" id="wizard-location" class="form-control" placeholder="e.g. United States, London">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Select Platform Sources -->
+                            <div class="wizard-step-panel" data-step="2">
+                                <div class="form-group" style="margin-bottom: 0.5rem;">
+                                    <label>Select target data sources</label>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.75rem;">Choose social networks to scan for buying signals.</span>
+                                </div>
+                                
+                                <div class="platform-options-grid">
+                                    <div class="platform-option-card active" data-platform="linkedin">
+                                        <i data-lucide="linkedin"></i>
+                                        <span class="platform-option-label">LinkedIn</span>
+                                    </div>
+                                    <div class="platform-option-card" data-platform="facebook">
+                                        <i data-lucide="facebook"></i>
+                                        <span class="platform-option-label">Facebook</span>
+                                    </div>
+                                    <div class="platform-option-card" data-platform="twitter">
+                                        <i data-lucide="twitter"></i>
+                                        <span class="platform-option-label">Twitter / X</span>
+                                    </div>
+                                    <div class="platform-option-card" data-platform="reddit">
+                                        <i data-lucide="message-square"></i>
+                                        <span class="platform-option-label">Reddit</span>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="platform" value="linkedin">
+                            </div>
+
+                            <!-- Step 3: Configure Intent Filters -->
+                            <div class="wizard-step-panel" data-step="3">
+                                <div class="wizard-grid-2">
+                                    <div class="form-group">
+                                        <label for="timeframe">Post recency</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="calendar" class="input-icon"></i>
+                                            <select id="timeframe" class="form-control">
+                                                <option value="qdr:d">Past 24 Hours</option>
+                                                <option value="qdr:w">Past Week</option>
+                                                <option value="qdr:m">Past Month</option>
+                                                <option value="qdr:m2">Past 2 Months</option>
+                                                <option value="qdr:m3" selected>Past 3 Months</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="limit">Maximum records scanned</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="hash" class="input-icon"></i>
+                                            <select id="limit" class="form-control">
+                                                <option value="5">5 Results</option>
+                                                <option value="10" selected>10 Results</option>
+                                                <option value="15">15 Results</option>
+                                                <option value="20">20 Results</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-top: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <label for="wizard-intent-score-min">Minimum AI intent threshold</label>
+                                        <span id="wizard-intent-score-val" style="font-size: 0.75rem; font-weight: 700; color: var(--primary);">40% Match</span>
+                                    </div>
+                                    <input type="range" id="wizard-intent-score-min" class="custom-range-slider" min="10" max="90" value="40">
+                                    <div class="slider-labels">
+                                        <span>Loose Matches (10%)</span>
+                                        <span>High Buying Signal (90%)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: AI Qualification & Estimate -->
+                            <div class="wizard-step-panel" data-step="4">
+                                <div class="form-group" style="margin-bottom: 1.25rem;">
+                                    <label>Scan verification summary</label>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.75rem;">Confirm details to launch Llama-3.3 parsing scan.</span>
+                                </div>
+
+                                <div class="estimate-leads-panel" style="margin-bottom: 1.25rem;">
+                                    <div class="estimate-count" id="wizard-estimate-count">10 - 25</div>
+                                    <div class="estimate-label">Estimated qualified lead targets</div>
+                                    <span style="font-size: 0.65rem; color: var(--text-muted); max-width: 250px;">Based on your filter metrics, matching history, and domain indexes.</span>
+                                </div>
+
+                                <div class="form-actions-row" style="display: flex; gap: 0.75rem; width: 100%;">
+                                    <button type="submit" id="btn-search" class="btn btn-primary" style="flex: 2;">
+                                        <i data-lucide="sparkles"></i>
+                                        <span>Launch AI scan</span>
+                                    </button>
+                                    <button type="button" id="btn-save-search" class="btn btn-secondary" style="flex: 1;">
+                                        <i data-lucide="bookmark"></i>
+                                        <span>Save scraper</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Stepper Buttons Footer -->
+                            <div class="wizard-actions">
+                                <button type="button" id="btn-wizard-back" class="btn btn-secondary" style="width: auto; padding: 0.5rem 1.25rem;" disabled>
+                                    <i data-lucide="arrow-left"></i> Back
+                                </button>
+                                <button type="button" id="btn-wizard-continue" class="btn btn-primary" style="width: auto; padding: 0.5rem 1.25rem;">
+                                    Continue <i data-lucide="arrow-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Saved Searches & Monitoring Container -->
+                    <div class="card monitoring-card" style="margin-top: 1.5rem; width: 100%;">
+                        <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i data-lucide="activity"></i>
+                                <span>Saved monitoring scrapers</span>
+                            </div>
+                            <button type="button" id="btn-run-monitoring" class="btn btn-glow-outline" style="width: auto; padding: 0.45rem 0.85rem; font-size: 0.8rem; height: 32px; display: flex; align-items: center; gap: 0.35rem;">
+                                <i data-lucide="refresh-cw"></i> Scan all active scrapers
+                            </button>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 1rem;">
+                            <table class="table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Search keyword</th>
+                                        <th>Platform</th>
+                                        <th>Timeframe</th>
+                                        <th>Last checked</th>
+                                        <th>Total discovered</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="saved-searches-tbody">
+                                    <!-- Populated via JavaScript -->
+                                </tbody>
+                            </table>
+                            <div id="monitoring-empty-state" class="empty-container" style="padding: 2rem; display: none;">
+                                <i data-lucide="bell-off" style="width: 36px; height: 36px; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+                                <h4>No saved searches</h4>
+                                <p style="color: var(--text-muted); font-size: 0.85rem;">Save search parameters to automatically monitor buying signals.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scan Loader Progress Panel -->
+                    <div id="loading-state" class="loading-container card" style="display: none; margin-top: 1.5rem;">
+                        <div class="pulsing-ai-indicator" style="margin-bottom: 1rem;">
+                            <div class="pulsing-dot"></div>
+                            <span>Silvia AI scraper engaged...</span>
+                        </div>
+                        <div id="loading-status-text" class="loading-text" style="font-weight: 500; color: var(--text-primary);">Querying LinkedIn posts via Google Serper API...</div>
+                        <div style="width: 100%; max-width: 400px; background: var(--bg-trans-5); height: 5px; border-radius: 3px; overflow: hidden; margin-top: 1rem;">
+                            <div id="loading-progress" style="width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.4s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 3: Outreach Pipeline (Kanban Board) -->
+                <div id="view-pipeline" class="tab-view">
+                    <div class="view-header">
+                        <h2>Outreach Pipeline</h2>
+                        <p>Drag and drop leads between CRM stages. Double-click cards to open details panel.</p>
+                    </div>
+                    
+                    <div class="kanban-board">
+                        <div class="kanban-column" data-stage="New">
+                            <div class="kanban-column-header">
+                                <div class="header-left">
+                                    <span class="stage-dot stage-new"></span>
+                                    <span>New Leads</span>
+                                </div>
+                                <span class="column-count" id="count-new">0</span>
+                            </div>
+                            <div class="kanban-cards" id="cards-new"></div>
+                        </div>
+                        <div class="kanban-column" data-stage="Drafted">
+                            <div class="kanban-column-header">
+                                <div class="header-left">
+                                    <span class="stage-dot stage-drafted"></span>
+                                    <span>Drafted Pitch</span>
+                                </div>
+                                <span class="column-count" id="count-drafted">0</span>
+                            </div>
+                            <div class="kanban-cards" id="cards-drafted"></div>
+                        </div>
+                        <div class="kanban-column" data-stage="Emailed">
+                            <div class="kanban-column-header">
+                                <div class="header-left">
+                                    <span class="stage-dot stage-emailed"></span>
+                                    <span>Emailed Out</span>
+                                </div>
+                                <span class="column-count" id="count-emailed">0</span>
+                            </div>
+                            <div class="kanban-cards" id="cards-emailed"></div>
+                        </div>
+                        <div class="kanban-column" data-stage="Replied">
+                            <div class="kanban-column-header">
+                                <div class="header-left">
+                                    <span class="stage-dot stage-replied"></span>
+                                    <span>Replied</span>
+                                </div>
+                                <span class="column-count" id="count-replied">0</span>
+                            </div>
+                            <div class="kanban-cards" id="cards-replied"></div>
+                        </div>
+                        <div class="kanban-column" data-stage="Disqualified">
+                            <div class="kanban-column-header">
+                                <div class="header-left">
+                                    <span class="stage-dot stage-disqualified"></span>
+                                    <span>Disqualified</span>
+                                </div>
+                                <span class="column-count" id="count-disqualified">0</span>
+                            </div>
+                            <div class="kanban-cards" id="cards-disqualified"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 4: Search Archive Redesign -->
+                <div id="view-archive" class="tab-view">
+                    <div class="view-header">
+                        <h2>Search Archive</h2>
+                        <p>Examine historical search record index, modify layouts, or execute bulk stage changes.</p>
+                    </div>
+
+                    <!-- Layout: Search history on the left, lead list on the right -->
+                    <div class="archive-layout-grid">
+                        
+                        <!-- Left panel: Search History list -->
+                        <div class="card history-card">
+                            <div class="card-title">
+                                <i data-lucide="history"></i>
+                                <span>Search query index</span>
+                            </div>
+                            <div class="history-list" id="archive-history-list">
+                                <!-- Populated from searchesData via app.js -->
+                            </div>
+                        </div>
+
+                        <!-- Right panel: Leads table for selected search -->
+                        <div class="card table-card archive-table-card">
+                            
+                            <!-- Header saved views selectors -->
+                            <div class="archive-views-row">
+                                <div class="saved-views-buttons">
+                                    <button type="button" class="view-pill-btn active" id="archive-view-all">All scraped</button>
+                                    <button type="button" class="view-pill-btn" id="archive-view-high">High intent only</button>
+                                    <button type="button" class="view-pill-btn" id="archive-view-fb">Facebook leads</button>
+                                    <button type="button" class="view-pill-btn" id="archive-view-replied">Replied stage</button>
+                                </div>
+                            </div>
+
+                            <div class="table-toolbar">
+                                <div class="toolbar-title" id="archive-table-title">All leads database</div>
+                                <div class="table-filters">
+                                    <select id="archive-filter-platform" class="filter-select">
+                                        <option value="all">All Sources</option>
+                                        <option value="linkedin">LinkedIn</option>
+                                        <option value="facebook">Facebook</option>
+                                        <option value="twitter">Twitter / X</option>
+                                        <option value="reddit">Reddit</option>
+                                    </select>
+
+                                    <select id="archive-filter-status" class="filter-select">
+                                        <option value="all">All Intent Scores</option>
+                                        <option value="Qualified">Qualified</option>
+                                        <option value="Warm Lead">Warm Lead</option>
+                                        <option value="Prospect">Prospect</option>
+                                        <option value="Potential Lead">Potential Lead</option>
+                                        <option value="Informational">Informational</option>
+                                        <option value="Unqualified">Unqualified</option>
+                                        <option value="Not a Lead">Not a Lead</option>
+                                    </select>
+
+                                    <select id="archive-filter-crm" class="filter-select">
+                                        <option value="all">All Stages</option>
+                                        <option value="New">New</option>
+                                        <option value="New Discovery">New Discovery</option>
+                                        <option value="Drafted">Drafted</option>
+                                        <option value="Emailed">Emailed</option>
+                                        <option value="Replied">Replied</option>
+                                        <option value="Disqualified">Disqualified</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Empty Archive Indicator -->
+                            <div id="archive-empty-state" class="empty-container" style="display: none;">
+                                <i data-lucide="folder-open" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                                <h3>No lead data found</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 320px; margin-top: 0.25rem;">Select another search query or perform a new scan.</p>
+                            </div>
+
+                            <!-- Spreadsheet Data Grid -->
+                            <div id="archive-table-wrapper" class="table-responsive" style="display: none;">
+                                <table class="table" style="table-layout: fixed; width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px; padding: 0.5rem 0.75rem;">
+                                                <input type="checkbox" id="archive-select-all-checkbox" class="custom-checkbox">
+                                            </th>
+                                            <th style="width: 32%;">Lead / title</th>
+                                            <th style="width: 25%;">Company / org</th>
+                                            <th style="width: 18%;">Match score</th>
+                                            <th style="width: 18%;">Verified contact</th>
+                                            <th style="width: 7%;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="archive-leads-tbody">
+                                        <!-- Rendered from app.js -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Archive Pagination Controls -->
+                            <div class="pagination" id="archive-pagination" style="display: flex;">
+                                <button class="pag-btn" id="archive-pag-prev" disabled><i data-lucide="chevron-left"></i></button>
+                                <span class="pag-text" id="archive-pag-text">Page 1 of 1</span>
+                                <button class="pag-btn" id="archive-pag-next" disabled><i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 5: Outreach Config (Redesigned into split screen preview layout) -->
+                <div id="view-settings" class="tab-view">
+                    <div class="view-header">
+                        <h2>Outreach Config</h2>
+                        <p>Customize parameters to optimize personalized Llama pitches for target leads.</p>
+                    </div>
+                    
+                    <div class="config-split-grid">
+                        
+                        <!-- Left Panel: Profile configs -->
+                        <div class="card settings-card">
+                            <div class="card-title">
+                                <i data-lucide="user-check"></i>
+                                <span>Profile & pitch variables</span>
+                            </div>
+                            <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="agency-name">Business / product name</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="briefcase" class="input-icon"></i>
+                                        <input type="text" id="agency-name" class="form-control" placeholder="e.g. Silvia Design Co." value="Silvia Team" style="padding-left: 2.25rem;">
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="agency-info">Value pitch profile & core offers</label>
+                                    <textarea id="agency-info" class="form-control" style="height: 140px; resize: vertical; padding: 0.65rem 0.85rem;" placeholder="e.g. custom UI/UX design, Next.js web apps, free code auditing...">premier design & development services</textarea>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="email-tone">AI copywriting tone style</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="languages" class="input-icon"></i>
+                                        <select id="email-tone" class="form-control" style="padding-left: 2.25rem;">
+                                            <option value="Short & Conversational" selected>Short & Conversational</option>
+                                            <option value="Professional & Formal">Professional & Formal</option>
+                                            <option value="Value Pitch (Free Audit)">Value Pitch (Free Audit)</option>
+                                            <option value="Aggressive Pitch (Meeting link)">Aggressive Pitch (Meeting link)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Live Previews -->
+                        <div class="config-preview-panel">
+                            <div class="preview-tabs-header">
+                                <button type="button" class="preview-tab-btn active" id="config-preview-tab-email">Email campaign preview</button>
+                                <button type="button" class="preview-tab-btn" id="config-preview-tab-linkedin">LinkedIn DM preview</button>
+                            </div>
+
+                            <div class="card preview-card">
+                                <div id="preview-meta-fields" class="preview-meta-row">
+                                    <div class="preview-meta-item"><strong>To:</strong> <span id="preview-target-email">sarah@company.com</span></div>
+                                    <div class="preview-meta-item" id="preview-subject-container"><strong>Subject:</strong> <span id="preview-target-subject">Quick question re: design requirements</span></div>
+                                </div>
+                                <div class="preview-body-content" id="live-pitch-preview-body">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- Bulk Actions Floating Footer Drawer -->
+    <div class="bulk-actions-bar" id="bulk-actions-bar">
+        <span class="bulk-selected-count" id="bulk-selected-count">0 leads selected</span>
+        <div class="bulk-btn-row">
+            <button type="button" class="bulk-action-btn" id="btn-bulk-export">
+                <i data-lucide="download" style="width:12px; height:12px;"></i> Export to CSV
+            </button>
+            <button type="button" class="bulk-action-btn" id="btn-bulk-stage-draft">
+                <i data-lucide="edit-3" style="width:12px; height:12px;"></i> Move to drafted
+            </button>
+            <button type="button" class="bulk-action-btn danger" id="btn-bulk-stage-disqualify">
+                <i data-lucide="trash-2" style="width:12px; height:12px;"></i> Disqualify
+            </button>
+        </div>
+    </div>
+
+    <!-- Right-side Slide-over Details Drawer -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-header-top">
+                    <h3>Lead profile drawer</h3>
+                    <button id="modal-close-btn" class="modal-close">&times;</button>
+                </div>
+                
+                <div class="modal-header-author">
+                    <label for="modal-author-name">Poster full name</label>
+                    <input type="text" id="modal-author-name" class="form-control modal-dense-input" placeholder="Poster Name" style="padding-left: 0.75rem;">
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <div class="detail-section">
+                    <label for="modal-company-name">Target company name</label>
+                    <input type="text" id="modal-company-name" class="form-control modal-dense-input" placeholder="Company Name" style="padding-left: 0.75rem;">
+                </div>
+                
+                <div class="detail-section-row">
+                    <div style="flex: 1;">
+                        <label for="modal-buying-intent">Buying intent level</label>
+                        <select id="modal-buying-intent" class="filter-select select-dense">
+                            <option value="High">High</option>
+                            <option value="Hiring">Hiring</option>
+                            <option value="Research">Research</option>
+                            <option value="Low">Low</option>
+                            <option value="None">None</option>
+                            <option value="Unknown">Unknown</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="modal-intent-type">Classified intent type</label>
+                        <select id="modal-intent-type" class="filter-select select-dense">
+                            <option value="Looking For Service">Looking For Service</option>
+                            <option value="Recommendation Request">Recommendation Request</option>
+                            <option value="Hiring Signal">Hiring Signal</option>
+                            <option value="Expansion Signal">Expansion Signal</option>
+                            <option value="Funding Signal">Funding Signal</option>
+                            <option value="General Discussion">General Discussion</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="detail-section-row" style="margin-top: 0.5rem;">
+                    <div style="flex: 1;">
+                        <label for="modal-crm-status">Outreach CRM stage</label>
+                        <select id="modal-crm-status" class="filter-select select-dense">
+                            <option value="New">New</option>
+                            <option value="New Discovery">New Discovery</option>
+                            <option value="Drafted">Drafted</option>
+                            <option value="Emailed">Emailed</option>
+                            <option value="Replied">Replied</option>
+                            <option value="Disqualified">Disqualified</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="modal-contact-confidence-fake">Contact source data</label>
+                        <div class="contact-meta-row" style="display: flex; gap: 0.4rem; align-items: center; height: 33px; font-size: 0.78rem; color: var(--text-secondary); background: var(--bg-trans-2); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.4rem 0.65rem;">
+                            <span id="modal-contact-source" style="font-weight: 600; color: var(--text-primary);">guessed</span>
+                            <span style="color: var(--text-muted);">•</span>
+                            <span id="modal-contact-confidence" style="font-weight: 600; color: var(--text-primary);">low</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <label for="modal-service-required">Extracted service required</label>
+                    <input type="text" id="modal-service-required" class="form-control modal-dense-input" placeholder="e.g. Design Consulting, React Web Dev" style="padding-left: 0.75rem;">
+                </div>
+
+                <div class="detail-section-row">
+                    <div style="flex: 1;">
+                        <label for="modal-industry">Classified industry</label>
+                        <input type="text" id="modal-industry" class="form-control modal-dense-input" placeholder="e.g. E-Commerce" style="padding-left: 0.75rem;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="modal-location">Lead location</label>
+                        <input type="text" id="modal-location" class="form-control modal-dense-input" placeholder="e.g. London, UK" style="padding-left: 0.75rem;">
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <label for="modal-need-description">AI lead need summary</label>
+                    <textarea id="modal-need-description" class="form-control textarea-dense" placeholder="Lead requirements details..." style="padding-left: 0.75rem; padding-right: 0.75rem;"></textarea>
+                </div>
+
+                <div class="detail-section contact-info-section">
+                    <div class="contact-label-wrapper">
+                        <label for="modal-contact-info">Verified business email</label>
+                        <button type="button" id="btn-enrich-contact" class="btn btn-secondary btn-enrich" title="Verify contact business email">
+                            <i data-lucide="search"></i>
+                            <span>Find email</span>
+                        </button>
+                    </div>
+                    <input type="text" id="modal-contact-info" class="form-control modal-dense-input" placeholder="Click Find email to search decision-maker domain." style="padding-left: 0.75rem;">
+                    <div id="enrich-loader" style="display: none; font-size: 0.72rem; color: var(--primary); margin-top: 0.3rem; align-items: center; gap: 0.25rem;">
+                        <span class="spinner spinner-tiny"></span>
+                        <span>Searching LinkedIn domains for decision-maker...</span>
+                    </div>
+                </div>
+
+                <div class="detail-section score-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <div class="score-label" style="font-size:0.75rem; font-weight:600;">Match intent score:</div>
+                        <span id="modal-lead-category" class="badge badge-success">High Intent</span>
+                    </div>
+                    <div class="score-indicator-box" style="margin-top: 0.35rem;">
+                        <span class="score-number" id="modal-lead-score">0</span>
+                        <span class="score-pct">/ 100</span>
+                    </div>
+                </div>
+
+                <div class="detail-section pitch-outreach-section">
+                    <div class="pitch-label-wrapper">
+                        <label style="font-size:0.75rem; font-weight:600;">Outreach pitch draft</label>
+                        <button id="btn-generate-pitch" class="btn btn-primary btn-generate">
+                            <i data-lucide="sparkles"></i> Generate AI pitch
+                        </button>
+                    </div>
+                    
+                    <div id="email-loader" style="display: none; padding: 1rem; text-align: center; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed var(--border-color);">
+                        <div class="spinner spinner-medium" style="margin: 0 auto;"></div>
+                        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.5rem;">Drafting pitch via Llama 3.3...</div>
+                    </div>
+                    
+                    <textarea id="modal-email-body" class="form-control textarea-email" placeholder="Personalized pitch text..." style="padding-left: 0.75rem; padding-right: 0.75rem;"></textarea>
+                    <div id="email-body-placeholder" class="email-placeholder">Click 'Generate AI pitch' to write email automatically based on lead need & agency settings.</div>
+                </div>
+
+                <div class="drawer-action-buttons">
+                    <div class="drawer-buttons-row">
+                        <a href="#" id="modal-btn-linkedin" class="btn btn-primary" target="_blank" style="flex: 1;">
+                            <i data-lucide="external-link"></i> <span>View source</span>
+                        </a>
+                        <button id="modal-btn-send" class="btn btn-success-outline" style="flex: 1;" disabled>
+                            <i data-lucide="send"></i> <span>Send pitch</span>
+                        </button>
+                    </div>
+                    <div class="drawer-buttons-row">
+                        <button id="modal-btn-copy" class="btn btn-secondary" style="flex: 1;">
+                            <i data-lucide="copy"></i> <span>Copy details</span>
+                        </button>
+                        <button id="modal-btn-copy-email" class="btn btn-secondary" style="flex: 1;" disabled>
+                            <i data-lucide="mail"></i> <span>Copy email</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Reference -->
+    <script src="/static/app.js?v=20260619_v14"></script>
+</body>
+</html>
