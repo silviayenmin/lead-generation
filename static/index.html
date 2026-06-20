@@ -852,8 +852,8 @@
                     
                     <div class="config-split-grid">
                         
-                        <!-- Left Panel: Profile configs -->
-                        <div class="card settings-card">
+                        <!-- Profile configs -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
                             <div class="card-title">
                                 <i data-lucide="user-check"></i>
                                 <span>Profile & pitch variables</span>
@@ -887,8 +887,8 @@
                             </div>
                         </div>
 
-                        <!-- Left Panel: IMAP configuration card -->
-                        <div class="card settings-card" style="margin-top: 1.5rem;">
+                        <!-- IMAP configuration card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
                             <div class="card-title">
                                 <i data-lucide="mail"></i>
                                 <span>Inbox Sync Configuration (IMAP)</span>
@@ -933,23 +933,50 @@
                             </div>
                         </div>
 
-                        <!-- Right Panel: Live Previews -->
-                        <div class="config-preview-panel">
-                            <div class="preview-tabs-header">
-                                <button type="button" class="preview-tab-btn active" id="config-preview-tab-email">Email campaign preview</button>
-                                <button type="button" class="preview-tab-btn" id="config-preview-tab-linkedin">LinkedIn DM preview</button>
-                            </div>
+                    </div>
 
-                            <div class="card preview-card">
-                                <div id="preview-meta-fields" class="preview-meta-row">
-                                    <div class="preview-meta-item"><strong>To:</strong> <span id="preview-target-email">sarah@company.com</span></div>
-                                    <div class="preview-meta-item" id="preview-subject-container"><strong>Subject:</strong> <span id="preview-target-subject">Quick question re: design requirements</span></div>
+                    <!-- Bottom Panel: Previews full-width -->
+                    <div class="config-preview-panel" style="margin-top: 1.5rem;">
+                        <div class="preview-tabs-header">
+                            <button type="button" class="preview-tab-btn active" id="config-preview-tab-email">Email campaign preview</button>
+                            <button type="button" class="preview-tab-btn" id="config-preview-tab-linkedin">LinkedIn DM preview</button>
+                        </div>
+
+                        <div class="card preview-card">
+                            <div id="preview-meta-fields" class="preview-meta-row">
+                                <div class="preview-meta-item"><strong>To:</strong> <span id="preview-target-email">sarah@company.com</span></div>
+                                <div class="preview-meta-item" id="preview-subject-container"><strong>Subject:</strong> <span id="preview-target-subject">Quick question re: design requirements</span></div>
+                            </div>
+                            <div class="preview-body-content" id="live-pitch-preview-body">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Interactive test variables card to populate placeholders -->
+                        <div class="card test-variables-card" style="padding: 1.25rem;">
+                            <div class="card-title" style="font-size: 16px; margin-bottom: 0.5rem; border-bottom: none; padding-bottom: 0; display: flex; align-items: center; gap: 0.4rem;">
+                                <i data-lucide="sliders" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                                <span>Interactive Test Variables</span>
+                            </div>
+                            <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                                Enter sample values below to preview how custom tags render in your active pitch template.
+                            </p>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                                <div class="form-group" style="margin-bottom: 0; gap: 4px;">
+                                    <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{AuthorName}</label>
+                                    <input type="text" id="test-var-author" class="form-control" value="Sarah Jenkins" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
                                 </div>
-                                <div class="preview-body-content" id="live-pitch-preview-body">
-                                    <!-- Rendered dynamically -->
+                                <div class="form-group" style="margin-bottom: 0; gap: 4px;">
+                                    <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{CompanyName}</label>
+                                    <input type="text" id="test-var-company" class="form-control" value="Acme Corp" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0; gap: 4px;">
+                                    <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{ServiceRequired}</label>
+                                    <input type="text" id="test-var-service" class="form-control" value="React Development" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
                                 </div>
                             </div>
                         </div>
+                    </div>
 
                     </div>
                 </div>
