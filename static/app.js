@@ -435,6 +435,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnSaveSearch) btnSaveSearch.addEventListener("click", saveCurrentSearch);
     if (btnRunMonitoring) btnRunMonitoring.addEventListener("click", runActiveMonitoring);
     
+    // IMAP Configuration save & Sync triggers
+    const btnSaveImap = document.getElementById("btn-save-imap-config");
+    if (btnSaveImap) btnSaveImap.addEventListener("click", saveImapConfig);
+    
+    const btnSyncReplies = document.getElementById("btn-sync-replies-trigger");
+    if (btnSyncReplies) btnSyncReplies.addEventListener("click", syncReplies);
+    
     // Drag-and-Drop Columns Listener
     initDragAndDrop();
     
@@ -496,6 +503,7 @@ function switchTab(tabName) {
         renderArchiveLeads();
     } else if (tabName === "settings") {
         updateConfigPreview();
+        loadImapConfig();
     }
 }
 
@@ -1253,6 +1261,43 @@ function openDetailModal(lead) {
         emailBodyPlaceholder.style.display = "block";
         modalBtnSend.disabled = true;
         modalBtnCopyEmail.disabled = true;
+    }
+    
+    // Render Email Replies History inside detail drawer
+    const drawerRepliesSection = document.getElementById("drawer-replies-section");
+    const drawerRepliesList = document.getElementById("drawer-replies-list");
+    if (drawerRepliesSection && drawerRepliesList) {
+        const replies = lead.replies || [];
+        if (replies.length > 0) {
+            drawerRepliesList.innerHTML = "";
+            replies.forEach(reply => {
+                const replyCard = document.createElement("div");
+                replyCard.style.background = "rgba(255, 255, 255, 0.03)";
+                replyCard.style.border = "1px solid var(--border-color)";
+                replyCard.style.borderRadius = "8px";
+                replyCard.style.padding = "10px 12px";
+                replyCard.style.display = "flex";
+                replyCard.style.flexDirection = "column";
+                replyCard.style.gap = "0.25rem";
+                
+                replyCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+                        <strong>From: ${reply.from || "Unknown"}</strong>
+                        <span>${reply.date || ""}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin-top: 0.15rem;">
+                        Sub: ${reply.subject || "(No Subject)"}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); white-space: pre-wrap; font-style: italic; margin-top: 0.25rem; line-height: 1.3;">
+                        "${reply.snippet || ""}"
+                    </div>
+                `;
+                drawerRepliesList.appendChild(replyCard);
+            });
+            drawerRepliesSection.style.display = "block";
+        } else {
+            drawerRepliesSection.style.display = "none";
+        }
     }
     
     detailModal.classList.add("active");
@@ -3220,5 +3265,115 @@ async function logout() {
     }
     localStorage.removeItem("APP_SECRET_KEY");
     showLoginOverlay();
+}
+
+async function loadImapConfig() {
+    const imapServerInput = document.getElementById("settings-imap-server");
+    const imapPortInput = document.getElementById("settings-imap-port");
+    const imapEmailInput = document.getElementById("settings-imap-email");
+    const imapPasswordInput = document.getElementById("settings-imap-password");
+    
+    if (!imapServerInput) return;
+    
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/config", {
+            headers: { "X-API-Key": secretKey }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            const config = data.config || {};
+            imapServerInput.value = config.imap_server || "";
+            imapPortInput.value = config.imap_port || "993";
+            imapEmailInput.value = config.imap_email || "";
+            imapPasswordInput.value = config.imap_password || "";
+        }
+    } catch (err) {
+        console.error("Failed to load IMAP settings:", err);
+    }
+}
+
+async function saveImapConfig() {
+    const imapServerInput = document.getElementById("settings-imap-server");
+    const imapPortInput = document.getElementById("settings-imap-port");
+    const imapEmailInput = document.getElementById("settings-imap-email");
+    const imapPasswordInput = document.getElementById("settings-imap-password");
+    
+    if (!imapServerInput) return;
+    
+    const payload = {
+        imap_server: imapServerInput.value.trim(),
+        imap_port: imapPortInput.value.trim(),
+        imap_email: imapEmailInput.value.trim(),
+        imap_password: imapPasswordInput.value
+    };
+    
+    if (!payload.imap_server || !payload.imap_port || !payload.imap_email || !payload.imap_password) {
+        await showCustomAlert("Please fill in all IMAP settings fields.", "Incomplete Fields", "warning");
+        return;
+    }
+    
+    const btnSave = document.getElementById("btn-save-imap-config");
+    if (btnSave) btnSave.disabled = true;
+    
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/config", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": secretKey
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+            await showCustomAlert("IMAP inbox configurations saved successfully!", "Settings Saved", "success");
+        } else {
+            const errData = await response.json();
+            await showCustomAlert(errData.detail || "Failed to save IMAP configuration.", "Error Saving", "danger");
+        }
+    } catch (err) {
+        await showCustomAlert("Network error saving email configuration: " + err.message, "Connection Error", "danger");
+    } finally {
+        if (btnSave) btnSave.disabled = false;
+    }
+}
+
+async function syncReplies() {
+    const btnSync = document.getElementById("btn-sync-replies-trigger");
+    if (btnSync) {
+        btnSync.disabled = true;
+        btnSync.innerHTML = `<span class="spinner spinner-tiny"></span> Syncing...`;
+    }
+    
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/sync-replies", {
+            method: "POST",
+            headers: { "X-API-Key": secretKey }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const count = data.newRepliesCount || 0;
+            if (count > 0) {
+                await loadExistingLeads();
+                await showCustomAlert(`Success! Sync detected ${count} new email replies. Leads updated in pipeline!`, "Sync Completed", "success");
+            } else {
+                await showCustomAlert("Sync completed. No new email replies from qualified leads found.", "Sync Completed", "info");
+            }
+        } else {
+            const errData = await response.json();
+            await showCustomAlert(errData.detail || "Sync failed. Check settings credentials.", "Sync Failed", "danger");
+        }
+    } catch (err) {
+        await showCustomAlert("Network error running reply check: " + err.message, "Connection Error", "danger");
+    } finally {
+        if (btnSync) {
+            btnSync.disabled = false;
+            btnSync.innerHTML = `<i data-lucide="refresh-cw"></i> Sync Replies`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
 }
 
