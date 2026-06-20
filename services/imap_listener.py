@@ -3,6 +3,7 @@ import email
 from email.header import decode_header
 from email.utils import parseaddr
 import datetime
+import re
 
 def decode_mime_header(header_value):
     if not header_value:
@@ -18,6 +19,37 @@ def decode_mime_header(header_value):
         else:
             result_parts.append(str(fragment))
     return "".join(result_parts)
+
+def strip_reply_history(body: str) -> str:
+    if not body:
+        return ""
+        
+    # Check for inline reply quote header "On ... wrote:"
+    # This matches "On <date/time/sender> wrote:" or common translations
+    match = re.search(r'\bOn\s+[^\n]+?(?:\d{4}|\d{2})[^\n]+?(?:wrote|schrieb|a\s+écrit|escribió|writes):', body, re.IGNORECASE)
+    if match:
+        body = body[:match.start()]
+        
+    # Check common email thread separators
+    for separator in ["-----Original Message-----", "--- Original Message ---", "________________________________"]:
+        if separator in body:
+            body = body.split(separator)[0]
+            
+    lines = body.splitlines()
+    cleaned_lines = []
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        # If line is "From:" and the following lines contain other email headers, it's a quote block
+        if stripped.lower().startswith("from:") and i < len(lines) - 2:
+            next_lines = [l.strip().lower() for l in lines[i+1:i+4]]
+            if any(l.startswith("to:") for l in next_lines) and any(l.startswith("subject:") or l.startswith("sent:") or l.startswith("date:") for l in next_lines):
+                break
+        # If line starts with standard email quote prefix '>'
+        if stripped.startswith(">"):
+            break
+        cleaned_lines.append(line)
+        
+    return "\n".join(cleaned_lines).strip()
 
 def get_email_body_snippet(msg):
     body = ""
@@ -41,17 +73,34 @@ def get_email_body_snippet(msg):
         except Exception:
             pass
             
+    # Strip quoted email history
+    body = strip_reply_history(body)
+    
     # Clean whitespace and return snippet
     cleaned = " ".join(body.strip().split())
     if len(cleaned) > 250:
         return cleaned[:250] + "..."
     return cleaned or "(No plain text content)"
 
+def normalize_subject(subj: str) -> str:
+    if not subj:
+        return ""
+    s = subj.lower().strip()
+    while True:
+        found = False
+        for prefix in ["re:", "fwd:", "fw:", "reply:", "aw:", "antwort:"]:
+            if s.startswith(prefix):
+                s = s[len(prefix):].strip()
+                found = True
+        if not found:
+            break
+    # strip spaces and symbols to compare alphanumeric chars only
+    return "".join(c for c in s if c.isalnum())
+
 def sync_user_replies(user_email: str, config: dict, leads: dict) -> tuple:
     """
-    Connects to the user's IMAP mailbox, retrieves the latest 50 emails,
-    matches sender addresses against lead contact info, updates statuses to 'Replied',
-    and stores email snippets in lead details.
+    Connects to the user's IMAP mailbox, searches for messages sent by each lead's
+    configured contact email, updates status to 'Replied', and stores email snippets.
     
     Returns (new_replies_count, updated_leads_dict)
     """
@@ -77,56 +126,80 @@ def sync_user_replies(user_email: str, config: dict, leads: dict) -> tuple:
         mail.login(username, password)
         mail.select("INBOX")
         
-        # Search for all messages in the inbox
-        status, data = mail.search(None, "ALL")
-        if status != "OK":
-            return 0, leads
-            
-        mail_ids = data[0].split()
-        if not mail_ids:
-            return 0, leads
-            
-        # Inspect the latest 50 messages to keep performance high
-        latest_ids = mail_ids[-50:]
-        
-        for mid in reversed(latest_ids):
-            # Fetch message headers and body parts
-            res_status, msg_data = mail.fetch(mid, "(RFC822)")
-            if res_status != "OK" or not msg_data:
+        # Iterate over leads to perform targeted searches
+        for url, lead in updated_leads.items():
+            lead_email = (lead.get("contactInfo") or "").strip().lower()
+            if not lead_email:
                 continue
                 
-            raw_email = msg_data[0][1]
-            if not raw_email:
-                continue
-                
-            msg = email.message_from_bytes(raw_email)
-            
-            # Parse headers
-            from_header = decode_mime_header(msg.get("From"))
-            subject_header = decode_mime_header(msg.get("Subject"))
-            date_header = decode_mime_header(msg.get("Date"))
-            
-            _, from_addr = parseaddr(from_header)
-            from_addr = from_addr.strip().lower()
-            
-            if not from_addr:
-                continue
-                
-            # Find a matching lead
-            matched_url = None
-            for url, lead in updated_leads.items():
-                lead_email = (lead.get("contactInfo") or "").strip().lower()
-                if lead_email and lead_email == from_addr:
-                    matched_url = url
+            # Get outreach subject from draftEmail
+            draft_text = lead.get("draftEmail", "")
+            outreach_subject = ""
+            for line in draft_text.split("\n"):
+                if line.lower().startswith("subject:"):
+                    outreach_subject = line[8:].strip()
                     break
+            
+            norm_outreach = normalize_subject(outreach_subject)
+            
+            # Clean and filter existing replies
+            if "replies" in lead:
+                filtered_existing = []
+                for r in lead["replies"]:
+                    if "snippet" in r:
+                        r["snippet"] = strip_reply_history(r["snippet"])
                     
-            if matched_url:
-                lead = updated_leads[matched_url]
+                    if norm_outreach:
+                        if normalize_subject(r.get("subject", "")) == norm_outreach:
+                            filtered_existing.append(r)
+                    else:
+                        filtered_existing.append(r)
+                lead["replies"] = filtered_existing
+                # If all replies are removed and status was Replied, revert to Emailed
+                if not filtered_existing and lead.get("crmStatus") == "Replied":
+                    lead["crmStatus"] = "Emailed"
+
+            # Search specifically for emails sent by this lead's email address
+            status, data = mail.search(None, f'FROM "{lead_email}"')
+            if status != "OK" or not data or not data[0]:
+                continue
+                
+            mail_ids = data[0].split()
+            if not mail_ids:
+                continue
+                
+            # Inspect the latest 5 messages from this specific lead to check for new replies
+            for mid in reversed(mail_ids[-5:]):
+                res_status, msg_data = mail.fetch(mid, "(RFC822)")
+                if res_status != "OK" or not msg_data:
+                    continue
+                    
+                raw_email = msg_data[0][1]
+                if not raw_email:
+                    continue
+                    
+                msg = email.message_from_bytes(raw_email)
+                
+                # Parse headers
+                from_header = decode_mime_header(msg.get("From"))
+                subject_header = decode_mime_header(msg.get("Subject"))
+                date_header = decode_mime_header(msg.get("Date"))
+                
+                _, from_addr = parseaddr(from_header)
+                from_addr = from_addr.strip().lower()
+                
+                # Ensure the address matches exactly (IMAP search is a substring search)
+                if from_addr != lead_email:
+                    continue
+                    
+                # If we have an outreach subject, ensure the email subject matches it
+                if norm_outreach:
+                    norm_msg_subject = normalize_subject(subject_header)
+                    if norm_msg_subject != norm_outreach:
+                        continue
                 
                 # Check for existing reply to prevent duplicates
                 replies = lead.get("replies", [])
-                
-                # Simple duplicate check: match snippet and timestamp
                 snippet = get_email_body_snippet(msg)
                 
                 is_duplicate = False
@@ -156,6 +229,5 @@ def sync_user_replies(user_email: str, config: dict, leads: dict) -> tuple:
         
     except Exception as e:
         print(f"Error checking email replies via IMAP: {e}")
-        # Return what we have so far
         
     return new_replies_count, updated_leads

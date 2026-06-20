@@ -676,8 +676,8 @@ async def sync_replies_endpoint(request: Request):
     # Run sync
     new_replies, updated_db = sync_user_replies(user_email, config, db)
     
-    if new_replies > 0:
-        save_db(updated_db, user_email)
+    # Save the updated database to persist any filtered replies or status reversions
+    save_db(updated_db, user_email)
         
     return {"status": "success", "newRepliesCount": new_replies}
 
@@ -693,4 +693,5 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
     import uvicorn
+    # Trigger uvicorn reload with corrected time-matching regex
     uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)

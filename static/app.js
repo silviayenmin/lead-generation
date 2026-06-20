@@ -3369,8 +3369,19 @@ async function syncReplies() {
         if (response.ok) {
             const data = await response.json();
             const count = data.newRepliesCount || 0;
+            
+            // Always reload the leads database to pull cleaned/updated messages
+            await loadExistingLeads();
+            
+            // If the lead drawer is currently open, refresh its content with updated data
+            if (activeLead) {
+                const freshLead = leadsData.find(l => l.sourceUrl === activeLead.sourceUrl);
+                if (freshLead) {
+                    openDetailModal(freshLead);
+                }
+            }
+            
             if (count > 0) {
-                await loadExistingLeads();
                 await showCustomAlert(`Success! Sync detected ${count} new email replies. Leads updated in pipeline!`, "Sync Completed", "success");
             } else {
                 await showCustomAlert("Sync completed. No new email replies from qualified leads found.", "Sync Completed", "info");
