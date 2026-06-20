@@ -2664,6 +2664,15 @@ function initConfigPreviewTabs() {
             updateConfigPreview();
         });
     }
+
+    // Register event listeners for interactive preview test variables
+    const testVarAuthor = document.getElementById("test-var-author");
+    const testVarCompany = document.getElementById("test-var-company");
+    const testVarService = document.getElementById("test-var-service");
+    
+    if (testVarAuthor) testVarAuthor.addEventListener("input", updateConfigPreview);
+    if (testVarCompany) testVarCompany.addEventListener("input", updateConfigPreview);
+    if (testVarService) testVarService.addEventListener("input", updateConfigPreview);
 }
 
 function updateConfigPreview() {
@@ -2678,14 +2687,18 @@ function updateConfigPreview() {
     const agencyInfo = agencyInfoInput ? agencyInfoInput.value.trim() : "premier design & development services";
     const emailTone = emailToneSelect ? emailToneSelect.value : "Short & Conversational";
     
+    const testAuthorVal = document.getElementById("test-var-author")?.value.trim() || "Sarah Jenkins";
+    const testCompanyVal = document.getElementById("test-var-company")?.value.trim() || "Acme Corp";
+    const testServiceVal = document.getElementById("test-var-service")?.value.trim() || "React Development";
+    
     if (configPreviewTab === "email") {
         if (subjectContainer) subjectContainer.style.display = "block";
         if (targetEmail) targetEmail.innerText = "contact@buyercompany.com";
         if (targetSubject) targetSubject.innerText = `Outreach Pitch - ${agencyName}`;
         
-        previewBody.innerHTML = `Hi <mark>{AuthorName}</mark>,
+        previewBody.innerHTML = `Hi <mark>${testAuthorVal}</mark>,
 
-I saw your recent post mentioning that <mark>{CompanyName}</mark> is looking for support with <mark>{ServiceRequired}</mark>.
+I saw your recent post mentioning that <mark>${testCompanyVal}</mark> is looking for support with <mark>${testServiceVal}</mark>.
 
 We run <strong>${agencyName}</strong>, specializing in ${agencyInfo}. Given your requirements, I think our background aligns perfectly.
 
@@ -2697,9 +2710,9 @@ The ${agencyName} Team`;
         if (subjectContainer) subjectContainer.style.display = "none";
         if (targetEmail) targetEmail.innerText = "linkedin.com/in/decision-maker-profile";
         
-        previewBody.innerHTML = `Hey <mark>{AuthorName}</mark>!
+        previewBody.innerHTML = `Hey <mark>${testAuthorVal}</mark>!
 
-Saw your post about <mark>{CompanyName}</mark> looking for help with <mark>{ServiceRequired}</mark>. At <strong>${agencyName}</strong>, we build ${agencyInfo}.
+Saw your post about <mark>${testCompanyVal}</mark> looking for help with <mark>${testServiceVal}</mark>. At <strong>${agencyName}</strong>, we build ${agencyInfo}.
 
 I think our design/dev capabilities match your request exactly. Do you have 5 minutes to discuss this?`;
     }
