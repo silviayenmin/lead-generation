@@ -576,3 +576,28 @@ def delete_session(token: str):
     except Exception as e:
         print(f"Error deleting session in MongoDB: {e}")
 
+def save_email_config(user_email: str, config: dict) -> bool:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        result = users_col.update_one(
+            {"email": user_email.strip().lower()},
+            {"$set": {"email_config": config}}
+        )
+        return result.modified_count > 0 or result.matched_count > 0
+    except Exception as e:
+        print(f"Error saving email config in MongoDB: {e}")
+        return False
+
+def get_email_config(user_email: str) -> dict:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        user = users_col.find_one({"email": user_email.strip().lower()})
+        if user:
+            return user.get("email_config") or {}
+        return {}
+    except Exception as e:
+        print(f"Error loading email config from MongoDB: {e}")
+        return {}
+

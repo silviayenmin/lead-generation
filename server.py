@@ -42,10 +42,13 @@ from crm import (
     authenticate_user,
     create_session,
     verify_session,
-    delete_session
+    delete_session,
+    save_email_config,
+    get_email_config
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
+from services.imap_listener import sync_user_replies
 
 app = FastAPI(title="Silvia Serper Intent Discovery Platform")
 
@@ -88,6 +91,12 @@ class AuthRegisterRequest(BaseModel):
 class AuthLoginRequest(BaseModel):
     email: str
     password: str
+
+class OutreachConfigPayload(BaseModel):
+    imap_server: str
+    imap_port: str
+    imap_email: str
+    imap_password: str
 
 class SearchRequest(BaseModel):
     keyword: str
@@ -629,6 +638,48 @@ async def logout_endpoint(request: Request):
 async def verify_auth_token(request: Request):
     user = getattr(request.state, "user", None)
     return {"status": "authenticated", "user": user}
+
+@app.post("/api/outreach/config")
+async def save_outreach_config_endpoint(payload: OutreachConfigPayload, request: Request):
+    user_email = request.state.user
+    config_dict = payload.dict()
+    
+    if config_dict.get("imap_password") == "********":
+        # Keep old password
+        old_config = get_email_config(user_email)
+        config_dict["imap_password"] = old_config.get("imap_password", "")
+        
+    success = save_email_config(user_email, config_dict)
+    if success:
+        return {"status": "success", "message": "Email settings saved successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to save email settings")
+
+@app.get("/api/outreach/config")
+async def get_outreach_config_endpoint(request: Request):
+    user_email = request.state.user
+    config = get_email_config(user_email)
+    secure_config = dict(config)
+    if "imap_password" in secure_config and secure_config["imap_password"]:
+        secure_config["imap_password"] = "********"  # Mask password
+    return {"status": "success", "config": secure_config}
+
+@app.post("/api/outreach/sync-replies")
+async def sync_replies_endpoint(request: Request):
+    user_email = request.state.user
+    config = get_email_config(user_email)
+    if not config or not config.get("imap_email") or not config.get("imap_password"):
+        raise HTTPException(status_code=400, detail="IMAP settings are not configured. Please save your email settings first.")
+        
+    db = load_db(user_email)
+    
+    # Run sync
+    new_replies, updated_db = sync_user_replies(user_email, config, db)
+    
+    if new_replies > 0:
+        save_db(updated_db, user_email)
+        
+    return {"status": "success", "newRepliesCount": new_replies}
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():

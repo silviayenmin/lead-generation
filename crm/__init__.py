@@ -18,6 +18,8 @@ from .lead_database import (
     authenticate_user,
     create_session,
     verify_session,
-    delete_session
+    delete_session,
+    save_email_config,
+    get_email_config
 )
 

@@ -887,6 +887,52 @@
                             </div>
                         </div>
 
+                        <!-- Left Panel: IMAP configuration card -->
+                        <div class="card settings-card" style="margin-top: 1.5rem;">
+                            <div class="card-title">
+                                <i data-lucide="mail"></i>
+                                <span>Inbox Sync Configuration (IMAP)</span>
+                            </div>
+                            <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="settings-imap-server">IMAP Server</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="server" class="input-icon"></i>
+                                        <input type="text" id="settings-imap-server" class="form-control" placeholder="e.g. imap.gmail.com" style="padding-left: 2.25rem;">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="settings-imap-port">IMAP Port</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="hash" class="input-icon"></i>
+                                        <input type="text" id="settings-imap-port" class="form-control" placeholder="e.g. 993" style="padding-left: 2.25rem;">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="settings-imap-email">Email Address</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="mail" class="input-icon"></i>
+                                        <input type="email" id="settings-imap-email" class="form-control" placeholder="e.g. name@gmail.com" style="padding-left: 2.25rem;">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="settings-imap-password">App Password</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="key-round" class="input-icon"></i>
+                                        <input type="password" id="settings-imap-password" class="form-control" placeholder="e.g. abcd efgh ijkl mnop" style="padding-left: 2.25rem;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                    <button type="button" id="btn-save-imap-config" class="btn btn-primary flex-1">
+                                        <i data-lucide="save"></i> Save Settings
+                                    </button>
+                                    <button type="button" id="btn-sync-replies-trigger" class="btn btn-glow-outline flex-1">
+                                        <i data-lucide="refresh-cw"></i> Sync Replies
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Right Panel: Live Previews -->
                         <div class="config-preview-panel">
                             <div class="preview-tabs-header">
@@ -1062,6 +1108,16 @@
                     
                     <textarea id="modal-email-body" class="form-control textarea-email input-padding-x-sm" placeholder="Personalized pitch text..."></textarea>
                     <div id="email-body-placeholder" class="email-placeholder">Click 'Generate AI pitch' to write email automatically based on lead need & agency settings.</div>
+                </div>
+
+                <div class="detail-section replies-history-section" id="drawer-replies-section" style="display: none; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                    <label class="label-small-bold" style="display: flex; align-items: center; gap: 0.5rem; color: var(--secondary); margin-bottom: 0.5rem;">
+                        <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>
+                        <span>Replies History</span>
+                    </label>
+                    <div id="drawer-replies-list" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem;">
+                        <!-- Rendered dynamically -->
+                    </div>
                 </div>
 
                 <div class="drawer-action-buttons">
