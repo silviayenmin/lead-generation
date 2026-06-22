@@ -1602,6 +1602,14 @@ async function enrichContactEmail() {
         activeLead.contactInfo = data.contactInfo;
         modalContactInfo.value = data.contactInfo;
         
+        activeLead.contactSource = data.contactSource || "guessed";
+        activeLead.contactConfidence = data.contactConfidence || "low";
+        
+        const modalContactSourceElement = document.getElementById("modal-contact-source");
+        const modalContactConfidenceElement = document.getElementById("modal-contact-confidence");
+        if (modalContactSourceElement) modalContactSourceElement.innerText = activeLead.contactSource;
+        if (modalContactConfidenceElement) modalContactConfidenceElement.innerText = activeLead.contactConfidence;
+        
         const idx = leadsData.findIndex(l => l.sourceUrl === activeLead.sourceUrl);
         if (idx !== -1) {
             leadsData[idx] = { ...activeLead };

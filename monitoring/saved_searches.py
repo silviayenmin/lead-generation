@@ -200,6 +200,10 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
                     lead_data["contactSource"] = enrichment_info.get("contactSource")
                     lead_data["contactConfidence"] = enrichment_info.get("contactConfidence")
                     
+                    # Extract companyName from enrichment APIs if not already present
+                    if is_empty_value(lead_data.get("companyName")) and enrichment_info.get("companyName"):
+                        lead_data["companyName"] = validate_company_name(enrichment_info.get("companyName"))
+                    
                     # If this is a new URL, set to New Discovery
                     if is_new:
                         lead_data["crmStatus"] = "New Discovery"
