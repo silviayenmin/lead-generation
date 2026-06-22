@@ -1186,7 +1186,21 @@ function openDetailModal(lead) {
     
     modalAuthorName.value = lead.authorName || "";
     modalCompanyName.value = lead.companyName || "";
-    modalBuyingIntent.value = lead.buyingIntent || "Unknown";
+    let rawIntent = String(lead.buyingIntent || "").toLowerCase();
+    let cleanIntent = "Unknown";
+    if (rawIntent.includes("high")) cleanIntent = "High";
+    else if (rawIntent.includes("hiring")) cleanIntent = "Hiring";
+    else if (rawIntent.includes("research")) cleanIntent = "Research";
+    else if (rawIntent.includes("low")) cleanIntent = "Low";
+    else if (rawIntent.includes("none") || rawIntent.includes("no intent")) cleanIntent = "None";
+    else if (rawIntent) {
+        if (rawIntent.includes("looking for") || rawIntent.includes("need") || rawIntent.includes("services") || rawIntent.includes("develop") || rawIntent.includes("design") || rawIntent.includes("freelance") || rawIntent.includes("partner")) {
+            cleanIntent = "High";
+        } else {
+            cleanIntent = "Unknown";
+        }
+    }
+    modalBuyingIntent.value = cleanIntent;
     modalServiceRequired.value = Array.isArray(lead.serviceRequired)
         ? lead.serviceRequired.join(", ")
         : (lead.serviceRequired || "");

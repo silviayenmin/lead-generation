@@ -37,6 +37,7 @@ from crm import (
     is_empty_value,
     validate_author_name,
     validate_company_name,
+    delete_lead_from_db,
     delete_search_from_db,
     create_user,
     authenticate_user,
@@ -44,7 +45,9 @@ from crm import (
     verify_session,
     delete_session,
     save_email_config,
-    get_email_config
+    get_email_config,
+    is_facebook_fallback_name,
+    extract_author_from_email_or_url
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
@@ -207,7 +210,7 @@ async def run_search(payload: SearchRequest, request: Request):
                     author = await asyncio.to_thread(extract_fallback_author, title, source_url)
                 
                 # Apply author name validation
-                author = validate_author_name(author)
+                author = validate_author_name(author, lead.get("platform"))
                 lead["authorName"] = author
                 
                 # Apply company name validation
@@ -237,6 +240,16 @@ async def run_search(payload: SearchRequest, request: Request):
                 lead["contactSource"] = enrich_details.get("contactSource")
                 lead["contactConfidence"] = enrich_details.get("contactConfidence")
                 
+                # Update authorName if we found a valid email address and current authorName is fallback/Unknown
+                if not is_empty_value(c_info):
+                    current_author = lead.get("authorName")
+                    if is_empty_value(current_author) or (lead.get("platform") == "facebook" and is_facebook_fallback_name(current_author, source_url)):
+                        email_author = extract_author_from_email_or_url(c_info, source_url)
+                        if email_author and email_author != "Unknown":
+                            validated_email_author = validate_author_name(email_author, lead.get("platform"))
+                            if validated_email_author and validated_email_author != "Unknown":
+                                lead["authorName"] = validated_email_author
+                
                 # Print debug information (Requirement 5)
                 print("\n" + "="*50)
                 print(f"Original Title: {title}")
@@ -251,7 +264,7 @@ async def run_search(payload: SearchRequest, request: Request):
                 print(f"Error classifying lead {title}: {err}")
                 # Fallback
                 fallback_author = await asyncio.to_thread(extract_fallback_author, title, source_url)
-                fallback_author = validate_author_name(fallback_author)
+                fallback_author = validate_author_name(fallback_author, determine_lead_platform(source_url))
                 fallback_lead = {
                     "authorName": fallback_author,
                     "companyName": "Not Specified",
@@ -409,8 +422,6 @@ async def update_lead_crm(payload: UpdateCRMRequest, request: Request):
     db[payload.sourceUrl]["crmStatus"] = payload.crmStatus
     db[payload.sourceUrl]["draftEmail"] = payload.draftEmail
     
-    if payload.authorName is not None:
-        db[payload.sourceUrl]["authorName"] = payload.authorName
     if payload.companyName is not None:
         db[payload.sourceUrl]["companyName"] = payload.companyName
     if payload.buyingIntent is not None:
@@ -427,6 +438,20 @@ async def update_lead_crm(payload: UpdateCRMRequest, request: Request):
         db[payload.sourceUrl]["needDescription"] = payload.needDescription
     if payload.contactInfo is not None:
         db[payload.sourceUrl]["contactInfo"] = payload.contactInfo
+        
+        # Auto-update authorName if email is provided and current authorName is Unknown/fallback
+        if not is_empty_value(payload.contactInfo):
+            current_author = db[payload.sourceUrl].get("authorName")
+            lead_plat = db[payload.sourceUrl].get("platform")
+            if is_empty_value(current_author) or (lead_plat == "facebook" and is_facebook_fallback_name(current_author, payload.sourceUrl)):
+                email_author = extract_author_from_email_or_url(payload.contactInfo, payload.sourceUrl)
+                if email_author and email_author != "Unknown":
+                    validated_email_author = validate_author_name(email_author, lead_plat)
+                    if validated_email_author and validated_email_author != "Unknown":
+                        db[payload.sourceUrl]["authorName"] = validated_email_author
+
+    if payload.authorName is not None:
+        db[payload.sourceUrl]["authorName"] = payload.authorName
     if payload.platform is not None:
         db[payload.sourceUrl]["platform"] = payload.platform
         
@@ -475,6 +500,7 @@ async def enrich_lead_contact(payload: EnrichContactRequest, request: Request):
     if is_empty_value(author):
         title = fetch_title_from_url(payload.sourceUrl)
         author = extract_fallback_author(title, payload.sourceUrl)
+        author = validate_author_name(author, lead.get("platform"))
         lead["authorName"] = author
         
     company = lead.get("companyName")
@@ -505,6 +531,16 @@ async def enrich_lead_contact(payload: EnrichContactRequest, request: Request):
     lead["contactInfo"] = c_info
     lead["contactSource"] = enrichment_info.get("contactSource")
     lead["contactConfidence"] = enrichment_info.get("contactConfidence")
+    
+    # Auto-update authorName if email is provided and current authorName is Unknown/fallback
+    if not is_empty_value(c_info):
+        current_author = lead.get("authorName")
+        if is_empty_value(current_author) or (lead.get("platform") == "facebook" and is_facebook_fallback_name(current_author, payload.sourceUrl)):
+            email_author = extract_author_from_email_or_url(c_info, payload.sourceUrl)
+            if email_author and email_author != "Unknown":
+                validated_email_author = validate_author_name(email_author, lead.get("platform"))
+                if validated_email_author and validated_email_author != "Unknown":
+                    lead["authorName"] = validated_email_author
     
     db[payload.sourceUrl] = lead
     save_db(db, user_email)
@@ -693,5 +729,5 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
     import uvicorn
-    # Trigger uvicorn reload with corrected time-matching regex
+    # Trigger uvicorn reload with database-based fallback name resolver logic
     uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)

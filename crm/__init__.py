@@ -20,6 +20,8 @@ from .lead_database import (
     verify_session,
     delete_session,
     save_email_config,
-    get_email_config
+    get_email_config,
+    is_facebook_fallback_name,
+    extract_author_from_email_or_url
 )
 

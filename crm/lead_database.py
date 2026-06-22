@@ -159,6 +159,94 @@ def run_db_migration(db):
         except Exception as e:
             print(f"Error during searches migration to MongoDB: {e}")
 
+def is_facebook_fallback_name(author_name: str, url: str) -> bool:
+    if not url or "facebook.com" not in url.lower() or not author_name:
+        return False
+    fb_username = ""
+    url_lower = url.lower()
+    try:
+        if "/groups/" in url_lower:
+            idx = url_lower.find("facebook.com/groups/")
+            if idx != -1:
+                part_after = url[idx + len("facebook.com/groups/"):]
+                fb_username = part_after.split("/")[0].split("?")[0].strip()
+        else:
+            idx = url_lower.find("facebook.com/")
+            if idx != -1:
+                part_after = url[idx + len("facebook.com/"):]
+                segment = part_after.split("/")[0].split("?")[0].strip()
+                if segment and segment not in ["posts", "photos", "videos", "watch", "share", "groups", "pages", "events"]:
+                    fb_username = segment
+    except Exception:
+        pass
+
+    if not fb_username:
+        return False
+
+    import re
+    split_camel = re.sub(r'(?<!^)(?=[A-Z])', ' ', fb_username)
+    username_clean = split_camel.replace("-", " ").replace(".", " ").replace("_", " ")
+    words = username_clean.split()
+    cleaned_words = []
+    for w in words:
+        clean_w = "".join(c for c in w if c.isalpha())
+        if clean_w:
+            cleaned_words.append(clean_w.capitalize())
+    
+    cleaned_fallback = " ".join(cleaned_words)
+    return author_name.lower().strip() == cleaned_fallback.lower().strip()
+
+def extract_author_from_email_or_url(email_val: str, url_val: str) -> str:
+    # 1. Try to extract from email address username first (more accurate/person-specific)
+    if email_val and "@" in email_val:
+        try:
+            username = email_val.split("@")[0].strip()
+            # Avoid generic emails
+            generic_usernames = {"info", "contact", "admin", "hello", "support", "sales", "jobs", "team", "office", "marketing", "hr", "careers", "staff", "inbox"}
+            if username.lower() not in generic_usernames:
+                cleaned = username.replace(".", " ").replace("-", " ").replace("_", " ")
+                words = cleaned.split()
+                cleaned_words = []
+                for w in words:
+                    clean_w = "".join(c for c in w if c.isalpha())
+                    if clean_w:
+                        cleaned_words.append(clean_w.capitalize())
+                if cleaned_words:
+                    return " ".join(cleaned_words)
+        except Exception:
+            pass
+
+    # 2. Try to extract from URL if it's a Facebook profile/page/group post
+    if url_val and "facebook.com" in url_val.lower():
+        url_lower = url_val.lower()
+        try:
+            segment = None
+            if "/groups/" in url_lower:
+                parts = url_val.split("facebook.com/groups/")
+                if len(parts) > 1:
+                    segment = parts[1].split("/")[0].split("?")[0].strip()
+            elif "permalink.php" not in url_lower and "profile.php" not in url_lower:
+                parts = url_val.split("facebook.com/")
+                if len(parts) > 1:
+                    segment = parts[1].split("/")[0].split("?")[0].strip()
+
+            if segment and segment not in ["posts", "photos", "videos", "watch", "share", "groups", "pages", "events"]:
+                import re
+                split_camel = re.sub(r'(?<!^)(?=[A-Z])', ' ', segment)
+                cleaned = split_camel.replace(".", " ").replace("-", " ").replace("_", " ")
+                words = cleaned.split()
+                cleaned_words = []
+                for w in words:
+                    clean_w = "".join(c for c in w if c.isalpha())
+                    if clean_w:
+                        cleaned_words.append(clean_w.capitalize())
+                if cleaned_words:
+                    return " ".join(cleaned_words)
+        except Exception:
+            pass
+
+    return "Unknown"
+
 def load_db(user_email: str):
     with _db_lock:
         try:
@@ -195,6 +283,24 @@ def load_db(user_email: str):
                 if "platform" not in lead or not lead.get("platform"):
                     lead["platform"] = determine_lead_platform(url)
                     leads_col.update_one({"sourceUrl": url, "user_email": user_email}, {"$set": {"platform": lead["platform"]}})
+                    
+                author = lead.get("authorName", "Unknown")
+                
+                # Check if we should update with name from email if email is present
+                should_update = False
+                if author == "Unknown" or not author:
+                    should_update = True
+                elif lead.get("platform") == "facebook" and is_facebook_fallback_name(author, url):
+                    should_update = True
+                
+                if should_update:
+                    fallback_name = extract_author_from_email_or_url(lead.get("contactInfo"), lead.get("sourceUrl"))
+                    if fallback_name and fallback_name != "Unknown":
+                        # Validate the extracted author name before updating
+                        validated_name = validate_author_name(fallback_name, lead.get("platform"))
+                        if validated_name and validated_name != "Unknown":
+                            lead["authorName"] = validated_name
+                            leads_col.update_one({"sourceUrl": url, "user_email": user_email}, {"$set": {"authorName": validated_name}})
                     
             return leads
         except Exception as e:
@@ -279,26 +385,53 @@ def clean_json_response(response_text):
     return cleaned
 
 def extract_fallback_author(title: str, url: str) -> str:
+    def normalize_link(l: str) -> str:
+        if not l: return ""
+        l_lower = l.lower().strip()
+        for prefix in ["https://", "http://"]:
+            if l_lower.startswith(prefix):
+                l_lower = l_lower[len(prefix):]
+        if "facebook.com" in l_lower:
+            idx = l_lower.find("facebook.com")
+            l_lower = l_lower[idx:]
+        elif "linkedin.com" in l_lower:
+            idx = l_lower.find("linkedin.com")
+            l_lower = l_lower[idx:]
+        return l_lower.strip("/")
+
+    platform = determine_lead_platform(url)
     if title:
         if "on LinkedIn" in title:
             author = title.split("on LinkedIn")[0].strip()
-            if author: return author
+            if author:
+                validated = validate_author_name(author, platform)
+                if validated and validated != "Unknown":
+                    return validated
         for suffix in [" | Facebook", " - Facebook", " on Facebook"]:
             if suffix in title:
                 author = title.split(suffix)[0].strip()
                 if " - " in author:
                     author = author.split(" - ")[0].strip()
-                if author: return author
+                if author:
+                    validated = validate_author_name(author, platform)
+                    if validated and validated != "Unknown":
+                        return validated
         for suffix in [" on X", " | Twitter", " - Twitter", " / X"]:
             if suffix in title:
                 author = title.split(suffix)[0].strip()
                 if "(" in author and "@" in author:
                     author = author.split("(")[0].strip()
-                if author: return author
+                if author:
+                    validated = validate_author_name(author, platform)
+                    if validated and validated != "Unknown":
+                        return validated
         for suffix in [" : reddit", " | reddit", " - reddit", " on reddit"]:
             if suffix in title:
                 author = title.split(suffix)[0].strip()
-                if author: return author
+                if author:
+                    validated = validate_author_name(author, platform)
+                    if validated and validated != "Unknown":
+                        return validated
 
     username = ""
     if "linkedin.com/posts/" in url:
@@ -328,18 +461,37 @@ def extract_fallback_author(title: str, url: str) -> str:
 
     if username:
         try:
-            profile_query = f'site:linkedin.com/in/ {username}'
+            profile_query = f'linkedin.com/in/{username}'
             profile_results = search_leads(profile_query, tbs="")
             if profile_results:
-                top_title = profile_results[0].get("title", "")
-                for delim in [" - ", " | ", " @ ", " on LinkedIn"]:
-                    if delim in top_title:
-                        top_title = top_title.split(delim)[0]
-                cleaned_name = top_title.strip()
-                if "(" in cleaned_name:
-                    cleaned_name = cleaned_name.split("(")[0].strip()
-                if cleaned_name and len(cleaned_name.split()) >= 2:
-                    return cleaned_name
+                expected_normalized = f'linkedin.com/in/{username.lower()}'
+                # Try exact link match first
+                for r in profile_results[:10]:
+                    if normalize_link(r.get("link", "")) == expected_normalized:
+                        top_title = r.get("title", "")
+                        for delim in [" - ", " | ", " @ ", " on LinkedIn"]:
+                            if delim in top_title:
+                                top_title = top_title.split(delim)[0]
+                        cleaned_name = top_title.strip()
+                        if "(" in cleaned_name:
+                            cleaned_name = cleaned_name.split("(")[0].strip()
+                        if cleaned_name and len(cleaned_name.split()) >= 2:
+                            validated = validate_author_name(cleaned_name, "linkedin")
+                            if validated and validated != "Unknown":
+                                return validated
+                # Fallback to checking top 5
+                for r in profile_results[:5]:
+                    top_title = r.get("title", "")
+                    for delim in [" - ", " | ", " @ ", " on LinkedIn"]:
+                        if delim in top_title:
+                            top_title = top_title.split(delim)[0]
+                    cleaned_name = top_title.strip()
+                    if "(" in cleaned_name:
+                        cleaned_name = cleaned_name.split("(")[0].strip()
+                    if cleaned_name and len(cleaned_name.split()) >= 2:
+                        validated = validate_author_name(cleaned_name, "linkedin")
+                        if validated and validated != "Unknown":
+                            return validated
         except Exception as e:
             print(f"Error fetching profile name for username {username}: {e}")
 
@@ -351,10 +503,117 @@ def extract_fallback_author(title: str, url: str) -> str:
                 cleaned_words.append(w.capitalize())
         if cleaned_words:
             return " ".join(cleaned_words)
+
+    # 2. Handle Facebook profile lookup using Serper search and fallbacks
+    fb_username = ""
+    if url and "facebook.com" in url.lower():
+        url_lower = url.lower()
+        try:
+            if "/groups/" in url_lower:
+                idx = url_lower.find("facebook.com/groups/")
+                if idx != -1:
+                    part_after = url[idx + len("facebook.com/groups/"):]
+                    fb_username = part_after.split("/")[0].split("?")[0].strip()
+            elif "profile.php" in url_lower:
+                import urllib.parse as urlparse
+                parsed = urlparse.urlparse(url)
+                qs = urlparse.parse_qs(parsed.query)
+                if "id" in qs and qs["id"]:
+                    fb_username = qs["id"][0].strip()
+            elif "permalink.php" not in url_lower:
+                idx = url_lower.find("facebook.com/")
+                if idx != -1:
+                    part_after = url[idx + len("facebook.com/"):]
+                    segment = part_after.split("/")[0].split("?")[0].strip()
+                    if segment and segment not in ["posts", "photos", "videos", "watch", "share", "groups", "pages", "events"]:
+                        fb_username = segment
+        except Exception:
+            pass
+
+    if fb_username:
+        try:
+            if "/groups/" in url.lower():
+                profile_query = f'facebook.com/groups/{fb_username}'
+                expected_normalized = f'facebook.com/groups/{fb_username.lower()}'
+            else:
+                profile_query = f'facebook.com/{fb_username}'
+                expected_normalized = f'facebook.com/{fb_username.lower()}'
+                
+            profile_results = search_leads(profile_query, tbs="")
+            if profile_results:
+                # Try exact link match first
+                for r in profile_results[:10]:
+                    if normalize_link(r.get("link", "")) == expected_normalized:
+                        top_title = r.get("title", "")
+                        for suffix in [" | Facebook", " - Facebook", " on Facebook", " | Page", " - Page"]:
+                            if suffix.lower() in top_title.lower():
+                                idx = top_title.lower().find(suffix.lower())
+                                top_title = top_title[:idx]
+                        for delim in [" - ", " | ", " @ "]:
+                            if delim in top_title:
+                                top_title = top_title.split(delim)[0]
+                        cleaned_name = top_title.strip()
+                        if "(" in cleaned_name:
+                            cleaned_name = cleaned_name.split("(")[0].strip()
+                        
+                        noise_words = {"log into facebook", "facebook", "log in", "sign up", "security check", "welcome to facebook"}
+                        is_noise = False
+                        for noise in noise_words:
+                            if noise in cleaned_name.lower():
+                                is_noise = True
+                                break
+                        
+                        if not is_noise and cleaned_name and len(cleaned_name.split()) >= 2:
+                            validated = validate_author_name(cleaned_name, "facebook")
+                            if validated and validated != "Unknown":
+                                return validated
+                                
+                # Fallback to checking top 5 (only if not a numeric ID)
+                if not fb_username.isdigit():
+                    for r in profile_results[:5]:
+                        top_title = r.get("title", "")
+                        for suffix in [" | Facebook", " - Facebook", " on Facebook", " | Page", " - Page"]:
+                            if suffix.lower() in top_title.lower():
+                                idx = top_title.lower().find(suffix.lower())
+                                top_title = top_title[:idx]
+                        for delim in [" - ", " | ", " @ "]:
+                            if delim in top_title:
+                                top_title = top_title.split(delim)[0]
+                        cleaned_name = top_title.strip()
+                        if "(" in cleaned_name:
+                            cleaned_name = cleaned_name.split("(")[0].strip()
+                        
+                        noise_words = {"log into facebook", "facebook", "log in", "sign up", "security check", "welcome to facebook"}
+                        is_noise = False
+                        for noise in noise_words:
+                            if noise in cleaned_name.lower():
+                                is_noise = True
+                                break
+                        
+                        if not is_noise and cleaned_name and len(cleaned_name.split()) >= 2:
+                            validated = validate_author_name(cleaned_name, "facebook")
+                            if validated and validated != "Unknown":
+                                return validated
+        except Exception as e:
+            print(f"Error fetching profile name for Facebook username {fb_username}: {e}")
+
+        # Fallback if search returns noise or empty, clean the username segment
+        if not fb_username.isdigit():
+            import re
+            split_camel = re.sub(r'(?<!^)(?=[A-Z])', ' ', fb_username)
+            username_clean = split_camel.replace("-", " ").replace(".", " ").replace("_", " ")
+            words = username_clean.split()
+            cleaned_words = []
+            for w in words:
+                clean_w = "".join(c for c in w if c.isalpha())
+                if clean_w:
+                    cleaned_words.append(clean_w.capitalize())
+            if cleaned_words:
+                return " ".join(cleaned_words)
             
     return "Unknown"
 
-def validate_author_name(author: str) -> str:
+def validate_author_name(author: str, platform: str = None) -> str:
     if not author or is_empty_value(author):
         return "Unknown"
     
@@ -364,8 +623,9 @@ def validate_author_name(author: str) -> str:
     if "?" in author_clean:
         return "Unknown"
         
-    # 2. Reject names with more than 3 words
-    if len(author_clean.split()) > 3:
+    # 2. Reject names with more than 3 words (relaxed to 6 words for facebook to support page/group names)
+    max_words = 6 if platform == "facebook" else 3
+    if len(author_clean.split()) > max_words:
         return "Unknown"
         
     # 3. Reject names containing specific phrases (case-insensitive)
