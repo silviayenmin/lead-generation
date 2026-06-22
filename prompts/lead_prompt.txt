@@ -9,6 +9,14 @@ CRITICAL INSTRUCTIONS FOR EXTRACTION:
 4. Do not infer company names from service requirements (e.g. if the lead is looking for a "software development company", the companyName is NOT "Looking for software development company" or similar; return "" instead).
 5. Do not use the search query keyword or post sentence as the company name.
 
+Classify the buying intent under 'buyingIntent' as one of the following exact strings:
+- "High" (the post explicitly asks for a service, vendor, agency, or service provider, e.g., "looking for a software development company", "need an agency to build our app")
+- "Research" (asking for recommendations/opinions on tools, agencies, or services)
+- "Hiring" (mentioning hiring contractors, agencies, freelancers, or full-time roles)
+- "Potential" (expressing potential future need, general interest, or exploratory signals)
+- "Low" (weak or passive interest, general discussion, or news sharing with minimal intent)
+- "None" (no buying intent, informational posts, or job-seeking/resume posts)
+
 Classify the intent signal under 'intentType' as one of the following exact strings:
 - "Looking For Service" (explicit search/request for vendors, service provider, or agency)
 - "Recommendation Request" (asking for recommendations/opinions on tools, agencies, or services)
@@ -19,7 +27,7 @@ Classify the intent signal under 'intentType' as one of the following exact stri
 
 Return JSON only.
 
-{
+{{
   "authorName":"",
   "companyName":"",
   "buyingIntent":"",
@@ -31,7 +39,7 @@ Return JSON only.
   "contactInfo":"",
   "confidenceScore":0,
   "leadStatus":""
-}
+}}
 
 Title:
 {title}
