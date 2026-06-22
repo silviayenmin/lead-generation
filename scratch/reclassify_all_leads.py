@@ -48,6 +48,7 @@ def reclassify_leads():
                 doc["industry"] = classified.get("industry", "Unknown")
                 doc["location"] = classified.get("location", "Unknown")
                 doc["needDescription"] = classified.get("needDescription") or doc.get("needDescription") or ""
+                doc["leadStatus"] = classified.get("leadStatus") or "Unqualified"
                 
                 # Check author name
                 author = classified.get("authorName")

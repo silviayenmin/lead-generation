@@ -371,14 +371,17 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (archiveFilterPlatform) archiveFilterPlatform.addEventListener("change", () => {
         archiveCurrentPage = 1;
+        if (typeof syncPillsToDropdowns === "function") syncPillsToDropdowns();
         renderArchiveLeads();
     });
     if (archiveFilterStatus) archiveFilterStatus.addEventListener("change", () => {
         archiveCurrentPage = 1;
+        if (typeof syncPillsToDropdowns === "function") syncPillsToDropdowns();
         renderArchiveLeads();
     });
     if (archiveFilterCrm) archiveFilterCrm.addEventListener("change", () => {
         archiveCurrentPage = 1;
+        if (typeof syncPillsToDropdowns === "function") syncPillsToDropdowns();
         renderArchiveLeads();
     });
 
@@ -787,8 +790,25 @@ function renderLeads() {
     const searchVal = globalSearch ? globalSearch.value.trim().toLowerCase() : "";
     
     const filtered = leadsData.filter(lead => {
-        const leadStatus = String(lead.leadStatus || "").toLowerCase();
-        const statusMatch = statusVal === "all" || leadStatus.includes(statusVal);
+        const leadStatus = String(lead.leadStatus || "").toLowerCase().trim();
+        let statusMatch = false;
+        if (statusVal === "all") {
+            statusMatch = true;
+        } else if (statusVal === "qualified") {
+            statusMatch = (leadStatus === "qualified" || leadStatus === "new lead" || leadStatus === "new");
+        } else if (statusVal === "unqualified") {
+            statusMatch = (leadStatus === "unqualified" || leadStatus === "not qualified" || leadStatus === "disqualified");
+        } else if (statusVal === "warm lead") {
+            statusMatch = (leadStatus === "warm lead" || leadStatus === "warm");
+        } else if (statusVal === "potential lead") {
+            statusMatch = (leadStatus === "potential lead" || leadStatus === "potential" || leadStatus === "cold lead" || leadStatus === "cold");
+        } else if (statusVal === "not a lead") {
+            statusMatch = (leadStatus === "not a lead" || leadStatus === "not lead");
+        } else if (statusVal === "informational") {
+            statusMatch = (leadStatus === "informational" || leadStatus === "information");
+        } else {
+            statusMatch = (leadStatus === statusVal || leadStatus.includes(statusVal));
+        }
         
         const leadCrm = String(lead.crmStatus || "New").toLowerCase();
         const crmMatch = crmVal === "all" || leadCrm === crmVal;
@@ -2156,8 +2176,25 @@ function renderArchiveLeads() {
             if ((lead.crmStatus || "").toLowerCase() !== "replied") return false;
         }
 
-        const leadStatus = String(lead.leadStatus || "").toLowerCase();
-        const statusMatch = statusVal === "all" || leadStatus.includes(statusVal);
+        const leadStatus = String(lead.leadStatus || "").toLowerCase().trim();
+        let statusMatch = false;
+        if (statusVal === "all") {
+            statusMatch = true;
+        } else if (statusVal === "qualified") {
+            statusMatch = (leadStatus === "qualified" || leadStatus === "new lead" || leadStatus === "new");
+        } else if (statusVal === "unqualified") {
+            statusMatch = (leadStatus === "unqualified" || leadStatus === "not qualified" || leadStatus === "disqualified");
+        } else if (statusVal === "warm lead") {
+            statusMatch = (leadStatus === "warm lead" || leadStatus === "warm");
+        } else if (statusVal === "potential lead") {
+            statusMatch = (leadStatus === "potential lead" || leadStatus === "potential" || leadStatus === "cold lead" || leadStatus === "cold");
+        } else if (statusVal === "not a lead") {
+            statusMatch = (leadStatus === "not a lead" || leadStatus === "not lead");
+        } else if (statusVal === "informational") {
+            statusMatch = (leadStatus === "informational" || leadStatus === "information");
+        } else {
+            statusMatch = (leadStatus === statusVal || leadStatus.includes(statusVal));
+        }
         
         const leadCrm = String(lead.crmStatus || "New").toLowerCase();
         const crmMatch = crmVal === "all" || leadCrm === crmVal;
@@ -2493,6 +2530,35 @@ function initWizard() {
     updateWizardUI();
 }
 
+function syncPillsToDropdowns() {
+    const viewAllBtn = document.getElementById("archive-view-all");
+    const viewHighBtn = document.getElementById("archive-view-high");
+    const viewLiBtn = document.getElementById("archive-view-li");
+    const viewFbBtn = document.getElementById("archive-view-fb");
+    const viewRepliedBtn = document.getElementById("archive-view-replied");
+    const viewsPills = [viewAllBtn, viewHighBtn, viewLiBtn, viewFbBtn, viewRepliedBtn];
+    
+    viewsPills.forEach(btn => { if (btn) btn.classList.remove("active"); });
+    
+    const platform = archiveFilterPlatform ? archiveFilterPlatform.value : "all";
+    const crm = archiveFilterCrm ? archiveFilterCrm.value : "all";
+    
+    if (platform === "linkedin") {
+        archiveViewFilter = "all";
+        if (viewLiBtn) viewLiBtn.classList.add("active");
+    } else if (platform === "facebook") {
+        archiveViewFilter = "all";
+        if (viewFbBtn) viewFbBtn.classList.add("active");
+    } else if (crm.toLowerCase() === "replied") {
+        archiveViewFilter = "all";
+        if (viewRepliedBtn) viewRepliedBtn.classList.add("active");
+    } else if (archiveViewFilter === "high") {
+        if (viewHighBtn) viewHighBtn.classList.add("active");
+    } else {
+        if (viewAllBtn) viewAllBtn.classList.add("active");
+    }
+}
+
 // Archive Views buttons
 function initArchiveViews() {
     const viewAllBtn = document.getElementById("archive-view-all");
@@ -2505,6 +2571,28 @@ function initArchiveViews() {
     
     function setArchiveViewFilter(mode, activeBtn) {
         archiveViewFilter = mode;
+        if (mode === "linkedin") {
+            if (archiveFilterPlatform) archiveFilterPlatform.value = "linkedin";
+            if (archiveFilterCrm) archiveFilterCrm.value = "all";
+            archiveViewFilter = "all";
+        } else if (mode === "facebook") {
+            if (archiveFilterPlatform) archiveFilterPlatform.value = "facebook";
+            if (archiveFilterCrm) archiveFilterCrm.value = "all";
+            archiveViewFilter = "all";
+        } else if (mode === "replied") {
+            if (archiveFilterCrm) archiveFilterCrm.value = "Replied";
+            if (archiveFilterPlatform) archiveFilterPlatform.value = "all";
+            archiveViewFilter = "all";
+        } else if (mode === "all") {
+            if (archiveFilterPlatform) archiveFilterPlatform.value = "all";
+            if (archiveFilterCrm) archiveFilterCrm.value = "all";
+            if (archiveFilterStatus) archiveFilterStatus.value = "all";
+        } else if (mode === "high") {
+            if (archiveFilterPlatform) archiveFilterPlatform.value = "all";
+            if (archiveFilterCrm) archiveFilterCrm.value = "all";
+            if (archiveFilterStatus) archiveFilterStatus.value = "all";
+        }
+        
         viewsPills.forEach(btn => {
             if (btn) btn.classList.remove("active");
         });
