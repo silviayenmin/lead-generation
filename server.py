@@ -240,6 +240,10 @@ async def run_search(payload: SearchRequest, request: Request):
                 lead["contactSource"] = enrich_details.get("contactSource")
                 lead["contactConfidence"] = enrich_details.get("contactConfidence")
                 
+                # Extract companyName from enrichment APIs if not already present
+                if is_empty_value(lead.get("companyName")) and enrich_details.get("companyName"):
+                    lead["companyName"] = validate_company_name(enrich_details.get("companyName"))
+                
                 # Update authorName if we found a valid email address and current authorName is fallback/Unknown
                 if not is_empty_value(c_info):
                     current_author = lead.get("authorName")
@@ -531,6 +535,10 @@ async def enrich_lead_contact(payload: EnrichContactRequest, request: Request):
     lead["contactInfo"] = c_info
     lead["contactSource"] = enrichment_info.get("contactSource")
     lead["contactConfidence"] = enrichment_info.get("contactConfidence")
+    
+    # Extract companyName from enrichment APIs if not already present
+    if is_empty_value(lead.get("companyName")) and enrichment_info.get("companyName"):
+        lead["companyName"] = validate_company_name(enrichment_info.get("companyName"))
     
     # Auto-update authorName if email is provided and current authorName is Unknown/fallback
     if not is_empty_value(c_info):

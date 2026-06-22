@@ -50,14 +50,17 @@ class ApolloEnricher(BaseEnricher):
             first = parts[0] if parts else ""
             last = parts[1] if len(parts) > 1 else ""
 
+            json_payload = {
+                "q_keywords": f"{first} {last}",
+                "page": 1,
+                "per_page": 1
+            }
+            if company_name and not is_empty_value(company_name) and company_name.lower() not in ["not specified", "unknown", "none"]:
+                json_payload["q_organization_name"] = company_name
+
             resp = requests.post(
                 "https://api.apollo.io/v1/contacts/search",
-                json={
-                    "q_keywords": f"{first} {last}",
-                    "q_organization_name": company_name,
-                    "page": 1,
-                    "per_page": 1
-                },
+                json=json_payload,
                 headers={
                     "x-api-key": api_key,
                     "Content-Type": "application/json"
@@ -69,8 +72,10 @@ class ApolloEnricher(BaseEnricher):
             if contacts:
                 email = contacts[0].get("email")
                 if email and "@" in email:
+                    org_name = contacts[0].get("organization_name") or contacts[0].get("organization", {}).get("name")
                     return {
                         "email": email,
+                        "companyName": org_name,
                         "contactSource": "apollo",
                         "contactConfidence": "high"
                     }
@@ -84,7 +89,10 @@ class ProspeoEnricher(BaseEnricher):
         if not api_key:
             return {}
         try:
-            domain = company_name.lower().split()[0].replace(",","").replace(".","").replace("&","") + ".com"
+            domain = ""
+            if company_name and not is_empty_value(company_name) and company_name.lower() not in ["not specified", "unknown", "none"]:
+                domain = company_name.lower().split()[0].replace(",","").replace(".","").replace("&","") + ".com"
+                
             resp = requests.post(
                 "https://api.prospeo.io/enrich-person",
                 json={
@@ -102,8 +110,10 @@ class ProspeoEnricher(BaseEnricher):
             data = resp.json()
             email = data.get("person", {}).get("email", {}).get("email")
             if email:
+                org_name = data.get("person", {}).get("company", {}).get("name")
                 return {
                     "email": email,
+                    "companyName": org_name,
                     "contactSource": "prospeo",
                     "contactConfidence": "high"
                 }
