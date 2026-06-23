@@ -886,12 +886,15 @@
                             </div>
 
                             <!-- IMAP configuration card -->
-                            <div class="card settings-card" style="margin-bottom: 0;">
-                                <div class="card-title">
-                                    <i data-lucide="mail"></i>
-                                    <span>Inbox Sync Configuration (IMAP)</span>
+                            <div class="card settings-card collapsible-card collapsed" style="margin-bottom: 0;">
+                                <div class="card-title card-title-toggle" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="mail"></i>
+                                        <span>Inbox Sync Configuration (IMAP)</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="chevron-icon" style="transition: transform var(--transition-smooth); transform: rotate(0deg);"></i>
                                 </div>
-                                <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div class="settings-body collapsible-body" style="display: none; flex-direction: column; gap: 1rem;">
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label for="settings-imap-server">IMAP Server</label>
                                         <div class="input-wrapper">
@@ -932,12 +935,15 @@
                             </div>
 
                             <!-- Webhook CRM configuration card -->
-                            <div class="card settings-card" style="margin-bottom: 0;">
-                                <div class="card-title">
-                                    <i data-lucide="webhook"></i>
-                                    <span>CRM Webhook Integration (Zapier / Make)</span>
+                            <div class="card settings-card collapsible-card collapsed" style="margin-bottom: 0;">
+                                <div class="card-title card-title-toggle" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="webhook"></i>
+                                        <span>CRM Webhook Integration (Zapier / Make)</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="chevron-icon" style="transition: transform var(--transition-smooth); transform: rotate(0deg);"></i>
                                 </div>
-                                <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div class="settings-body collapsible-body" style="display: none; flex-direction: column; gap: 1rem;">
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label for="settings-webhook-url">Webhook Target URL</label>
                                         <div class="input-wrapper">
@@ -953,50 +959,112 @@
 
                         </div>
 
-                        <!-- Right Column Stack: Previews & Interactive Variables -->
-                        <div class="config-preview-column" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                            
-                            <div class="config-preview-panel" style="flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; height: 100%;">
-                                <div class="preview-tabs-header">
-                                    <button type="button" class="preview-tab-btn active" id="config-preview-tab-email">Email campaign preview</button>
-                                    <button type="button" class="preview-tab-btn" id="config-preview-tab-linkedin">LinkedIn DM preview</button>
+                        <div class="config-preview-column">
+                            <div class="unified-preview-browser">
+                                <!-- Browser Header / Tabs -->
+                                <div class="browser-header-bar">
+                                    <div class="browser-header-left">
+                                        <div class="browser-window-dots">
+                                            <span class="dot red"></span>
+                                            <span class="dot yellow"></span>
+                                            <span class="dot green"></span>
+                                        </div>
+                                        <div class="browser-tabs-container">
+                                            <button type="button" class="browser-tab-button preview-tab-btn active" id="config-preview-tab-email">
+                                                <i data-lucide="mail" style="width: 13px; height: 13px;"></i> Email Draft
+                                            </button>
+                                            <button type="button" class="browser-tab-button preview-tab-btn" id="config-preview-tab-linkedin">
+                                                <i data-lucide="linkedin" style="width: 13px; height: 13px;"></i> LinkedIn DM
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="card preview-card" style="flex-grow: 1; display: flex; flex-direction: column; min-height: 430px;">
-                                    <div id="preview-meta-fields" class="preview-meta-row">
-                                        <div class="preview-meta-item"><strong>To:</strong> <span id="preview-target-email">sarah@company.com</span></div>
-                                        <div class="preview-meta-item" id="preview-subject-container"><strong>Subject:</strong> <span id="preview-target-subject">Quick question re: design requirements</span></div>
+                                <!-- Variables Toolbar / Mockup Address Bar -->
+                                <div class="browser-toolbar-row">
+                                    <div class="toolbar-info-badge">
+                                        <i data-lucide="sliders" style="width: 12px; height: 12px;"></i>
+                                        <span>Preview variables</span>
                                     </div>
-                                    <div class="preview-body-content" id="live-pitch-preview-body" style="flex-grow: 1; min-height: 250px;">
-                                        <!-- Rendered dynamically -->
+                                    <div class="preview-vars-toolbar">
+                                        <div class="variable-tag-pill">
+                                            <span class="tag-name">{Author}</span>
+                                            <input type="text" id="test-var-author" value="Sarah Jenkins" class="tag-input" title="Test AuthorName tag">
+                                        </div>
+                                        <div class="variable-tag-pill">
+                                            <span class="tag-name">{Company}</span>
+                                            <input type="text" id="test-var-company" value="Acme Corp" class="tag-input" title="Test CompanyName tag">
+                                        </div>
+                                        <div class="variable-tag-pill">
+                                            <span class="tag-name">{Service}</span>
+                                            <input type="text" id="test-var-service" value="React Development" class="tag-input" title="Test ServiceRequired tag">
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Interactive test variables card to populate placeholders -->
-                                <div class="card test-variables-card" style="padding: 1.25rem; margin-bottom: 0;">
-                                    <div class="card-title" style="font-size: 16px; margin-bottom: 0.5rem; border-bottom: none; padding-bottom: 0; display: flex; align-items: center; gap: 0.4rem;">
-                                        <i data-lucide="sliders" style="width: 16px; height: 16px; color: var(--primary);"></i>
-                                        <span>Interactive Test Variables</span>
+                                <!-- Browser Content Area -->
+                                <div class="browser-content" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+                                    <!-- Email Composer Mockup -->
+                                    <div id="email-composer-mockup" class="composer-window" style="flex-grow: 1; display: flex; flex-direction: column;">
+                                        <div class="composer-fields">
+                                            <div class="composer-field-row" id="preview-subject-container" style="display: flex; align-items: center;">
+                                                <span class="field-label" style="font-weight: 600; min-width: 60px; color: var(--text-muted);">Subject:</span>
+                                                <span class="field-value" id="preview-target-subject" style="font-weight: 500; color: var(--text-primary);">Outreach Pitch - Silvia Team</span>
+                                            </div>
+                                        </div>
+                                        <div class="composer-body preview-body-content" id="live-pitch-preview-body" contenteditable="true" style="flex-grow: 1; padding: 1.25rem; overflow-y: auto; min-height: 250px; outline: none;">
+                                            <!-- Rendered dynamically -->
+                                        </div>
+                                        <div class="composer-footer" style="padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 1rem; border-top: 1px solid var(--border-color); background: var(--bg-trans-1);">
+                                            <button type="button" class="btn btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.78rem; font-weight: 600; pointer-events: none;">Send</button>
+                                            <div class="composer-toolbar-icons" style="display: flex; gap: 0.75rem; color: var(--text-muted); cursor: pointer;">
+                                                <i data-lucide="type" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="paperclip" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="link" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="smile" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="image" style="width: 16px; height: 16px;"></i>
+                                            </div>
+                                            <i data-lucide="trash-2" style="margin-left: auto; width: 16px; height: 16px; color: var(--text-muted); cursor: pointer;" title="Discard Draft"></i>
+                                        </div>
                                     </div>
-                                    <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                                        Enter sample values below to preview how custom tags render in your active pitch template.
-                                    </p>
-                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
-                                        <div class="form-group" style="margin-bottom: 0; gap: 4px;">
-                                            <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{AuthorName}</label>
-                                            <input type="text" id="test-var-author" class="form-control" value="Sarah Jenkins" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
+
+                                    <!-- LinkedIn Chat Mockup -->
+                                    <div id="linkedin-chat-mockup" class="chat-window" style="flex-grow: 1; display: none; flex-direction: column;">
+                                        <div class="chat-header" style="padding: 0.75rem 1.25rem; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); background: var(--bg-trans-1);">
+                                            <div class="chat-avatar" id="linkedin-preview-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; margin-right: 0.75rem;">SJ</div>
+                                            <div class="chat-user-details" style="display: flex; flex-direction: column;">
+                                                <span class="chat-username" id="linkedin-preview-name" style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary);">Sarah Jenkins</span>
+                                                <div class="chat-status-row" style="display: flex; align-items: center; gap: 0.25rem;">
+                                                    <span class="chat-status-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                                                    <span class="chat-status-text" style="font-size: 0.65rem; color: #10b981; font-weight: 500;">Active now</span>
+                                                </div>
+                                            </div>
+                                            <div class="chat-header-actions" style="margin-left: auto; display: flex; gap: 0.85rem; color: var(--text-muted); cursor: pointer;">
+                                                <i data-lucide="phone" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="video" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="info" style="width: 16px; height: 16px;"></i>
+                                            </div>
                                         </div>
-                                        <div class="form-group" style="margin-bottom: 0; gap: 4px;">
-                                            <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{CompanyName}</label>
-                                            <input type="text" id="test-var-company" class="form-control" value="Acme Corp" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
+                                        <div class="chat-history" style="flex-grow: 1; padding: 1.25rem; overflow-y: auto; background: var(--bg-trans-1); min-height: 250px; display: flex; flex-direction: column; justify-content: flex-end;">
+                                            <div class="chat-message-bubble-container sent" style="align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; max-width: 85%;">
+                                                <div class="chat-message-bubble preview-body-content" id="live-pitch-preview-body-linkedin" contenteditable="true" style="background: var(--primary); color: white; padding: 0.75rem 1rem; border-radius: 12px 12px 0 12px; font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; outline: none;">
+                                                    <!-- Rendered dynamically -->
+                                                </div>
+                                                <span class="chat-message-time" style="font-size: 0.6rem; color: var(--text-muted); margin-top: 0.25rem;">1:56 PM · Sent</span>
+                                            </div>
                                         </div>
-                                        <div class="form-group" style="margin-bottom: 0; gap: 4px;">
-                                            <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{ServiceRequired}</label>
-                                            <input type="text" id="test-var-service" class="form-control" value="React Development" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
+                                        <div class="chat-footer" style="padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-trans-1);">
+                                            <input type="text" class="form-control chat-input-field" placeholder="Write a message..." readonly style="font-size: 0.78rem; height: 32px; padding: 0 0.75rem; background: var(--bg-trans-2); border: 1px solid var(--border-color);">
+                                            <div class="chat-footer-actions" style="display: flex; align-items: center; gap: 0.85rem; color: var(--text-muted); cursor: pointer;">
+                                                <i data-lucide="image" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="paperclip" style="width: 16px; height: 16px;"></i>
+                                                <i data-lucide="smile" style="width: 16px; height: 16px;"></i>
+                                                <button type="button" style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.78rem; margin-left: auto; cursor: pointer; pointer-events: none;">Send</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> </div>
 
                         </div>
 

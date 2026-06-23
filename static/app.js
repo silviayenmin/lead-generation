@@ -206,6 +206,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize Lucide Icons
     lucide.createIcons();
     
+    // Initialize Collapsible Settings Cards (Accordion UX)
+    const collapsibleCards = document.querySelectorAll(".collapsible-card");
+    collapsibleCards.forEach(card => {
+        const titleToggle = card.querySelector(".card-title-toggle");
+        const bodyEl = card.querySelector(".collapsible-body");
+        const chevronIcon = card.querySelector(".chevron-icon");
+        
+        if (titleToggle && bodyEl) {
+            titleToggle.addEventListener("click", () => {
+                const isCollapsed = card.classList.contains("collapsed");
+                if (isCollapsed) {
+                    card.classList.remove("collapsed");
+                    bodyEl.style.display = "flex";
+                    if (chevronIcon) chevronIcon.style.transform = "rotate(180deg)";
+                } else {
+                    card.classList.add("collapsed");
+                    bodyEl.style.display = "none";
+                    if (chevronIcon) chevronIcon.style.transform = "rotate(0deg)";
+                }
+            });
+        }
+    });
+    
     // Theme toggle setup
     const btnThemeToggle = document.getElementById("btn-theme-toggle");
     const themeToggleIcon = document.getElementById("theme-toggle-icon");
@@ -2827,12 +2850,17 @@ function initConfigPreviewTabs() {
 }
 
 function updateConfigPreview() {
-    const previewBody = document.getElementById("live-pitch-preview-body");
+    const emailMockup = document.getElementById("email-composer-mockup");
+    const linkedinMockup = document.getElementById("linkedin-chat-mockup");
+    
+    const previewBodyEmail = document.getElementById("live-pitch-preview-body");
+    const previewBodyLinkedin = document.getElementById("live-pitch-preview-body-linkedin");
+    
     const targetEmail = document.getElementById("preview-target-email");
     const targetSubject = document.getElementById("preview-target-subject");
-    const subjectContainer = document.getElementById("preview-subject-container");
     
-    if (!previewBody) return;
+    const linkedinName = document.getElementById("linkedin-preview-name");
+    const linkedinAvatar = document.getElementById("linkedin-preview-avatar");
     
     const agencyName = agencyNameInput ? agencyNameInput.value.trim() : "Silvia Team";
     const agencyInfo = agencyInfoInput ? agencyInfoInput.value.trim() : "premier design & development services";
@@ -2843,11 +2871,14 @@ function updateConfigPreview() {
     const testServiceVal = document.getElementById("test-var-service")?.value.trim() || "React Development";
     
     if (configPreviewTab === "email") {
-        if (subjectContainer) subjectContainer.style.display = "block";
+        if (emailMockup) emailMockup.style.display = "flex";
+        if (linkedinMockup) linkedinMockup.style.display = "none";
+        
         if (targetEmail) targetEmail.innerText = "contact@buyercompany.com";
         if (targetSubject) targetSubject.innerText = `Outreach Pitch - ${agencyName}`;
         
-        previewBody.innerHTML = `Hi <mark>${testAuthorVal}</mark>,
+        if (previewBodyEmail) {
+            previewBodyEmail.innerHTML = `Hi <mark>${testAuthorVal}</mark>,
 
 I saw your recent post mentioning that <mark>${testCompanyVal}</mark> is looking for support with <mark>${testServiceVal}</mark>.
 
@@ -2857,16 +2888,27 @@ I drafted this custom email pitch using our <strong>${emailTone}</strong> tone f
 
 Best,
 The ${agencyName} Team`;
+        }
     } else {
-        if (subjectContainer) subjectContainer.style.display = "none";
-        if (targetEmail) targetEmail.innerText = "linkedin.com/in/decision-maker-profile";
+        if (emailMockup) emailMockup.style.display = "none";
+        if (linkedinMockup) linkedinMockup.style.display = "flex";
         
-        previewBody.innerHTML = `Hey <mark>${testAuthorVal}</mark>!
+        if (linkedinName) linkedinName.innerText = testAuthorVal;
+        if (linkedinAvatar) {
+            const initials = testAuthorVal.split(" ").map(w => w.charAt(0)).join("").substring(0, 2).toUpperCase();
+            linkedinAvatar.innerText = initials || "U";
+        }
+        
+        if (previewBodyLinkedin) {
+            previewBodyLinkedin.innerHTML = `Hey <mark>${testAuthorVal}</mark>!
 
 Saw your post about <mark>${testCompanyVal}</mark> looking for help with <mark>${testServiceVal}</mark>. At <strong>${agencyName}</strong>, we build ${agencyInfo}.
 
 I think our design/dev capabilities match your request exactly. Do you have 5 minutes to discuss this?`;
+        }
     }
+    
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // AI Recommended leads rendering
