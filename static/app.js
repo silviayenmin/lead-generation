@@ -111,6 +111,8 @@ const viewDiscovery = document.getElementById("view-discovery");
 const viewPipeline = document.getElementById("view-pipeline");
 const viewArchive = document.getElementById("view-archive");
 const viewSettings = document.getElementById("view-settings");
+const viewProfile = document.getElementById("view-profile");
+const topbarProfilePic = document.getElementById("topbar-profile-pic");
 
 // Archive Section DOM Elements
 const archiveHistoryList = document.getElementById("archive-history-list");
@@ -156,7 +158,7 @@ const modalBtnCopyEmail = document.getElementById("modal-btn-copy-email");
 const btnExportCsvSidebar = document.getElementById("btn-export-csv-sidebar");
 const btnEnrichContact = document.getElementById("btn-enrich-contact");
 const agencyNameInput = document.getElementById("agency-name");
-const agencyInfoInput = document.getElementById("agency-info");
+const agencyInfoInput = document.getElementById("profile-agency-info");
 const emailToneSelect = document.getElementById("email-tone");
 
 // Saved Searches and Monitoring Elements
@@ -343,8 +345,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Register auto-save for settings modifications
     if (agencyNameInput) {
         agencyNameInput.addEventListener("input", () => {
-            localStorage.setItem("silvia_agency_name", agencyNameInput.value);
-            localStorage.setItem("agencyName", agencyNameInput.value);
+            const val = agencyNameInput.value;
+            localStorage.setItem("silvia_agency_name", val);
+            localStorage.setItem("agencyName", val);
+            
+            const profileBusInput = document.getElementById("profile-business-name");
+            if (profileBusInput) profileBusInput.value = val;
+            
             updateSidebarAgencyName();
             updateConfigPreview();
         });
@@ -409,6 +416,36 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tabBtnPipeline) tabBtnPipeline.addEventListener("click", () => switchTab("pipeline"));
     if (tabBtnArchive) tabBtnArchive.addEventListener("click", () => switchTab("archive"));
     if (tabBtnSettings) tabBtnSettings.addEventListener("click", () => switchTab("settings"));
+    
+    // User Profile topbar trigger and button listeners
+    if (topbarProfilePic) topbarProfilePic.addEventListener("click", () => switchTab("profile"));
+    
+    const btnSaveProfile = document.getElementById("btn-save-user-profile");
+    if (btnSaveProfile) btnSaveProfile.addEventListener("click", saveUserProfile);
+    
+    const profileBusinessInput = document.getElementById("profile-business-name");
+    if (profileBusinessInput) {
+        profileBusinessInput.addEventListener("input", () => {
+            const val = profileBusinessInput.value;
+            if (agencyNameInput) agencyNameInput.value = val;
+            localStorage.setItem("silvia_agency_name", val);
+            localStorage.setItem("agencyName", val);
+            updateSidebarAgencyName();
+            updateConfigPreview();
+        });
+    }
+    
+    const btnToggleProfileToken = document.getElementById("btn-toggle-profile-token");
+    if (btnToggleProfileToken) btnToggleProfileToken.addEventListener("click", toggleProfileTokenVisibility);
+    
+    const btnCopyProfileToken = document.getElementById("btn-copy-profile-token");
+    if (btnCopyProfileToken) btnCopyProfileToken.addEventListener("click", copyProfileTokenToClipboard);
+    
+    const btnProfileLogout = document.getElementById("btn-profile-logout");
+    if (btnProfileLogout) btnProfileLogout.addEventListener("click", logout);
+    
+    const btnSaveWebhook = document.getElementById("btn-save-webhook-url");
+    if (btnSaveWebhook) btnSaveWebhook.addEventListener("click", saveWebhookUrl);
     
     // Drawer buttons & form triggers
     if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeModal);
@@ -478,7 +515,8 @@ function switchTab(tabName) {
         "discovery": { btn: tabBtnDiscovery, view: viewDiscovery },
         "pipeline": { btn: tabBtnPipeline, view: viewPipeline },
         "archive": { btn: tabBtnArchive, view: viewArchive },
-        "settings": { btn: tabBtnSettings, view: viewSettings }
+        "settings": { btn: tabBtnSettings, view: viewSettings },
+        "profile": { btn: topbarProfilePic, view: viewProfile }
     };
 
     Object.keys(tabs).forEach(name => {
@@ -507,6 +545,9 @@ function switchTab(tabName) {
     } else if (tabName === "settings") {
         updateConfigPreview();
         loadImapConfig();
+        loadWebhookUrl();
+    } else if (tabName === "profile") {
+        loadUserProfile();
     }
 }
 
@@ -3508,6 +3549,277 @@ async function syncReplies() {
             btnSync.innerHTML = `<i data-lucide="refresh-cw"></i> Sync Replies`;
             if (window.lucide) window.lucide.createIcons();
         }
+    }
+}
+
+// User Profile View Functions
+async function loadUserProfile() {
+    const displayNameInput = document.getElementById("profile-display-name");
+    const businessNameInput = document.getElementById("profile-business-name");
+    const joinedDateInput = document.getElementById("profile-joined-date");
+    const apiTokenInput = document.getElementById("profile-api-token");
+    
+    const displayNameHeading = document.getElementById("profile-display-name-heading");
+    const emailSubheading = document.getElementById("profile-email-subheading");
+    const avatarCircle = document.getElementById("profile-avatar-circle");
+
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/user/profile", {
+            headers: { "X-API-Key": secretKey }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            const profile = data.profile || {};
+            const stats = data.stats || {};
+            
+            // Populate Details
+            if (displayNameInput) displayNameInput.value = profile.displayName || "";
+            if (businessNameInput) businessNameInput.value = profile.businessName || "";
+            if (agencyInfoInput) agencyInfoInput.value = profile.agencyInfo || "";
+            
+            // Sync with Outreach Config variables & localStorage
+            if (profile.businessName) {
+                if (typeof agencyNameInput !== 'undefined' && agencyNameInput) {
+                    agencyNameInput.value = profile.businessName;
+                } else {
+                    const inputEl = document.getElementById("agency-name");
+                    if (inputEl) inputEl.value = profile.businessName;
+                }
+                localStorage.setItem("silvia_agency_name", profile.businessName);
+                localStorage.setItem("agencyName", profile.businessName);
+                if (typeof updateSidebarAgencyName === 'function') updateSidebarAgencyName();
+            }
+            if (profile.agencyInfo) {
+                localStorage.setItem("silvia_agency_info", profile.agencyInfo);
+            }
+            if (typeof updateConfigPreview === 'function') updateConfigPreview();
+            
+            if (profile.joinedDate) {
+                const date = new Date(profile.joinedDate);
+                if (joinedDateInput) joinedDateInput.value = date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+            }
+            
+            // Mask or set token
+            if (apiTokenInput) {
+                apiTokenInput.value = profile.apiToken || "silvia_dev_key";
+                apiTokenInput.dataset.token = profile.apiToken || "silvia_dev_key";
+                apiTokenInput.type = "password"; // Default hidden
+            }
+            
+            const webhookPill = document.getElementById("profile-health-webhook");
+            if (webhookPill) {
+                if (profile.webhookUrl) {
+                    webhookPill.className = "status-pulse-pill status-active";
+                    webhookPill.querySelector(".status-text").innerText = "Active";
+                } else {
+                    webhookPill.className = "status-pulse-pill status-inactive";
+                    webhookPill.querySelector(".status-text").innerText = "Inactive";
+                }
+            }
+            
+            // Set headings
+            if (displayNameHeading) displayNameHeading.innerText = profile.displayName || "User";
+            if (emailSubheading) emailSubheading.innerText = profile.email || "user@example.com";
+            
+            // Set Avatar Initials
+            if (avatarCircle) {
+                const name = profile.displayName || profile.email || "U";
+                const initials = name.split(" ").map(w => w.charAt(0)).join("").substring(0, 2).toUpperCase();
+                avatarCircle.innerText = initials;
+            }
+            
+            // Populate Quota Stats
+            const totalScans = stats.scansCount || 0;
+            const totalLeads = stats.leadsCount || 0;
+            const totalQualified = stats.qualifiedLeadsCount || 0;
+            
+            const scansPct = Math.min((totalScans / 100) * 100, 100);
+            const leadsPct = Math.min((totalLeads / 1000) * 100, 100);
+            const qualifiedPct = Math.min((totalQualified / 500) * 100, 100);
+            
+            const txtScans = document.getElementById("profile-usage-scans");
+            const txtLeads = document.getElementById("profile-usage-leads");
+            const txtQualified = document.getElementById("profile-usage-qualified");
+            
+            const barScans = document.getElementById("profile-progress-scans");
+            const barLeads = document.getElementById("profile-progress-leads");
+            const barQualified = document.getElementById("profile-progress-qualified");
+            
+            if (txtScans) txtScans.innerText = `${totalScans.toLocaleString()} / 100`;
+            if (txtLeads) txtLeads.innerText = `${totalLeads.toLocaleString()} / 1,000`;
+            if (txtQualified) txtQualified.innerText = `${totalQualified.toLocaleString()} / 500`;
+            
+            // Wrap in setTimeout to ensure layout reflow occurs before transition animations start
+            setTimeout(() => {
+                if (barScans) barScans.style.width = `${scansPct.toFixed(1)}%`;
+                if (barLeads) barLeads.style.width = `${leadsPct.toFixed(1)}%`;
+                if (barQualified) barQualified.style.width = `${qualifiedPct.toFixed(1)}%`;
+            }, 50);
+
+            // Dynamically check IMAP integration status
+            try {
+                const imapResponse = await fetch("/api/outreach/config", {
+                    headers: { "X-API-Key": secretKey }
+                });
+                if (imapResponse.ok) {
+                    const imapData = await imapResponse.json();
+                    const config = imapData.config || {};
+                    const imapPill = document.getElementById("profile-health-imap");
+                    if (imapPill) {
+                        if (config.imap_server && config.imap_email) {
+                            imapPill.className = "status-pulse-pill status-active";
+                            imapPill.querySelector(".status-text").innerText = "Active";
+                        } else {
+                            imapPill.className = "status-pulse-pill status-inactive";
+                            imapPill.querySelector(".status-text").innerText = "Not Configured";
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load IMAP settings for status check:", e);
+            }
+        }
+    } catch (err) {
+        console.error("Failed loading user profile:", err);
+    }
+}
+
+async function saveUserProfile() {
+    const displayNameInput = document.getElementById("profile-display-name");
+    const businessNameInput = document.getElementById("profile-business-name");
+    const btnSave = document.getElementById("btn-save-user-profile");
+    
+    if (!displayNameInput) return;
+    
+    const payload = {
+        displayName: displayNameInput.value.trim(),
+        businessName: businessNameInput ? businessNameInput.value.trim() : "",
+        agencyInfo: agencyInfoInput ? agencyInfoInput.value.trim() : ""
+    };
+    
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<span class="spinner spinner-tiny"></span> Saving...`;
+    }
+    
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/user/profile/update", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": secretKey
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+            if (payload.agencyInfo) {
+                localStorage.setItem("silvia_agency_info", payload.agencyInfo);
+            }
+            await showCustomAlert("User profile settings updated successfully!", "Profile Saved", "success");
+            loadUserProfile(); // Reload visual headers
+        } else {
+            const errData = await response.json();
+            await showCustomAlert(errData.detail || "Failed to save profile settings.", "Error Saving", "danger");
+        }
+    } catch (err) {
+        await showCustomAlert("Network error saving profile settings: " + err.message, "Connection Error", "danger");
+    } finally {
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = `<i data-lucide="save"></i> Save Changes`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function saveWebhookUrl() {
+    const webhookUrlInput = document.getElementById("settings-webhook-url");
+    const btnSave = document.getElementById("btn-save-webhook-url");
+    
+    if (!webhookUrlInput) return;
+    
+    const webhookUrl = webhookUrlInput.value.trim();
+    
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<span class="spinner spinner-tiny"></span> Saving...`;
+    }
+    
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/webhook", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": secretKey
+            },
+            body: JSON.stringify({ webhook_url: webhookUrl })
+        });
+        if (response.ok) {
+            await showCustomAlert("CRM / Zapier Webhook URL saved successfully!", "Settings Saved", "success");
+            await loadUserProfile(); // Reload user profile to update status badge
+        } else {
+            const errData = await response.json();
+            await showCustomAlert(errData.detail || "Failed to save Webhook URL.", "Error Saving", "danger");
+        }
+    } catch (err) {
+        await showCustomAlert("Network error saving Webhook URL: " + err.message, "Connection Error", "danger");
+    } finally {
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = `<i data-lucide="save" style="width: 12px; height: 12px;"></i> Save`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function loadWebhookUrl() {
+    const webhookUrlInput = document.getElementById("settings-webhook-url");
+    if (!webhookUrlInput) return;
+    
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/webhook", {
+            headers: { "X-API-Key": secretKey }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            webhookUrlInput.value = data.webhook_url || "";
+        }
+    } catch (err) {
+        console.error("Failed to load Webhook URL settings:", err);
+    }
+}
+
+function toggleProfileTokenVisibility() {
+    const apiTokenInput = document.getElementById("profile-api-token");
+    const toggleBtn = document.getElementById("btn-toggle-profile-token");
+    
+    if (!apiTokenInput) return;
+    
+    if (apiTokenInput.type === "password") {
+        apiTokenInput.type = "text";
+        if (toggleBtn) toggleBtn.innerHTML = `<i data-lucide="eye-off" style="width: 15px; height: 15px;"></i>`;
+    } else {
+        apiTokenInput.type = "password";
+        if (toggleBtn) toggleBtn.innerHTML = `<i data-lucide="eye" style="width: 15px; height: 15px;"></i>`;
+    }
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function copyProfileTokenToClipboard() {
+    const apiTokenInput = document.getElementById("profile-api-token");
+    if (!apiTokenInput) return;
+    
+    const rawToken = apiTokenInput.dataset.token || apiTokenInput.value;
+    
+    try {
+        await copyToClipboard(rawToken);
+        await showCustomAlert("Developer API Secret Key copied to clipboard!", "Key Copied", "success");
+    } catch (err) {
+        await showCustomAlert("Failed to copy token: " + err.message, "Copy Failed", "danger");
     }
 }
 

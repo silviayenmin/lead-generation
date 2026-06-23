@@ -852,131 +852,365 @@
                     
                     <div class="config-split-grid">
                         
-                        <!-- Profile configs -->
+                        <!-- Left Column Stack: Configuration Inputs -->
+                        <div class="config-inputs-column" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            
+                            <!-- Profile configs -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title">
+                                    <i data-lucide="user-check"></i>
+                                    <span>Profile & pitch variables</span>
+                                </div>
+                                <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="agency-name">Business / product name</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="briefcase" class="input-icon"></i>
+                                            <input type="text" id="agency-name" class="form-control" placeholder="e.g. Silvia Design Co." value="Silvia Team" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="email-tone">AI copywriting tone style</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="languages" class="input-icon"></i>
+                                            <select id="email-tone" class="form-control" style="padding-left: 2.25rem;">
+                                                <option value="Short & Conversational" selected>Short & Conversational</option>
+                                                <option value="Professional & Formal">Professional & Formal</option>
+                                                <option value="Value Pitch (Free Audit)">Value Pitch (Free Audit)</option>
+                                                <option value="Aggressive Pitch (Meeting link)">Aggressive Pitch (Meeting link)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- IMAP configuration card -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title">
+                                    <i data-lucide="mail"></i>
+                                    <span>Inbox Sync Configuration (IMAP)</span>
+                                </div>
+                                <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-server">IMAP Server</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="server" class="input-icon"></i>
+                                            <input type="text" id="settings-imap-server" class="form-control" placeholder="e.g. imap.gmail.com" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-port">IMAP Port</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="hash" class="input-icon"></i>
+                                            <input type="text" id="settings-imap-port" class="form-control" placeholder="e.g. 993" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-email">Email Address</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="mail" class="input-icon"></i>
+                                            <input type="email" id="settings-imap-email" class="form-control" placeholder="e.g. name@gmail.com" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-password">App Password</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="key-round" class="input-icon"></i>
+                                            <input type="password" id="settings-imap-password" class="form-control" placeholder="e.g. abcd efgh ijkl mnop" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <button type="button" id="btn-save-imap-config" class="btn btn-primary flex-1">
+                                            <i data-lucide="save"></i> Save Settings
+                                        </button>
+                                        <button type="button" id="btn-sync-replies-trigger" class="btn btn-glow-outline flex-1">
+                                            <i data-lucide="refresh-cw"></i> Sync Replies
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Webhook CRM configuration card -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title">
+                                    <i data-lucide="webhook"></i>
+                                    <span>CRM Webhook Integration (Zapier / Make)</span>
+                                </div>
+                                <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-webhook-url">Webhook Target URL</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="link" class="input-icon"></i>
+                                            <input type="text" id="settings-webhook-url" class="form-control" placeholder="e.g. https://hooks.zapier.com/hooks/catch/..." style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <button type="button" id="btn-save-webhook-url" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                        <i data-lucide="save"></i> Save Webhook URL
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Right Column Stack: Previews & Interactive Variables -->
+                        <div class="config-preview-column" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            
+                            <div class="config-preview-panel" style="flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; height: 100%;">
+                                <div class="preview-tabs-header">
+                                    <button type="button" class="preview-tab-btn active" id="config-preview-tab-email">Email campaign preview</button>
+                                    <button type="button" class="preview-tab-btn" id="config-preview-tab-linkedin">LinkedIn DM preview</button>
+                                </div>
+
+                                <div class="card preview-card" style="flex-grow: 1; display: flex; flex-direction: column; min-height: 430px;">
+                                    <div id="preview-meta-fields" class="preview-meta-row">
+                                        <div class="preview-meta-item"><strong>To:</strong> <span id="preview-target-email">sarah@company.com</span></div>
+                                        <div class="preview-meta-item" id="preview-subject-container"><strong>Subject:</strong> <span id="preview-target-subject">Quick question re: design requirements</span></div>
+                                    </div>
+                                    <div class="preview-body-content" id="live-pitch-preview-body" style="flex-grow: 1; min-height: 250px;">
+                                        <!-- Rendered dynamically -->
+                                    </div>
+                                </div>
+
+                                <!-- Interactive test variables card to populate placeholders -->
+                                <div class="card test-variables-card" style="padding: 1.25rem; margin-bottom: 0;">
+                                    <div class="card-title" style="font-size: 16px; margin-bottom: 0.5rem; border-bottom: none; padding-bottom: 0; display: flex; align-items: center; gap: 0.4rem;">
+                                        <i data-lucide="sliders" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                                        <span>Interactive Test Variables</span>
+                                    </div>
+                                    <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                                        Enter sample values below to preview how custom tags render in your active pitch template.
+                                    </p>
+                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                                        <div class="form-group" style="margin-bottom: 0; gap: 4px;">
+                                            <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{AuthorName}</label>
+                                            <input type="text" id="test-var-author" class="form-control" value="Sarah Jenkins" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0; gap: 4px;">
+                                            <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{CompanyName}</label>
+                                            <input type="text" id="test-var-company" class="form-control" value="Acme Corp" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0; gap: 4px;">
+                                            <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{ServiceRequired}</label>
+                                            <input type="text" id="test-var-service" class="form-control" value="React Development" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    </div>
+                </div>
+                
+                <!-- View 6: User Profile Dashboard -->
+                <div id="view-profile" class="tab-view">
+                    <div class="view-header">
+                        <h2>User Profile</h2>
+                        <p>Manage your account settings, developer credentials, and usage analytics.</p>
+                    </div>
+
+                    <div class="config-split-grid profile-grid">
+                        
+                        <!-- Left Panel: Profile Info Card -->
                         <div class="card settings-card" style="margin-bottom: 0;">
                             <div class="card-title">
-                                <i data-lucide="user-check"></i>
-                                <span>Profile & pitch variables</span>
+                                <i data-lucide="user"></i>
+                                <span>Account details</span>
                             </div>
-                            <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="agency-name">Business / product name</label>
+                            <div class="settings-body" style="display: flex; flex-direction: column; gap: 1.25rem; align-items: center; padding-top: 1.5rem;">
+                                <!-- User Big Avatar -->
+                                <div class="profile-avatar-large" id="profile-avatar-circle">US</div>
+                                <div style="text-align: center; margin-top: -0.5rem; margin-bottom: 0.5rem;">
+                                    <h3 id="profile-display-name-heading" style="margin: 0; font-size: 1.2rem; color: var(--text-primary);">User</h3>
+                                    <span id="profile-email-subheading" style="font-size: 0.8rem; color: var(--text-muted);">user@example.com</span>
+                                </div>
+
+                                <!-- Form inputs -->
+                                <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                    <label for="profile-display-name">Display Name</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="user" class="input-icon"></i>
+                                        <input type="text" id="profile-display-name" class="form-control" placeholder="e.g. Silvia Manager" style="padding-left: 2.25rem;">
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                    <label for="profile-business-name">Business / Company Name</label>
                                     <div class="input-wrapper">
                                         <i data-lucide="briefcase" class="input-icon"></i>
-                                        <input type="text" id="agency-name" class="form-control" placeholder="e.g. Silvia Design Co." value="Silvia Team" style="padding-left: 2.25rem;">
+                                        <input type="text" id="profile-business-name" class="form-control" placeholder="e.g. Silvia Agency" style="padding-left: 2.25rem;">
                                     </div>
                                 </div>
 
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="agency-info">Value pitch profile & core offers</label>
-                                    <textarea id="agency-info" class="form-control" style="height: 140px; resize: vertical; padding: 0.65rem 0.85rem;" placeholder="e.g. custom UI/UX design, Next.js web apps, free code auditing...">premier design & development services</textarea>
+                                <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                    <label for="profile-agency-info">Value Pitch Profile & Core Offers</label>
+                                    <textarea id="profile-agency-info" class="form-control" style="height: 100px; resize: vertical; padding: 0.65rem 0.85rem;" placeholder="e.g. custom UI/UX design, Next.js web apps, free code auditing...">premier design & development services</textarea>
                                 </div>
 
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="email-tone">AI copywriting tone style</label>
+                                <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                    <label>Membership Active Since</label>
                                     <div class="input-wrapper">
-                                        <i data-lucide="languages" class="input-icon"></i>
-                                        <select id="email-tone" class="form-control" style="padding-left: 2.25rem;">
-                                            <option value="Short & Conversational" selected>Short & Conversational</option>
-                                            <option value="Professional & Formal">Professional & Formal</option>
-                                            <option value="Value Pitch (Free Audit)">Value Pitch (Free Audit)</option>
-                                            <option value="Aggressive Pitch (Meeting link)">Aggressive Pitch (Meeting link)</option>
-                                        </select>
+                                        <i data-lucide="calendar" class="input-icon" style="color: var(--text-muted);"></i>
+                                        <input type="text" id="profile-joined-date" class="form-control" readonly style="padding-left: 2.25rem; background: var(--bg-trans-2); cursor: not-allowed; color: var(--text-secondary);">
                                     </div>
                                 </div>
+
+                                <button type="button" id="btn-save-user-profile" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Changes
+                                </button>
+
+                                <hr style="width: 100%; border: none; border-top: 1px solid var(--border-color); margin: 0.5rem 0;">
+
+                                <!-- API Access Token Display -->
+                                <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                    <label>Developer API Secret Key</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <div class="input-wrapper" style="flex-grow: 1;">
+                                            <i data-lucide="key" class="input-icon" style="color: var(--warning);"></i>
+                                            <input type="password" id="profile-api-token" class="form-control" readonly value="****************" style="padding-left: 2.25rem; background: var(--bg-trans-2); font-family: monospace; font-size: 0.8rem; letter-spacing: 0.05em;">
+                                            <button type="button" id="btn-toggle-profile-token" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer;" title="Show/Hide Key">
+                                                <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
+                                            </button>
+                                        </div>
+                                        <button type="button" id="btn-copy-profile-token" class="btn btn-glow-outline" style="width: auto; padding: 0 0.85rem; height: 38px; display: flex; align-items: center;" title="Copy to Clipboard">
+                                            <i data-lucide="copy" style="width: 15px; height: 15px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button type="button" id="btn-profile-logout" class="btn btn-glow-outline" style="width: 100%; margin-top: 0.5rem; color: var(--error); border-color: var(--error-border); display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(239, 68, 68, 0.03);">
+                                    <i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Logout Account
+                                </button>
                             </div>
                         </div>
 
-                        <!-- IMAP configuration card -->
-                        <div class="card settings-card" style="margin-bottom: 0;">
-                            <div class="card-title">
-                                <i data-lucide="mail"></i>
-                                <span>Inbox Sync Configuration (IMAP)</span>
+                        <!-- Right Panel: Subscription & Integrations -->
+                        <div class="profile-analytics-column" style="display: flex; flex-direction: column; gap: 1.25rem;">
+
+                            <!-- Subscription Limits Card -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="award"></i>
+                                        <span>Subscription & Quotas</span>
+                                    </div>
+                                    <span class="badge badge-success" style="font-size: 0.65rem; text-transform: uppercase;">Professional Developer Tier</span>
+                                </div>
+                                <div class="settings-body" style="display: flex; flex-direction: column; gap: 1.25rem; padding-top: 0.5rem;">
+                                    
+                                    <!-- Monthly Scans Run -->
+                                    <div class="quota-limit-item">
+                                        <div class="quota-info">
+                                            <span class="quota-label">
+                                                <i data-lucide="search" style="width: 13px; height: 13px; margin-right: 0.25rem; color: var(--primary);"></i>
+                                                Monthly Scans Run
+                                            </span>
+                                            <span id="profile-usage-scans" class="quota-values">0 / 100</span>
+                                        </div>
+                                        <div class="quota-progress-container">
+                                            <div id="profile-progress-scans" class="quota-progress-bar bg-primary" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Discovered Leads Limit -->
+                                    <div class="quota-limit-item">
+                                        <div class="quota-info">
+                                            <span class="quota-label">
+                                                <i data-lucide="database" style="width: 13px; height: 13px; margin-right: 0.25rem; color: var(--secondary);"></i>
+                                                Discovered Leads
+                                            </span>
+                                            <span id="profile-usage-leads" class="quota-values">0 / 1,000</span>
+                                        </div>
+                                        <div class="quota-progress-container">
+                                            <div id="profile-progress-leads" class="quota-progress-bar bg-secondary" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Qualified Leads Limit -->
+                                    <div class="quota-limit-item">
+                                        <div class="quota-info">
+                                            <span class="quota-label">
+                                                <i data-lucide="check-circle-2" style="width: 13px; height: 13px; margin-right: 0.25rem; color: var(--success);"></i>
+                                                Qualified Leads
+                                            </span>
+                                            <span id="profile-usage-qualified" class="quota-values">0 / 500</span>
+                                        </div>
+                                        <div class="quota-progress-container">
+                                            <div id="profile-progress-qualified" class="quota-progress-bar bg-success" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
                             </div>
-                            <div class="settings-body" style="display: flex; flex-direction: column; gap: 1rem;">
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="settings-imap-server">IMAP Server</label>
-                                    <div class="input-wrapper">
-                                        <i data-lucide="server" class="input-icon"></i>
-                                        <input type="text" id="settings-imap-server" class="form-control" placeholder="e.g. imap.gmail.com" style="padding-left: 2.25rem;">
+
+                            <!-- Integration Health & Workspace Status -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title">
+                                    <i data-lucide="cpu"></i>
+                                    <span>Integration Health & Status</span>
+                                </div>
+                                <div class="settings-body" style="padding-top: 0.5rem;">
+                                    <div class="integration-health-list">
+                                        
+                                        <!-- IMAP Integration -->
+                                        <div class="integration-item">
+                                            <div class="integration-meta">
+                                                <div class="integration-icon bg-mail-light">
+                                                    <i data-lucide="mail"></i>
+                                                </div>
+                                                <div class="integration-info">
+                                                    <span class="integration-name">IMAP Email Inbox Sync</span>
+                                                    <span class="integration-desc">Automated reply tracking for drafts</span>
+                                                </div>
+                                            </div>
+                                            <div id="profile-health-imap" class="status-pulse-pill status-inactive">
+                                                <span class="pulse-dot"></span>
+                                                <span class="status-text">Not Configured</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Developer API Secret Key -->
+                                        <div class="integration-item">
+                                            <div class="integration-meta">
+                                                <div class="integration-icon bg-key-light">
+                                                    <i data-lucide="key-round"></i>
+                                                </div>
+                                                <div class="integration-info">
+                                                    <span class="integration-name">Developer API Access</span>
+                                                    <span class="integration-desc">External data scraping integrations</span>
+                                                </div>
+                                            </div>
+                                            <div id="profile-health-api" class="status-pulse-pill status-active">
+                                                <span class="pulse-dot"></span>
+                                                <span class="status-text">Active</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Webhook CRM Sync -->
+                                        <div class="integration-item">
+                                            <div class="integration-meta">
+                                                <div class="integration-icon bg-webhook-light">
+                                                    <i data-lucide="webhook"></i>
+                                                </div>
+                                                <div class="integration-info">
+                                                    <span class="integration-name">Zapier / Make CRM Webhook</span>
+                                                    <span class="integration-desc">Real-time export trigger signals</span>
+                                                </div>
+                                            </div>
+                                            <div id="profile-health-webhook" class="status-pulse-pill status-inactive">
+                                                <span class="pulse-dot"></span>
+                                                <span class="status-text">Inactive</span>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="settings-imap-port">IMAP Port</label>
-                                    <div class="input-wrapper">
-                                        <i data-lucide="hash" class="input-icon"></i>
-                                        <input type="text" id="settings-imap-port" class="form-control" placeholder="e.g. 993" style="padding-left: 2.25rem;">
-                                    </div>
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="settings-imap-email">Email Address</label>
-                                    <div class="input-wrapper">
-                                        <i data-lucide="mail" class="input-icon"></i>
-                                        <input type="email" id="settings-imap-email" class="form-control" placeholder="e.g. name@gmail.com" style="padding-left: 2.25rem;">
-                                    </div>
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="settings-imap-password">App Password</label>
-                                    <div class="input-wrapper">
-                                        <i data-lucide="key-round" class="input-icon"></i>
-                                        <input type="password" id="settings-imap-password" class="form-control" placeholder="e.g. abcd efgh ijkl mnop" style="padding-left: 2.25rem;">
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                                    <button type="button" id="btn-save-imap-config" class="btn btn-primary flex-1">
-                                        <i data-lucide="save"></i> Save Settings
-                                    </button>
-                                    <button type="button" id="btn-sync-replies-trigger" class="btn btn-glow-outline flex-1">
-                                        <i data-lucide="refresh-cw"></i> Sync Replies
-                                    </button>
-                                </div>
                             </div>
-                        </div>
 
-                    </div>
-
-                    <!-- Bottom Panel: Previews full-width -->
-                    <div class="config-preview-panel" style="margin-top: 1.5rem;">
-                        <div class="preview-tabs-header">
-                            <button type="button" class="preview-tab-btn active" id="config-preview-tab-email">Email campaign preview</button>
-                            <button type="button" class="preview-tab-btn" id="config-preview-tab-linkedin">LinkedIn DM preview</button>
                         </div>
-
-                        <div class="card preview-card">
-                            <div id="preview-meta-fields" class="preview-meta-row">
-                                <div class="preview-meta-item"><strong>To:</strong> <span id="preview-target-email">sarah@company.com</span></div>
-                                <div class="preview-meta-item" id="preview-subject-container"><strong>Subject:</strong> <span id="preview-target-subject">Quick question re: design requirements</span></div>
-                            </div>
-                            <div class="preview-body-content" id="live-pitch-preview-body">
-                                <!-- Rendered dynamically -->
-                            </div>
-                        </div>
-
-                        <!-- Interactive test variables card to populate placeholders -->
-                        <div class="card test-variables-card" style="padding: 1.25rem;">
-                            <div class="card-title" style="font-size: 16px; margin-bottom: 0.5rem; border-bottom: none; padding-bottom: 0; display: flex; align-items: center; gap: 0.4rem;">
-                                <i data-lucide="sliders" style="width: 16px; height: 16px; color: var(--primary);"></i>
-                                <span>Interactive Test Variables</span>
-                            </div>
-                            <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                                Enter sample values below to preview how custom tags render in your active pitch template.
-                            </p>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
-                                <div class="form-group" style="margin-bottom: 0; gap: 4px;">
-                                    <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{AuthorName}</label>
-                                    <input type="text" id="test-var-author" class="form-control" value="Sarah Jenkins" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0; gap: 4px;">
-                                    <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{CompanyName}</label>
-                                    <input type="text" id="test-var-company" class="form-control" value="Acme Corp" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0; gap: 4px;">
-                                    <label style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">{ServiceRequired}</label>
-                                    <input type="text" id="test-var-service" class="form-control" value="React Development" style="font-size: 0.75rem; height: 32px; padding: 0 0.5rem; background: var(--bg-trans-2);">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     </div>
                 </div>
