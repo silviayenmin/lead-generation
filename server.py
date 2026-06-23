@@ -5,7 +5,7 @@ import sys
 import time
 import datetime
 import asyncio
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -47,7 +47,10 @@ from crm import (
     save_email_config,
     get_email_config,
     is_facebook_fallback_name,
-    extract_author_from_email_or_url
+    extract_author_from_email_or_url,
+    get_mongo_db,
+    save_webhook_config,
+    get_webhook_config
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
@@ -140,6 +143,53 @@ class SavedSearchRequest(BaseModel):
 
 class BulkDeleteRequest(BaseModel):
     urls: List[str]
+
+class UpdateProfileRequest(BaseModel):
+    displayName: Optional[str] = None
+    businessName: Optional[str] = None
+    agencyInfo: Optional[str] = None
+
+class WebhookConfigPayload(BaseModel):
+    webhook_url: str
+
+def fire_webhook_sync(webhook_url: str, event_type: str, lead_data: dict):
+    import urllib.request
+    import urllib.error
+    import json
+    import datetime
+    
+    payload = {
+        "event": event_type,
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "lead": {
+            "sourceUrl": lead_data.get("sourceUrl"),
+            "authorName": lead_data.get("authorName"),
+            "companyName": lead_data.get("companyName"),
+            "crmStatus": lead_data.get("crmStatus"),
+            "leadCategory": lead_data.get("leadCategory"),
+            "leadScore": lead_data.get("leadScore"),
+            "contactInfo": lead_data.get("contactInfo"),
+            "needDescription": lead_data.get("needDescription"),
+            "serviceRequired": lead_data.get("serviceRequired"),
+            "intentType": lead_data.get("intentType"),
+            "platform": lead_data.get("platform"),
+            "location": lead_data.get("location"),
+            "industry": lead_data.get("industry")
+        }
+    }
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            webhook_url,
+            data=data,
+            headers={"Content-Type": "application/json", "User-Agent": "Silvia-AI-Webhook-Dispatcher/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=10.0) as response:
+            print(f"[Webhook] Fired webhook to {webhook_url}. Response code: {response.getcode()}")
+    except urllib.error.URLError as e:
+        print(f"[Webhook] URLError firing webhook to {webhook_url}: {e}")
+    except Exception as e:
+        print(f"[Webhook] Failed to fire webhook to {webhook_url}: {e}")
 
 @app.post("/api/search")
 async def run_search(payload: SearchRequest, request: Request):
@@ -417,7 +467,7 @@ async def bulk_delete_leads(payload: BulkDeleteRequest, request: Request):
     return {"status": "success", "message": f"Successfully deleted {success_count} leads"}
 
 @app.post("/api/leads/update")
-async def update_lead_crm(payload: UpdateCRMRequest, request: Request):
+async def update_lead_crm(payload: UpdateCRMRequest, request: Request, background_tasks: BackgroundTasks):
     user_email = request.state.user
     db = load_db(user_email)
     if payload.sourceUrl not in db:
@@ -453,7 +503,7 @@ async def update_lead_crm(payload: UpdateCRMRequest, request: Request):
                     validated_email_author = validate_author_name(email_author, lead_plat)
                     if validated_email_author and validated_email_author != "Unknown":
                         db[payload.sourceUrl]["authorName"] = validated_email_author
-
+ 
     if payload.authorName is not None:
         db[payload.sourceUrl]["authorName"] = payload.authorName
     if payload.platform is not None:
@@ -463,6 +513,16 @@ async def update_lead_crm(payload: UpdateCRMRequest, request: Request):
     db[payload.sourceUrl] = calculate_lead_score(db[payload.sourceUrl])
         
     save_db(db, user_email)
+    
+    # Trigger webhook trigger if configured
+    webhook_url = get_webhook_config(user_email)
+    if webhook_url:
+        background_tasks.add_task(
+            fire_webhook_sync,
+            webhook_url,
+            "lead_updated",
+            db[payload.sourceUrl]
+        )
     
     return {"status": "success", "lead": db[payload.sourceUrl]}
 
@@ -683,6 +743,84 @@ async def verify_auth_token(request: Request):
     user = getattr(request.state, "user", None)
     return {"status": "authenticated", "user": user}
 
+@app.get("/api/user/profile")
+async def get_user_profile(request: Request):
+    user_email = request.state.user
+    
+    db = get_mongo_db()
+    users_col = db["users"]
+    user = users_col.find_one({"email": user_email})
+    if not user:
+        user = {"email": user_email, "created_at": datetime.datetime.utcnow().isoformat()}
+        
+    leads_col = db["leads"]
+    searches_col = db["searches"]
+    
+    scans_count = searches_col.count_documents({"user_email": user_email})
+    leads_count = leads_col.count_documents({"user_email": user_email})
+    qualified_count = leads_col.count_documents({
+        "user_email": user_email, 
+        "leadCategory": {"$in": ["High Intent", "Medium Intent"]}
+    })
+    
+    drafted_count = leads_col.count_documents({
+        "user_email": user_email,
+        "crmStatus": {"$in": ["Drafted", "drafted"]}
+    })
+    emailed_count = leads_col.count_documents({
+        "user_email": user_email,
+        "crmStatus": {"$in": ["Emailed", "emailed"]}
+    })
+    replied_count = leads_col.count_documents({
+        "user_email": user_email,
+        "crmStatus": {"$in": ["Replied", "replied"]}
+    })
+    
+    rate = int((qualified_count / leads_count) * 100) if leads_count > 0 else 0
+    api_key = request.headers.get("X-API-Key")
+    
+    return {
+        "status": "success",
+        "profile": {
+            "email": user_email,
+            "displayName": user.get("displayName") or user_email.split("@")[0].capitalize(),
+            "businessName": user.get("businessName") or "My Business",
+            "agencyInfo": user.get("agencyInfo") or "premier design & development services",
+            "joinedDate": user.get("created_at") or datetime.datetime.utcnow().isoformat(),
+            "apiToken": api_key,
+            "webhookUrl": user.get("webhook_url") or ""
+        },
+        "stats": {
+            "scansCount": scans_count,
+            "leadsCount": leads_count,
+            "qualifiedLeadsCount": qualified_count,
+            "qualificationRate": rate,
+            "draftedCount": drafted_count,
+            "emailedCount": emailed_count,
+            "repliedCount": replied_count
+        }
+    }
+
+@app.post("/api/user/profile/update")
+async def update_user_profile(payload: UpdateProfileRequest, request: Request):
+    user_email = request.state.user
+    
+    db = get_mongo_db()
+    users_col = db["users"]
+    
+    update_data = {}
+    if payload.displayName is not None:
+        update_data["displayName"] = payload.displayName.strip()
+    if payload.businessName is not None:
+        update_data["businessName"] = payload.businessName.strip()
+    if payload.agencyInfo is not None:
+        update_data["agencyInfo"] = payload.agencyInfo.strip()
+        
+    if update_data:
+        users_col.update_one({"email": user_email}, {"$set": update_data}, upsert=True)
+        
+    return {"status": "success", "message": "Profile updated successfully"}
+
 @app.post("/api/outreach/config")
 async def save_outreach_config_endpoint(payload: OutreachConfigPayload, request: Request):
     user_email = request.state.user
@@ -707,6 +845,21 @@ async def get_outreach_config_endpoint(request: Request):
     if "imap_password" in secure_config and secure_config["imap_password"]:
         secure_config["imap_password"] = "********"  # Mask password
     return {"status": "success", "config": secure_config}
+
+@app.get("/api/outreach/webhook")
+async def get_webhook_endpoint(request: Request):
+    user_email = request.state.user
+    webhook_url = get_webhook_config(user_email)
+    return {"status": "success", "webhook_url": webhook_url}
+
+@app.post("/api/outreach/webhook")
+async def save_webhook_endpoint(payload: WebhookConfigPayload, request: Request):
+    user_email = request.state.user
+    success = save_webhook_config(user_email, payload.webhook_url)
+    if success:
+        return {"status": "success", "message": "Webhook URL saved successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to save Webhook URL")
 
 @app.post("/api/outreach/sync-replies")
 async def sync_replies_endpoint(request: Request):

@@ -861,3 +861,30 @@ def get_email_config(user_email: str) -> dict:
         print(f"Error loading email config from MongoDB: {e}")
         return {}
 
+
+def save_webhook_config(user_email: str, webhook_url: str) -> bool:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        result = users_col.update_one(
+            {"email": user_email.strip().lower()},
+            {"$set": {"webhook_url": webhook_url.strip()}}
+        )
+        return result.modified_count > 0 or result.matched_count > 0
+    except Exception as e:
+        print(f"Error saving webhook url in MongoDB: {e}")
+        return False
+
+
+def get_webhook_config(user_email: str) -> str:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        user = users_col.find_one({"email": user_email.strip().lower()})
+        if user:
+            return user.get("webhook_url") or ""
+        return ""
+    except Exception as e:
+        print(f"Error loading webhook url from MongoDB: {e}")
+        return ""
+

@@ -3642,9 +3642,225 @@ textarea.form-control {
     transform: translateY(0);
 }
 
-/* Light theme overrides for Login Overlay */
 .light-theme .login-overlay {
     background: rgba(245, 247, 250, 0.85);
+}
+
+/* User Profile Dashboard Styles */
+.profile-avatar-large {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: #ffffff;
+    font-size: 2.2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(3, 113, 114, 0.25);
+    border: 4px solid var(--border-color);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.profile-grid {
+    grid-template-columns: 380px 1fr !important;
+}
+
+@media (max-width: 1024px) {
+    .profile-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.profile-pic-placeholder {
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.profile-pic-placeholder:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px var(--primary-glow);
+    border-color: var(--primary);
+}
+
+/* User Profile Subscription Quota and Integration Health Redesign */
+.quota-limit-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.quota-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.quota-label {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+}
+
+.quota-values {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.quota-progress-container {
+    height: 6px;
+    background: var(--bg-trans-5);
+    border-radius: 3px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.quota-progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quota-progress-bar.bg-primary {
+    background: var(--primary);
+}
+
+.quota-progress-bar.bg-secondary {
+    background: var(--secondary);
+}
+
+.quota-progress-bar.bg-success {
+    background: var(--success);
+}
+
+.integration-health-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+.integration-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0.85rem;
+    background: var(--bg-trans-2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: var(--transition-smooth);
+}
+
+.integration-item:hover {
+    border-color: var(--bg-trans-15);
+    background: var(--bg-hover);
+}
+
+.integration-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.integration-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.integration-icon i,
+.integration-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.integration-icon.bg-mail-light {
+    background: rgba(3, 113, 114, 0.12);
+    color: var(--primary);
+}
+
+.integration-icon.bg-key-light {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--warning);
+}
+
+.integration-icon.bg-webhook-light {
+    background: rgba(77, 163, 255, 0.12);
+    color: var(--highlight);
+}
+
+.integration-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.integration-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.integration-desc {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.status-pulse-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.status-pulse-pill.status-active {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success);
+}
+
+.status-pulse-pill.status-inactive {
+    background: var(--bg-trans-3);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.status-pulse-pill .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-pulse-pill.status-active .pulse-dot {
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+    animation: pulse 2s infinite;
+}
+
+.status-pulse-pill.status-inactive .pulse-dot {
+    background: var(--text-muted);
 }
 
 
