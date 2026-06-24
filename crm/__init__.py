@@ -25,6 +25,10 @@ from .lead_database import (
     extract_author_from_email_or_url,
     get_mongo_db,
     save_webhook_config,
-    get_webhook_config
+    get_webhook_config,
+    update_user_password,
+    generate_and_save_otp,
+    verify_and_delete_otp,
+    send_otp_email
 )
 

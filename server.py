@@ -50,13 +50,17 @@ from crm import (
     extract_author_from_email_or_url,
     get_mongo_db,
     save_webhook_config,
-    get_webhook_config
+    get_webhook_config,
+    update_user_password,
+    generate_and_save_otp,
+    verify_and_delete_otp,
+    send_otp_email
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
 from services.imap_listener import sync_user_replies
 
-app = FastAPI(title="Silvia Serper Intent Discovery Platform")
+app = FastAPI(title="LeadFlow Intent Discovery Platform")
 
 APP_SECRET_KEY = os.getenv("APP_SECRET_KEY", "silvia_dev_key")
 
@@ -64,7 +68,14 @@ APP_SECRET_KEY = os.getenv("APP_SECRET_KEY", "silvia_dev_key")
 async def api_key_auth_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/"):
         # Bypass authorization for public login and signup endpoints
-        if request.url.path in ["/api/auth/login", "/api/auth/register"]:
+        if request.url.path in [
+            "/api/auth/login",
+            "/api/auth/register",
+            "/api/auth/register-request",
+            "/api/auth/register-verify",
+            "/api/auth/forgot-request",
+            "/api/auth/forgot-verify"
+        ]:
             return await call_next(request)
             
         api_key = request.headers.get("X-API-Key")
@@ -98,6 +109,27 @@ class AuthLoginRequest(BaseModel):
     email: str
     password: str
 
+class RegisterRequestPayload(BaseModel):
+    email: str
+    password: str
+
+class RegisterVerifyPayload(BaseModel):
+    email: str
+    otp: str
+
+class ForgotRequestPayload(BaseModel):
+    email: str
+
+class ForgotVerifyPayload(BaseModel):
+    email: str
+    otp: str
+    new_password: str
+
+class AuthResetPasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class OutreachConfigPayload(BaseModel):
     imap_server: str
     imap_port: str
@@ -128,7 +160,7 @@ class UpdateCRMRequest(BaseModel):
 
 class GeneratePitchRequest(BaseModel):
     sourceUrl: str
-    agencyName: Optional[str] = "Silvia Team"
+    agencyName: Optional[str] = "My Business"
     agencyInfo: Optional[str] = "premier design & development services"
     emailTone: Optional[str] = "Short & Conversational"
 
@@ -722,6 +754,139 @@ async def register_endpoint(payload: AuthRegisterRequest):
         raise HTTPException(status_code=400, detail="User with this email already exists")
     token = create_session(payload.email)
     return {"status": "success", "session_token": token, "email": payload.email}
+
+
+@app.post("/api/auth/register-request")
+async def register_request_endpoint(payload: RegisterRequestPayload):
+    if not payload.email or not payload.password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    if len(payload.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+    
+    # Check if user already exists
+    db = get_mongo_db()
+    users_col = db["users"]
+    email_clean = payload.email.strip().lower()
+    if users_col.find_one({"email": email_clean}):
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+    
+    # Hash password and prepare pending_data
+    from crm.lead_database import hash_password
+    pw_hash, salt = hash_password(payload.password)
+    pending_data = {
+        "password_hash": pw_hash,
+        "salt": salt
+    }
+    
+    otp = generate_and_save_otp(email_clean, "signup", pending_data)
+    if not otp:
+        raise HTTPException(status_code=500, detail="Failed to generate verification code")
+        
+    send_otp_email(email_clean, otp, "signup")
+    return {"status": "success", "message": "Verification OTP sent to email"}
+
+
+@app.post("/api/auth/register-verify")
+async def register_verify_endpoint(payload: RegisterVerifyPayload):
+    if not payload.email or not payload.otp:
+        raise HTTPException(status_code=400, detail="Email and OTP code are required")
+        
+    email_clean = payload.email.strip().lower()
+    pending_data = verify_and_delete_otp(email_clean, "signup", payload.otp)
+    if pending_data is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP code")
+        
+    # Create the user in MongoDB
+    db = get_mongo_db()
+    users_col = db["users"]
+    
+    # Check again if user exists (concurrency safety)
+    if users_col.find_one({"email": email_clean}):
+        raise HTTPException(status_code=400, detail="User already registered")
+        
+    users_col.insert_one({
+        "email": email_clean,
+        "password_hash": pending_data["password_hash"],
+        "salt": pending_data["salt"],
+        "created_at": datetime.datetime.utcnow().isoformat()
+    })
+    
+    token = create_session(email_clean)
+    return {"status": "success", "session_token": token, "email": email_clean}
+
+
+@app.post("/api/auth/forgot-request")
+async def forgot_request_endpoint(payload: ForgotRequestPayload):
+    if not payload.email:
+        raise HTTPException(status_code=400, detail="Email is required")
+        
+    email_clean = payload.email.strip().lower()
+    db = get_mongo_db()
+    users_col = db["users"]
+    
+    # Check if user exists
+    if not users_col.find_one({"email": email_clean}):
+        raise HTTPException(status_code=404, detail="User with this email does not exist")
+        
+    otp = generate_and_save_otp(email_clean, "forgot_password")
+    if not otp:
+        raise HTTPException(status_code=500, detail="Failed to generate recovery code")
+        
+    send_otp_email(email_clean, otp, "forgot_password")
+    return {"status": "success", "message": "Recovery OTP sent to email"}
+
+
+@app.post("/api/auth/forgot-verify")
+async def forgot_verify_endpoint(payload: ForgotVerifyPayload):
+    if not payload.email or not payload.otp or not payload.new_password:
+        raise HTTPException(status_code=400, detail="Email, OTP, and new password are required")
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters long")
+        
+    email_clean = payload.email.strip().lower()
+    pending_data = verify_and_delete_otp(email_clean, "forgot_password", payload.otp)
+    if pending_data is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP code")
+        
+    # Update password and terminate other active sessions
+    success = update_user_password(email_clean, payload.new_password)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to update password")
+        
+    # Log the user in automatically
+    token = create_session(email_clean)
+    return {"status": "success", "session_token": token, "email": email_clean}
+
+
+@app.post("/api/auth/reset-password")
+async def reset_password_endpoint(payload: AuthResetPasswordRequest, request: Request):
+    user_email = request.state.user
+    if not user_email:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    db = get_mongo_db()
+    users_col = db["users"]
+    user = users_col.find_one({"email": user_email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    # Verify current password
+    from crm.lead_database import verify_password
+    if not verify_password(payload.current_password, user["password_hash"], user["salt"]):
+        raise HTTPException(status_code=401, detail="Incorrect current password")
+        
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters long")
+        
+    # Update user password
+    success = update_user_password(user_email, payload.new_password)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to update password")
+        
+    # Re-create session since the previous sessions were deleted by update_user_password
+    token = create_session(user_email)
+    return {"status": "success", "session_token": token, "message": "Password updated successfully"}
+
 
 @app.post("/api/auth/login")
 async def login_endpoint(payload: AuthLoginRequest):
