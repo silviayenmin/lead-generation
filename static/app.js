@@ -1,7 +1,7 @@
 // Intercept all fetch requests to automatically append X-API-Key header
-(function() {
+(function () {
     const ORIGINAL_FETCH = window.fetch;
-    window.fetch = function(url, options = {}) {
+    window.fetch = function (url, options = {}) {
         const urlStr = String(url);
         if (urlStr.startsWith("/api/")) {
             if (!options.headers) {
@@ -44,7 +44,7 @@ function initTheme() {
     const savedTheme = localStorage.getItem("silvia_theme");
     const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const currentTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-    
+
     if (document.documentElement) {
         if (currentTheme === 'light') {
             document.documentElement.classList.add('light-theme');
@@ -60,6 +60,7 @@ let leadsData = [];
 let searchesData = [];
 let activeSearchId = "all";
 let activeLead = null;
+let pendingVerificationEmail = "";
 let archiveCurrentPage = 1;
 const archivePageSize = 10;
 const STAGES = ["New", "Drafted", "Emailed", "Replied", "Disqualified"];
@@ -205,14 +206,14 @@ function getPlatformIconSvg(platform, size = 14, style = "") {
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize Lucide Icons
     lucide.createIcons();
-    
+
     // Initialize Collapsible Settings Cards (Accordion UX)
     const collapsibleCards = document.querySelectorAll(".collapsible-card");
     collapsibleCards.forEach(card => {
         const titleToggle = card.querySelector(".card-title-toggle");
         const bodyEl = card.querySelector(".collapsible-body");
         const chevronIcon = card.querySelector(".chevron-icon");
-        
+
         if (titleToggle && bodyEl) {
             titleToggle.addEventListener("click", () => {
                 const isCollapsed = card.classList.contains("collapsed");
@@ -228,11 +229,11 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
     });
-    
+
     // Theme toggle setup
     const btnThemeToggle = document.getElementById("btn-theme-toggle");
     const themeToggleIcon = document.getElementById("theme-toggle-icon");
-    
+
     function updateThemeIcon() {
         if (!themeToggleIcon) return;
         const isLight = document.documentElement.classList.contains('light-theme');
@@ -243,9 +244,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         lucide.createIcons();
     }
-    
+
     updateThemeIcon();
-    
+
     if (btnThemeToggle) {
         btnThemeToggle.addEventListener("click", () => {
             const isLight = document.documentElement.classList.toggle('light-theme');
@@ -253,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
             updateThemeIcon();
         });
     }
-    
+
     // Check authentication on page load
     checkAuthentication();
 
@@ -296,7 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const linkShowLogin = document.getElementById("link-show-login");
     const loginCard = document.getElementById("login-card");
     const registerCard = document.getElementById("register-card");
-    
+
     if (linkShowRegister && loginCard && registerCard) {
         linkShowRegister.onclick = (e) => {
             e.preventDefault();
@@ -320,7 +321,92 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnLogout) {
         btnLogout.addEventListener("click", logout);
     }
-    
+
+    // OTP/Forgot Password Elements and Listeners
+    const registerOtpForm = document.getElementById("register-otp-form");
+    if (registerOtpForm) {
+        registerOtpForm.addEventListener("submit", submitRegisterOtp);
+    }
+    const forgotRequestForm = document.getElementById("forgot-request-form");
+    if (forgotRequestForm) {
+        forgotRequestForm.addEventListener("submit", submitForgotRequest);
+    }
+    const forgotVerifyForm = document.getElementById("forgot-verify-form");
+    if (forgotVerifyForm) {
+        forgotVerifyForm.addEventListener("submit", submitForgotVerify);
+    }
+
+    // Toggle forgot password visibility
+    const forgotVerifyTogglePwdBtn = document.getElementById("forgot-verify-toggle-password");
+    const forgotVerifyPwdInput = document.getElementById("forgot-verify-new-password");
+    const forgotVerifyEyeIcon = document.getElementById("forgot-verify-eye-icon");
+    if (forgotVerifyTogglePwdBtn && forgotVerifyPwdInput && forgotVerifyEyeIcon) {
+        forgotVerifyTogglePwdBtn.addEventListener("click", () => {
+            const isPwd = forgotVerifyPwdInput.type === "password";
+            forgotVerifyPwdInput.type = isPwd ? "text" : "password";
+            forgotVerifyEyeIcon.setAttribute("data-lucide", isPwd ? "eye-off" : "eye");
+            if (window.lucide) window.lucide.createIcons();
+        });
+    }
+
+    // Forgot Password card transitions
+    const linkShowForgot = document.getElementById("link-show-forgot");
+    const linkForgotRequestBack = document.getElementById("link-forgot-request-back");
+    const linkForgotVerifyBack = document.getElementById("link-forgot-verify-back");
+    const linkRegisterOtpBack = document.getElementById("link-register-otp-back");
+
+    const forgotRequestCard = document.getElementById("forgot-request-card");
+    const forgotVerifyCard = document.getElementById("forgot-verify-card");
+    const registerOtpCard = document.getElementById("register-otp-card");
+
+    if (linkShowForgot && loginCard && forgotRequestCard) {
+        linkShowForgot.onclick = (e) => {
+            e.preventDefault();
+            loginCard.style.display = "none";
+            forgotRequestCard.style.display = "flex";
+            const emailInput = document.getElementById("forgot-request-email");
+            if (emailInput) {
+                emailInput.value = "";
+                emailInput.focus();
+            }
+            const errorMsg = document.getElementById("forgot-request-error-msg");
+            if (errorMsg) errorMsg.style.display = "none";
+        };
+    }
+    if (linkForgotRequestBack && loginCard && forgotRequestCard) {
+        linkForgotRequestBack.onclick = (e) => {
+            e.preventDefault();
+            forgotRequestCard.style.display = "none";
+            loginCard.style.display = "flex";
+            const loginEmailInput = document.getElementById("login-email");
+            if (loginEmailInput) loginEmailInput.focus();
+        };
+    }
+    if (linkForgotVerifyBack && loginCard && forgotVerifyCard) {
+        linkForgotVerifyBack.onclick = (e) => {
+            e.preventDefault();
+            forgotVerifyCard.style.display = "none";
+            loginCard.style.display = "flex";
+            const loginEmailInput = document.getElementById("login-email");
+            if (loginEmailInput) loginEmailInput.focus();
+        };
+    }
+    if (linkRegisterOtpBack && registerCard && registerOtpCard) {
+        linkRegisterOtpBack.onclick = (e) => {
+            e.preventDefault();
+            registerOtpCard.style.display = "none";
+            registerCard.style.display = "flex";
+            const regEmailInput = document.getElementById("register-email");
+            if (regEmailInput) regEmailInput.focus();
+        };
+    }
+
+    // Bind profile screen change password button
+    const btnProfileChangePassword = document.getElementById("btn-profile-change-password");
+    if (btnProfileChangePassword) {
+        btnProfileChangePassword.addEventListener("click", submitProfilePasswordReset);
+    }
+
     // Sidebar collapsible toggle handler
     const sidebar = document.getElementById("sidebar");
     const sidebarToggle = document.getElementById("sidebar-toggle");
@@ -360,21 +446,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Outreach Config Settings hydration from localStorage
-    if (localStorage.getItem("silvia_agency_name")) agencyNameInput.value = localStorage.getItem("silvia_agency_name");
+    if (agencyNameInput && localStorage.getItem("silvia_agency_name")) agencyNameInput.value = localStorage.getItem("silvia_agency_name");
     updateSidebarAgencyName();
-    if (localStorage.getItem("silvia_agency_info")) agencyInfoInput.value = localStorage.getItem("silvia_agency_info");
-    if (localStorage.getItem("silvia_email_tone")) emailToneSelect.value = localStorage.getItem("silvia_email_tone");
-    
+    if (agencyInfoInput && localStorage.getItem("silvia_agency_info")) agencyInfoInput.value = localStorage.getItem("silvia_agency_info");
+    if (emailToneSelect && localStorage.getItem("silvia_email_tone")) emailToneSelect.value = localStorage.getItem("silvia_email_tone");
+
     // Register auto-save for settings modifications
     if (agencyNameInput) {
         agencyNameInput.addEventListener("input", () => {
             const val = agencyNameInput.value;
             localStorage.setItem("silvia_agency_name", val);
             localStorage.setItem("agencyName", val);
-            
+
             const profileBusInput = document.getElementById("profile-business-name");
             if (profileBusInput) profileBusInput.value = val;
-            
+
             updateSidebarAgencyName();
             updateConfigPreview();
         });
@@ -391,14 +477,14 @@ document.addEventListener("DOMContentLoaded", () => {
             updateConfigPreview();
         });
     }
-    
+
     // Form and Filtering Event Listeners
     if (searchForm) searchForm.addEventListener("submit", handleSearchSubmit);
     if (filterPlatform) filterPlatform.addEventListener("change", renderLeads);
     if (filterStatus) filterStatus.addEventListener("change", renderLeads);
     if (filterCrm) filterCrm.addEventListener("change", renderLeads);
     if (globalSearch) globalSearch.addEventListener("input", renderLeads);
-    
+
     if (archiveFilterPlatform) archiveFilterPlatform.addEventListener("change", () => {
         archiveCurrentPage = 1;
         if (typeof syncPillsToDropdowns === "function") syncPillsToDropdowns();
@@ -432,20 +518,20 @@ document.addEventListener("DOMContentLoaded", () => {
         archiveCurrentPage++;
         renderArchiveLeads();
     });
-    
+
     // Left Navigation Sidebar tabs
     if (tabBtnDashboard) tabBtnDashboard.addEventListener("click", () => switchTab("dashboard"));
     if (tabBtnDiscovery) tabBtnDiscovery.addEventListener("click", () => switchTab("discovery"));
     if (tabBtnPipeline) tabBtnPipeline.addEventListener("click", () => switchTab("pipeline"));
     if (tabBtnArchive) tabBtnArchive.addEventListener("click", () => switchTab("archive"));
     if (tabBtnSettings) tabBtnSettings.addEventListener("click", () => switchTab("settings"));
-    
+
     // User Profile topbar trigger and button listeners
     if (topbarProfilePic) topbarProfilePic.addEventListener("click", () => switchTab("profile"));
-    
+
     const btnSaveProfile = document.getElementById("btn-save-user-profile");
     if (btnSaveProfile) btnSaveProfile.addEventListener("click", saveUserProfile);
-    
+
     const profileBusinessInput = document.getElementById("profile-business-name");
     if (profileBusinessInput) {
         profileBusinessInput.addEventListener("input", () => {
@@ -457,19 +543,19 @@ document.addEventListener("DOMContentLoaded", () => {
             updateConfigPreview();
         });
     }
-    
+
     const btnToggleProfileToken = document.getElementById("btn-toggle-profile-token");
     if (btnToggleProfileToken) btnToggleProfileToken.addEventListener("click", toggleProfileTokenVisibility);
-    
+
     const btnCopyProfileToken = document.getElementById("btn-copy-profile-token");
     if (btnCopyProfileToken) btnCopyProfileToken.addEventListener("click", copyProfileTokenToClipboard);
-    
+
     const btnProfileLogout = document.getElementById("btn-profile-logout");
     if (btnProfileLogout) btnProfileLogout.addEventListener("click", logout);
-    
+
     const btnSaveWebhook = document.getElementById("btn-save-webhook-url");
     if (btnSaveWebhook) btnSaveWebhook.addEventListener("click", saveWebhookUrl);
-    
+
     // Drawer buttons & form triggers
     if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeModal);
     if (modalBtnCopy) modalBtnCopy.addEventListener("click", copyLeadSummary);
@@ -478,7 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnGeneratePitch) btnGeneratePitch.addEventListener("click", generateAiPitch);
     if (modalCrmStatus) modalCrmStatus.addEventListener("change", handleCrmStatusChange);
     if (modalEmailBody) modalEmailBody.addEventListener("input", handleEmailBodyInput);
-    
+
     // Lead form auto-sync database listeners
     if (modalAuthorName) modalAuthorName.addEventListener("change", saveLeadDetailsFromModal);
     if (modalCompanyName) modalCompanyName.addEventListener("change", saveLeadDetailsFromModal);
@@ -489,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (modalLocation) modalLocation.addEventListener("change", saveLeadDetailsFromModal);
     if (modalNeedDescription) modalNeedDescription.addEventListener("change", saveLeadDetailsFromModal);
     if (modalContactInfo) modalContactInfo.addEventListener("change", saveLeadDetailsFromModal);
-    
+
     // Verification & Export links
     if (btnExportCsvSidebar) btnExportCsvSidebar.addEventListener("click", exportCampaignCSV);
     if (btnEnrichContact) btnEnrichContact.addEventListener("click", enrichContactEmail);
@@ -497,17 +583,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Saved searches and active monitoring triggers
     if (btnSaveSearch) btnSaveSearch.addEventListener("click", saveCurrentSearch);
     if (btnRunMonitoring) btnRunMonitoring.addEventListener("click", runActiveMonitoring);
-    
+
     // IMAP Configuration save & Sync triggers
     const btnSaveImap = document.getElementById("btn-save-imap-config");
     if (btnSaveImap) btnSaveImap.addEventListener("click", saveImapConfig);
-    
+
     const btnSyncReplies = document.getElementById("btn-sync-replies-trigger");
     if (btnSyncReplies) btnSyncReplies.addEventListener("click", syncReplies);
-    
+
     // Drag-and-Drop Columns Listener
     initDragAndDrop();
-    
+
     // Drawer overlay close detection
     if (detailModal) {
         detailModal.addEventListener("click", (e) => {
@@ -580,13 +666,13 @@ async function loadExistingLeads() {
         const response = await fetch("/api/leads");
         const data = await response.json();
         leadsData = data.leads || [];
-        
+
         // Populate primary stats banner counts globally
         updateGlobalStats(leadsData);
         loadPerformanceAnalytics();
         renderRecommendedLeads();
         renderRecentActivity();
-        
+
         // Initial render matches currently open view
         if (viewDashboard && viewDashboard.classList.contains("active")) {
             renderLeads();
@@ -603,26 +689,26 @@ async function loadExistingLeads() {
 // Scrape Submit
 async function handleSearchSubmit(e) {
     e.preventDefault();
-    
+
     const keyword = keywordInput.value.trim();
     const timeframe = timeframeSelect.value;
     const limit = parseInt(limitSelect.value);
     const platform = platformSelect ? platformSelect.value : "linkedin";
     const matchTypeSelect = document.getElementById("match-type");
     const match_type = matchTypeSelect ? matchTypeSelect.value : "partial";
-    
+
     if (!keyword) return;
-    
+
     setSearchLoading(true, platform);
-    
+
     let progress = 5;
     loadingProgress.style.width = `${progress}%`;
-    
+
     const interval = setInterval(() => {
         if (progress < 90) {
             progress += Math.floor(Math.random() * 8) + 2;
             loadingProgress.style.width = `${progress}%`;
-            
+
             if (progress > 30 && progress < 60) {
                 loadingStatusText.innerText = "Analyzing post relevance with Llama-3.3 Agent...";
             } else if (progress >= 60) {
@@ -630,7 +716,7 @@ async function handleSearchSubmit(e) {
             }
         }
     }, 1200);
-    
+
     try {
         const response = await fetch("/api/search", {
             method: "POST",
@@ -639,17 +725,17 @@ async function handleSearchSubmit(e) {
             },
             body: JSON.stringify({ keyword, timeframe, limit, platform, match_type })
         });
-        
+
         if (!response.ok) {
             throw new Error(`Search request failed: ${response.statusText}`);
         }
-        
+
         clearInterval(interval);
         loadingProgress.style.width = "100%";
-        
+
         // Fetch new state and jump to dashboard view
         await loadExistingLeads();
-        
+
         setTimeout(() => {
             setSearchLoading(false);
             // Reset wizard step
@@ -657,10 +743,10 @@ async function handleSearchSubmit(e) {
             const wizardPanels = document.querySelectorAll(".wizard-step-panel");
             wizardPanels.forEach(p => p.classList.remove("active"));
             document.querySelector(".wizard-step-panel[data-step='1']").classList.add("active");
-            
+
             switchTab("dashboard");
         }, 500);
-        
+
     } catch (error) {
         clearInterval(interval);
         setSearchLoading(false);
@@ -686,7 +772,7 @@ function setSearchLoading(isLoading, platform = "linkedin") {
 // Header Stats update
 function updateGlobalStats(leadsList) {
     if (statTotal) statTotal.innerText = leadsList.length;
-    
+
     // Qualified Leads are High Intent + Medium Intent
     const qualified = leadsList.filter(l => {
         const category = l.leadCategory || "";
@@ -697,13 +783,13 @@ function updateGlobalStats(leadsList) {
         return status.includes("qualif") || status.includes("warm") || status.includes("prospect");
     });
     if (statQualified) statQualified.innerText = qualified.length;
-    
+
     const activeOutreach = leadsList.filter(l => {
         const stage = (l.crmStatus || "").toLowerCase();
         return stage === "drafted" || stage === "emailed" || stage === "replied";
     });
     if (statActiveOutreach) statActiveOutreach.innerText = activeOutreach.length;
-    
+
     let totalScore = 0;
     let count = 0;
     leadsList.forEach(l => {
@@ -719,7 +805,7 @@ function updateGlobalStats(leadsList) {
             count++;
         }
     });
-    
+
     const avgScore = count > 0 ? Math.round(totalScore / count) : 0;
     if (statConfidence) statConfidence.innerText = `${avgScore}%`;
 
@@ -751,7 +837,7 @@ function updateFunnelChart(leadsList) {
         const category = l.leadCategory || "";
         return category === "High Intent" || category === "Medium Intent";
     }).length;
-    
+
     const outreachCount = leadsList.filter(l => {
         const stage = (l.crmStatus || "").toLowerCase();
         return ["drafted", "emailed", "replied"].includes(stage);
@@ -847,12 +933,12 @@ function renderLeads() {
 
     if (!leadsTbody) return;
     leadsTbody.innerHTML = "";
-    
+
     const statusVal = filterStatus ? filterStatus.value.toLowerCase() : "all";
     const crmVal = filterCrm ? filterCrm.value.toLowerCase() : "all";
     const platformVal = filterPlatform ? filterPlatform.value.toLowerCase() : "all";
     const searchVal = globalSearch ? globalSearch.value.trim().toLowerCase() : "";
-    
+
     const filtered = leadsData.filter(lead => {
         const leadStatus = String(lead.leadStatus || "").toLowerCase().trim();
         let statusMatch = false;
@@ -873,22 +959,22 @@ function renderLeads() {
         } else {
             statusMatch = (leadStatus === statusVal || leadStatus.includes(statusVal));
         }
-        
+
         const leadCrm = String(lead.crmStatus || "New").toLowerCase();
         const crmMatch = crmVal === "all" || leadCrm === crmVal;
-        
+
         const leadPlatform = getLeadPlatform(lead);
         const platformMatch = platformVal === "all" || leadPlatform === platformVal;
-        
+
         const author = String(lead.authorName || "").toLowerCase();
         const company = String(lead.companyName || "").toLowerCase();
         const need = String(lead.needDescription || "").toLowerCase();
-        const service = Array.isArray(lead.serviceRequired) 
-            ? lead.serviceRequired.join(", ").toLowerCase() 
+        const service = Array.isArray(lead.serviceRequired)
+            ? lead.serviceRequired.join(", ").toLowerCase()
             : String(lead.serviceRequired || "").toLowerCase();
         const industry = String(lead.industry || "").toLowerCase();
         const location = String(lead.location || "").toLowerCase();
-        
+
         let searchMatch = true;
         if (searchVal) {
             const searchWords = searchVal.split(/\s+/).filter(w => w.length > 0);
@@ -904,73 +990,73 @@ function renderLeads() {
                 return false;
             });
         }
-            
+
         return statusMatch && crmMatch && platformMatch && searchMatch;
     });
-    
+
     // Keep stats updated based on table matching rows
     updateGlobalStats(leadsData);
-    
+
     if (filtered.length === 0) {
         if (emptyState) emptyState.style.display = "flex";
         if (tableWrapper) tableWrapper.style.display = "none";
         return;
     }
-    
+
     if (emptyState) emptyState.style.display = "none";
     if (tableWrapper) tableWrapper.style.display = "block";
-    
+
     // Sort matching leads by structured intent score (descending)
     filtered.sort((a, b) => {
         let scoreA = a.leadScore !== undefined ? a.leadScore : (parseFloat(a.confidenceScore) || 0) * 100;
         let scoreB = b.leadScore !== undefined ? b.leadScore : (parseFloat(b.confidenceScore) || 0) * 100;
         return scoreB - scoreA;
     });
-    
+
     // Slice to top 5 leads for the dashboard view
     const top5Leads = filtered.slice(0, 5);
-    
+
     top5Leads.forEach((lead, idx) => {
         const row = document.createElement("tr");
         row.style.cursor = "pointer";
-        
+
         row.addEventListener("click", (e) => {
             if (e.target.closest("a") || e.target.closest("button")) return;
             openDetailModal(lead);
         });
-        
+
         const displayAuthor = lead.authorName || "Unknown Poster";
         const displayCompany = lead.companyName || "No Company Details";
         const displayRole = Array.isArray(lead.serviceRequired)
             ? lead.serviceRequired.join(", ")
             : (lead.serviceRequired || lead.industry || "Prospect Partner");
         const displayIntentType = lead.intentType || "General Intent";
-            
+
         let score = lead.leadScore;
         if (score === undefined || score === null) {
             score = parseFloat(lead.confidenceScore) || 0;
             if (score <= 1.0 && score > 0) score = Math.round(score * 100);
             if (score === 0) score = 40;
         }
-        
+
         let cleanIntent = lead.leadCategory || lead.buyingIntent || 'Low';
         if (cleanIntent.toLowerCase().includes("high")) cleanIntent = "High";
         else if (cleanIntent.toLowerCase().includes("medium") || cleanIntent.toLowerCase().includes("warm")) cleanIntent = "Medium";
         else if (cleanIntent.toLowerCase().includes("low")) cleanIntent = "Low";
         else if (cleanIntent.length > 15) cleanIntent = cleanIntent.substring(0, 15) + "...";
-        
+
         let displayIntent = cleanIntent;
         if (!displayIntent.toLowerCase().includes("intent")) {
             displayIntent = displayIntent + " Intent";
         }
-        
+
         const emailVal = lead.contactInfo || "";
         const isEmailValid = emailVal && emailVal.includes('@') && emailVal !== 'hello@company.com';
         const isEmailVerified = isEmailValid && lead.contactSource !== 'guessed';
         const emailBadgeLabel = isEmailVerified ? 'Verified' : (lead.contactSource === 'guessed' ? 'Guessed' : 'Unverified');
         const emailBadgeClass = isEmailVerified ? 'badge-success' : (lead.contactSource === 'guessed' ? 'badge-warning' : 'badge-neutral');
         const emailBadgeIcon = isEmailVerified ? 'check' : (lead.contactSource === 'guessed' ? 'help-circle' : 'help-circle');
-            
+
         const platform = getLeadPlatform(lead);
         let platformBadgeColor = "rgba(124, 92, 255, 0.1)";
         let platformColor = "var(--primary)";
@@ -995,7 +1081,7 @@ function renderLeads() {
 
         const avatarUrl = getLeadAvatarUrl(displayAuthor);
         const logoUrl = getCompanyLogoUrl(displayCompany);
- 
+
         let contactHtml = "";
         if (isEmailValid) {
             contactHtml = `
@@ -1060,14 +1146,14 @@ function renderLeads() {
                 </div>
             </td>
         `;
-        
+
         row.querySelector(".btn-row-copy").addEventListener("click", () => {
             copyToClipboard(getFormattedLeadSummary(lead));
         });
-        
+
         leadsTbody.appendChild(row);
     });
-    
+
     lucide.createIcons();
 }
 
@@ -1080,53 +1166,53 @@ function renderKanban() {
         "Replied": { cards: document.getElementById("cards-replied"), count: document.getElementById("count-replied"), items: [] },
         "Disqualified": { cards: document.getElementById("cards-disqualified"), count: document.getElementById("count-disqualified"), items: [] }
     };
-    
+
     Object.keys(columns).forEach(stage => {
         if (columns[stage].cards) columns[stage].cards.innerHTML = "";
     });
-    
+
     leadsData.forEach(lead => {
         const stage = lead.crmStatus || "New";
         const matchedColumn = columns[stage] || columns["New"];
         matchedColumn.items.push(lead);
     });
-    
+
     Object.keys(columns).forEach(stage => {
         const col = columns[stage];
         if (!col.cards || !col.count) return;
         col.count.innerText = col.items.length;
-        
+
         if (col.items.length === 0) {
             col.cards.innerHTML = `<div style="color: var(--text-muted); font-size: 0.72rem; text-align: center; padding: 2rem 0; font-style: italic;">No leads in stage</div>`;
             return;
         }
-        
+
         col.items.forEach(lead => {
             const card = document.createElement("div");
             card.className = "kanban-card";
             card.draggable = true;
-            
+
             card.addEventListener("dblclick", () => openDetailModal(lead));
-            
+
             card.addEventListener("dragstart", (e) => {
                 e.dataTransfer.setData("text/plain", lead.sourceUrl);
                 card.style.opacity = "0.4";
             });
-            
+
             card.addEventListener("dragend", () => {
                 card.style.opacity = "1";
             });
-            
+
             let score = lead.leadScore;
             if (score === undefined || score === null) {
                 score = parseFloat(lead.confidenceScore) || 0;
                 if (score <= 1.0 && score > 0) score = Math.round(score * 100);
                 if (score === 0) score = 40;
             }
-            
+
             const displayCompany = lead.companyName || "No Company Details";
             const displayRequirement = lead.serviceRequired || lead.needDescription || "No requirement extracted";
-            
+
             // Opportunity value calculation
             const estVal = score > 65 ? `$5,000` : `$2,500`;
 
@@ -1188,7 +1274,7 @@ function renderKanban() {
                     <span class="card-value">${estVal} Val</span>
                 </div>
             `;
-            
+
             card.querySelector(".btn-open").addEventListener("click", (e) => {
                 e.stopPropagation();
                 openDetailModal(lead);
@@ -1197,7 +1283,7 @@ function renderKanban() {
             col.cards.appendChild(card);
         });
     });
-    
+
     lucide.createIcons();
 }
 
@@ -1209,39 +1295,39 @@ function initDragAndDrop() {
             col.style.borderColor = "var(--primary)";
             col.style.background = "rgba(124, 92, 255, 0.03)";
         });
-        
+
         col.addEventListener("dragleave", () => {
             col.style.borderColor = "";
             col.style.background = "";
         });
-        
+
         col.addEventListener("drop", async (e) => {
             e.preventDefault();
             col.style.borderColor = "";
             col.style.background = "";
-            
+
             const leadUrl = e.dataTransfer.setData ? "" : ""; // fallback
             const targetStage = col.getAttribute("data-stage");
-            
+
             // HTML5 dataTransfer compatibility
             let transferUrl = "";
             try {
                 transferUrl = e.dataTransfer.getData("text/plain");
-            } catch(err){}
+            } catch (err) { }
 
             if (!transferUrl) return;
 
             const lead = leadsData.find(l => l.sourceUrl === transferUrl);
             if (lead && lead.crmStatus !== targetStage) {
                 lead.crmStatus = targetStage;
-                
+
                 if (activeLead && activeLead.sourceUrl === lead.sourceUrl) {
                     modalCrmStatus.value = targetStage;
                 }
-                
+
                 // Redraw instantly
                 renderKanban();
-                
+
                 try {
                     await fetch("/api/leads/update", {
                         method: "POST",
@@ -1267,7 +1353,7 @@ function initDragAndDrop() {
 // Slide Drawer Opening controls
 function openDetailModal(lead) {
     activeLead = lead;
-    
+
     modalAuthorName.value = lead.authorName || "";
     modalCompanyName.value = lead.companyName || "";
     let rawIntent = String(lead.buyingIntent || "").toLowerCase();
@@ -1288,17 +1374,17 @@ function openDetailModal(lead) {
     modalServiceRequired.value = Array.isArray(lead.serviceRequired)
         ? lead.serviceRequired.join(", ")
         : (lead.serviceRequired || "");
-        
+
     modalIndustry.value = lead.industry || "";
     modalLocation.value = lead.location || "";
-    
+
     modalNeedDescription.value = lead.needDescription || "";
-    
+
     // Check if email is null, undefined, hello@company.com, or empty
     const emailVal = lead.contactInfo || "";
     const isEmailValid = emailVal && emailVal.includes('@') && emailVal !== 'hello@company.com';
     const noEmailSpan = document.getElementById("modal-email-no-data");
-    
+
     if (isEmailValid) {
         modalContactInfo.value = emailVal;
         if (noEmailSpan) noEmailSpan.style.display = "none";
@@ -1306,7 +1392,7 @@ function openDetailModal(lead) {
         modalContactInfo.value = "";
         if (noEmailSpan) noEmailSpan.style.display = "block";
     }
-    
+
     let score = lead.leadScore;
     if (score === undefined || score === null) {
         score = parseFloat(lead.confidenceScore) || 0;
@@ -1330,9 +1416,9 @@ function openDetailModal(lead) {
     if (modalIntentType) modalIntentType.value = lead.intentType || "General Discussion";
     if (modalContactSource) modalContactSource.innerText = lead.contactSource || "guessed";
     if (modalContactConfidence) modalContactConfidence.innerText = lead.contactConfidence || "low";
-    
+
     modalBtnLinkedin.href = lead.sourceUrl || "#";
-    
+
     // Update platform button visual dynamically based on source url
     if (lead.sourceUrl.includes("facebook.com")) {
         modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("facebook", 14)} View Facebook`;
@@ -1343,9 +1429,9 @@ function openDetailModal(lead) {
     } else {
         modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("linkedin", 14)} View LinkedIn`;
     }
-    
+
     modalCrmStatus.value = lead.crmStatus || "New";
-    
+
     // Load existing drafts
     if (lead.draftEmail) {
         modalEmailBody.value = lead.draftEmail;
@@ -1360,7 +1446,7 @@ function openDetailModal(lead) {
         modalBtnSend.disabled = true;
         modalBtnCopyEmail.disabled = true;
     }
-    
+
     // Render Email Replies History inside detail drawer
     const drawerRepliesSection = document.getElementById("drawer-replies-section");
     const drawerRepliesList = document.getElementById("drawer-replies-list");
@@ -1377,7 +1463,7 @@ function openDetailModal(lead) {
                 replyCard.style.display = "flex";
                 replyCard.style.flexDirection = "column";
                 replyCard.style.gap = "0.25rem";
-                
+
                 replyCard.innerHTML = `
                     <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
                         <strong>From: ${reply.from || "Unknown"}</strong>
@@ -1397,7 +1483,7 @@ function openDetailModal(lead) {
             drawerRepliesSection.style.display = "none";
         }
     }
-    
+
     detailModal.classList.add("active");
     document.body.style.overflow = "hidden"; // Keep background scroll locked
     lucide.createIcons();
@@ -1433,7 +1519,7 @@ async function syncLeadToBackend() {
                 contactInfo: activeLead.contactInfo || ""
             })
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             const idx = leadsData.findIndex(l => l.sourceUrl === activeLead.sourceUrl);
@@ -1471,14 +1557,14 @@ function handleEmailBodyInput() {
 // AI Cold Outreach drafting (Groq Llama-3.3)
 async function generateAiPitch() {
     if (!activeLead) return;
-    
+
     btnGeneratePitch.disabled = true;
     emailLoader.style.display = "block";
     emailBodyPlaceholder.style.display = "none";
     modalEmailBody.style.display = "none";
-    
+
     try {
-        const agencyName = agencyNameInput.value.trim() || "Silvia Team";
+        const agencyName = agencyNameInput.value.trim() || "My Business";
         const agencyInfo = agencyInfoInput.value.trim() || "premier design & development services";
         const emailTone = emailToneSelect.value || "Short & Conversational";
 
@@ -1494,29 +1580,29 @@ async function generateAiPitch() {
                 emailTone: emailTone
             })
         });
-        
+
         if (!response.ok) throw new Error("FastAPI generation request rejected.");
-        
+
         const data = await response.json();
-        
+
         activeLead.draftEmail = data.pitch;
         activeLead.crmStatus = data.crmStatus;
-        
+
         modalCrmStatus.value = data.crmStatus;
         modalEmailBody.value = data.pitch;
-        
+
         emailLoader.style.display = "none";
         modalEmailBody.style.display = "block";
-        
+
         modalBtnSend.disabled = false;
         modalBtnCopyEmail.disabled = false;
-        
+
         const idx = leadsData.findIndex(l => l.sourceUrl === activeLead.sourceUrl);
         if (idx !== -1) {
             leadsData[idx].draftEmail = data.pitch;
             leadsData[idx].crmStatus = data.crmStatus;
         }
-        
+
         if (viewDashboard && viewDashboard.classList.contains("active")) renderLeads();
         if (viewArchive && viewArchive.classList.contains("active")) renderArchiveLeads();
         updateGlobalStats(leadsData);
@@ -1532,11 +1618,11 @@ async function generateAiPitch() {
 // Client mailto link execution
 async function handleSendPitch() {
     if (!activeLead || !modalEmailBody.value.trim()) return;
-    
+
     const emailText = modalEmailBody.value;
     let subject = "Outreach Details";
     let body = emailText;
-    
+
     if (emailText.includes("Subject:")) {
         const lines = emailText.split("\n");
         const subLine = lines.find(l => l.toLowerCase().startsWith("subject:"));
@@ -1545,12 +1631,12 @@ async function handleSendPitch() {
             body = lines.filter(l => !l.toLowerCase().startsWith("subject:")).join("\n").trim();
         }
     }
-    
+
     const contactEmail = activeLead.contactInfo && activeLead.contactInfo.includes("@") ? activeLead.contactInfo : "";
     const mailtoUrl = `mailto:${encodeURIComponent(contactEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
+
     window.open(mailtoUrl, "_blank");
-    
+
     // Automatically advance stage to Emailed
     activeLead.crmStatus = "Emailed";
     modalCrmStatus.value = "Emailed";
@@ -1596,20 +1682,20 @@ async function exportCampaignCSV() {
         await showCustomAlert("No lead details to export!", "Export Error", "danger");
         return;
     }
-    
+
     let csvRows = [];
     csvRows.push("Email,FirstName,LastName,CompanyName,Subject,Icebreaker,PostUrl,ConfidenceScore,CrmStatus");
-    
+
     leadsData.forEach(lead => {
         const email = lead.contactInfo && lead.contactInfo.includes("@") ? lead.contactInfo : "";
-        
+
         const author = lead.authorName || "Friend";
         const parts = author.split(" ");
         const firstName = parts[0] || "Friend";
         const lastName = parts.slice(1).join(" ") || "";
-        
+
         const company = (lead.companyName || "").replace(/"/g, '""');
-        
+
         let subject = "Outreach";
         let body = lead.draftEmail || "";
         if (body.includes("Subject:")) {
@@ -1621,18 +1707,18 @@ async function exportCampaignCSV() {
             }
         }
         body = body.replace(/"/g, '""');
-        
+
         const postUrl = lead.sourceUrl || "";
         const score = lead.confidenceScore || 0;
         const status = lead.crmStatus || "New";
-        
+
         csvRows.push(`"${email}","${firstName}","${lastName}","${company}","${subject}","${body}","${postUrl}","${score}","${status}"`);
     });
-    
+
     const csvString = csvRows.join("\r\n");
     const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", "silvia_campaign_outreach.csv");
@@ -1645,13 +1731,13 @@ async function exportCampaignCSV() {
 // Real-time contact email verification Lookup
 async function enrichContactEmail() {
     if (!activeLead) return;
-    
+
     const btnEnrich = document.getElementById("btn-enrich-contact");
     const enrichLoader = document.getElementById("enrich-loader");
-    
+
     btnEnrich.disabled = true;
     enrichLoader.style.display = "flex";
-    
+
     try {
         const response = await fetch("/api/enrich-contact", {
             method: "POST",
@@ -1662,11 +1748,11 @@ async function enrichContactEmail() {
                 sourceUrl: activeLead.sourceUrl
             })
         });
-        
+
         if (!response.ok) throw new Error("Contact verification service rejected lookup.");
-        
+
         const data = await response.json();
-        
+
         if (data.authorName) {
             activeLead.authorName = data.authorName;
             modalAuthorName.value = data.authorName;
@@ -1685,20 +1771,20 @@ async function enrichContactEmail() {
         }
         activeLead.contactInfo = data.contactInfo;
         modalContactInfo.value = data.contactInfo;
-        
+
         activeLead.contactSource = data.contactSource || "guessed";
         activeLead.contactConfidence = data.contactConfidence || "low";
-        
+
         const modalContactSourceElement = document.getElementById("modal-contact-source");
         const modalContactConfidenceElement = document.getElementById("modal-contact-confidence");
         if (modalContactSourceElement) modalContactSourceElement.innerText = activeLead.contactSource;
         if (modalContactConfidenceElement) modalContactConfidenceElement.innerText = activeLead.contactConfidence;
-        
+
         const idx = leadsData.findIndex(l => l.sourceUrl === activeLead.sourceUrl);
         if (idx !== -1) {
             leadsData[idx] = { ...activeLead };
         }
-        
+
         if (viewDashboard && viewDashboard.classList.contains("active")) renderLeads();
         if (viewArchive && viewArchive.classList.contains("active")) renderArchiveLeads();
         updateGlobalStats(leadsData);
@@ -1713,7 +1799,7 @@ async function enrichContactEmail() {
 // Drawer auto-save inputs onchange
 async function saveLeadDetailsFromModal() {
     if (!activeLead) return;
-    
+
     activeLead.authorName = modalAuthorName.value;
     activeLead.companyName = modalCompanyName.value;
     activeLead.buyingIntent = modalBuyingIntent.value;
@@ -1723,14 +1809,14 @@ async function saveLeadDetailsFromModal() {
     activeLead.location = modalLocation.value;
     activeLead.needDescription = modalNeedDescription.value;
     activeLead.contactInfo = modalContactInfo.value;
-    
+
     const idx = leadsData.findIndex(l => l.sourceUrl === activeLead.sourceUrl);
     if (idx !== -1) {
         leadsData[idx] = { ...activeLead };
     }
-    
+
     await syncLeadToBackend();
-    
+
     if (viewDashboard && viewDashboard.classList.contains("active")) renderLeads();
     if (viewArchive && viewArchive.classList.contains("active")) renderArchiveLeads();
 }
@@ -1751,10 +1837,10 @@ async function loadSearchHistory() {
 function renderArchiveHistory() {
     if (!archiveHistoryList) return;
     archiveHistoryList.innerHTML = "";
-    
+
     const searchInput = document.getElementById("archive-history-search");
     const filterVal = searchInput ? searchInput.value.trim().toLowerCase() : "";
-    
+
     // Render "All Leads" item if filter is empty
     if (!filterVal) {
         const allItem = document.createElement("div");
@@ -1778,25 +1864,25 @@ function renderArchiveHistory() {
         `;
         archiveHistoryList.appendChild(allItem);
     }
-    
+
     // Filter history list items
     const filteredSearches = searchesData.filter(search => {
         const displayKeyword = search.keyword || "Scan Query";
         return !filterVal || displayKeyword.toLowerCase().includes(filterVal);
     });
-    
+
     let visibleSearches = filteredSearches;
     let showMoreCard = false;
-    
+
     if (!filterVal && filteredSearches.length > 10) {
         visibleSearches = filteredSearches.slice(0, 10);
         showMoreCard = true;
     }
-    
+
     // Add history list items
     visibleSearches.forEach(search => {
         const displayKeyword = search.keyword || "Scan Query";
-        
+
         const item = document.createElement("div");
         item.className = `history-item ${activeSearchId === search.id ? "active" : ""}`;
         item.addEventListener("click", () => {
@@ -1805,7 +1891,7 @@ function renderArchiveHistory() {
             renderArchiveHistory();
             renderArchiveLeads();
         });
-        
+
         const leadCount = search.leadUrls ? search.leadUrls.filter(url => leadsData.some(l => l.sourceUrl === url)).length : 0;
         let formattedDate = "Recent";
         if (search.timestamp) {
@@ -1816,15 +1902,15 @@ function renderArchiveHistory() {
                 console.error(e);
             }
         }
-        
+
         let truncatedKeyword = displayKeyword;
         if (truncatedKeyword.length > 20) {
             truncatedKeyword = truncatedKeyword.substring(0, 20) + "...";
         }
-        
+
         const isExact = search.matchType === "exact";
         const exactBadgeHtml = isExact ? `<span class="badge-exact">Exact</span>` : "";
-        
+
         let displayTimeframe = "All Time";
         if (search.timeframe) {
             if (search.timeframe === "qdr:d") displayTimeframe = "24 Hours";
@@ -1833,10 +1919,10 @@ function renderArchiveHistory() {
             else if (search.timeframe === "qdr:m2") displayTimeframe = "2 Months";
             else if (search.timeframe === "qdr:m3") displayTimeframe = "3 Months";
         }
-        
+
         const platform = search.platform || "linkedin";
         const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
-        
+
         item.innerHTML = `
             <div class="history-item-accent"></div>
             <div class="history-item-header">
@@ -1864,7 +1950,7 @@ function renderArchiveHistory() {
 
         archiveHistoryList.appendChild(item);
     });
-    
+
     // Add "View More" card if searches exceed 10
     if (showMoreCard) {
         const moreCard = document.createElement("div");
@@ -1876,7 +1962,7 @@ function renderArchiveHistory() {
         moreCard.addEventListener("click", openQueriesModal);
         archiveHistoryList.appendChild(moreCard);
     }
-    
+
     if (window.lucide) {
         window.lucide.createIcons();
     }
@@ -1887,27 +1973,27 @@ function openQueriesModal() {
     const modal = document.getElementById("queries-modal");
     if (!modal) return;
     modal.style.display = "flex";
-    
+
     // Force a minor delay for CSS scale transform animation activation
     setTimeout(() => {
         modal.classList.add("active");
     }, 10);
-    
+
     renderModalQueries();
-    
+
     // Bind modal close buttons
     const closeBtn = document.getElementById("queries-modal-close");
     if (closeBtn) {
         closeBtn.onclick = closeQueriesModal;
     }
-    
+
     // Close on overlay background click
     modal.onclick = (e) => {
         if (e.target === modal) {
             closeQueriesModal();
         }
     };
-    
+
     // Bind search filter input
     const searchInput = document.getElementById("modal-queries-search");
     if (searchInput) {
@@ -1930,16 +2016,16 @@ function renderModalQueries() {
     const gridContainer = document.getElementById("modal-queries-grid");
     if (!gridContainer) return;
     gridContainer.innerHTML = "";
-    
+
     const searchInput = document.getElementById("modal-queries-search");
     const filterVal = searchInput ? searchInput.value.trim().toLowerCase() : "";
-    
+
     searchesData.forEach(search => {
         const displayKeyword = search.keyword || "Scan Query";
         if (filterVal && !displayKeyword.toLowerCase().includes(filterVal)) {
             return;
         }
-        
+
         const card = document.createElement("div");
         card.className = `history-item ${activeSearchId === search.id ? "active" : ""}`;
         card.style.margin = "0";
@@ -1952,7 +2038,7 @@ function renderModalQueries() {
             renderArchiveHistory();
             renderArchiveLeads();
         });
-        
+
         const leadCount = search.leadUrls ? search.leadUrls.filter(url => leadsData.some(l => l.sourceUrl === url)).length : 0;
         let formattedDate = "Recent";
         if (search.timestamp) {
@@ -1963,18 +2049,18 @@ function renderModalQueries() {
                 console.error(e);
             }
         }
-        
+
         let truncatedKeyword = displayKeyword;
         if (truncatedKeyword.length > 20) {
             truncatedKeyword = truncatedKeyword.substring(0, 20) + "...";
         }
-        
+
         const isExact = search.matchType === "exact";
         const exactBadgeHtml = isExact ? `<span class="badge-exact">Exact</span>` : "";
-        
+
         const platform = search.platform || "linkedin";
         const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
-        
+
         card.innerHTML = `
             <div class="history-item-accent"></div>
             <div class="history-item-header">
@@ -1991,7 +2077,7 @@ function renderModalQueries() {
                 <span class="badge-platform badge-platform-${platform}">${getPlatformIconSvg(platform, 10)}${capPlatform}</span>
             </div>
         `;
-        
+
         const deleteBtn = card.querySelector(".btn-delete-search");
         if (deleteBtn) {
             deleteBtn.addEventListener("click", (e) => {
@@ -2000,10 +2086,10 @@ function renderModalQueries() {
                 confirmDeleteSearch(search.id);
             });
         }
-        
+
         gridContainer.appendChild(card);
     });
-    
+
     if (window.lucide) {
         window.lucide.createIcons();
     }
@@ -2015,7 +2101,7 @@ function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
         // Create container overlay
         const overlay = document.createElement("div");
         overlay.className = "custom-confirm-overlay";
-        
+
         // Define theme icon
         let iconName = "alert-triangle";
         if (type === "danger") {
@@ -2023,7 +2109,7 @@ function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
         } else if (type === "primary") {
             iconName = "check-circle";
         }
-        
+
         // Modal box HTML
         overlay.innerHTML = `
             <div class="custom-confirm-box" onclick="event.stopPropagation()">
@@ -2038,21 +2124,21 @@ function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(overlay);
-        
+
         // Parse the Lucide icon inside the modal
         if (window.lucide) {
             window.lucide.createIcons();
         }
-        
+
         // Trigger reflow then activate animation
         overlay.offsetHeight; // force reflow
         overlay.classList.add("active");
-        
+
         const btnCancel = overlay.querySelector("#custom-confirm-btn-cancel");
         const btnOk = overlay.querySelector("#custom-confirm-btn-ok");
-        
+
         const closeConfirm = (result) => {
             overlay.classList.remove("active");
             overlay.addEventListener("transitionend", () => {
@@ -2060,10 +2146,10 @@ function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
             }, { once: true });
             resolve(result);
         };
-        
+
         btnCancel.addEventListener("click", () => closeConfirm(false));
         btnOk.addEventListener("click", () => closeConfirm(true));
-        
+
         // Close on overlay background click
         overlay.addEventListener("click", (e) => {
             if (e.target === overlay) {
@@ -2078,11 +2164,11 @@ function showCustomAlert(message, title = "Notification", type = "primary") {
     return new Promise((resolve) => {
         const overlay = document.createElement("div");
         overlay.className = "custom-confirm-overlay";
-        
+
         let iconName = "info";
         if (type === "primary") iconName = "info";
         else if (type === "danger") iconName = "alert-circle";
-        
+
         overlay.innerHTML = `
             <div class="custom-confirm-box" onclick="event.stopPropagation()">
                 <div class="custom-confirm-title">
@@ -2095,18 +2181,18 @@ function showCustomAlert(message, title = "Notification", type = "primary") {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(overlay);
-        
+
         if (window.lucide) {
             window.lucide.createIcons();
         }
-        
+
         overlay.offsetHeight;
         overlay.classList.add("active");
-        
+
         const btnOk = overlay.querySelector("#custom-confirm-btn-ok");
-        
+
         const closeAlert = () => {
             overlay.classList.remove("active");
             overlay.addEventListener("transitionend", () => {
@@ -2114,9 +2200,9 @@ function showCustomAlert(message, title = "Notification", type = "primary") {
             }, { once: true });
             resolve();
         };
-        
+
         btnOk.addEventListener("click", closeAlert);
-        
+
         overlay.addEventListener("click", (e) => {
             if (e.target === overlay) {
                 closeAlert();
@@ -2143,13 +2229,13 @@ async function confirmDeleteSearch(searchId) {
         if (response.ok && result.status === "success") {
             // Filter searchesData locally to remove the deleted search
             searchesData = searchesData.filter(s => s.id !== searchId);
-            
+
             // Reset activeSearchId to "all" if the deleted search was the active one
             if (activeSearchId === searchId) {
                 activeSearchId = "all";
                 archiveCurrentPage = 1;
             }
-            
+
             // Refresh the UI
             renderArchiveHistory();
             renderArchiveLeads();
@@ -2180,17 +2266,17 @@ async function confirmDeleteLead(sourceUrl) {
         if (response.ok && result.status === "success") {
             // Remove from local data
             leadsData = leadsData.filter(l => l.sourceUrl !== sourceUrl);
-            
+
             // Also remove from selection if it was selected
             archiveSelectedUrls = archiveSelectedUrls.filter(u => u !== sourceUrl);
             updateBulkActionsBar();
-            
+
             // Update global dashboard components
             updateGlobalStats(leadsData);
             if (typeof loadPerformanceAnalytics === "function") loadPerformanceAnalytics();
             if (typeof renderRecommendedLeads === "function") renderRecommendedLeads();
             if (typeof renderRecentActivity === "function") renderRecentActivity();
-            
+
             // Re-render
             renderArchiveLeads();
             renderArchiveHistory();
@@ -2207,11 +2293,11 @@ async function confirmDeleteLead(sourceUrl) {
 function renderArchiveLeads() {
     if (!archiveLeadsTbody) return;
     archiveLeadsTbody.innerHTML = "";
-    
+
     const statusVal = archiveFilterStatus ? archiveFilterStatus.value.toLowerCase() : "all";
     const crmVal = archiveFilterCrm ? archiveFilterCrm.value.toLowerCase() : "all";
     const platformVal = archiveFilterPlatform ? archiveFilterPlatform.value.toLowerCase() : "all";
-    
+
     let leadsToRender = [];
     if (activeSearchId === "all") {
         leadsToRender = leadsData;
@@ -2227,7 +2313,7 @@ function renderArchiveLeads() {
             if (archiveTableTitle) archiveTableTitle.innerText = "All leads database";
         }
     }
-    
+
     const filtered = leadsToRender.filter(lead => {
         // Filter by header tabs first
         if (archiveViewFilter === "high") {
@@ -2259,16 +2345,16 @@ function renderArchiveLeads() {
         } else {
             statusMatch = (leadStatus === statusVal || leadStatus.includes(statusVal));
         }
-        
+
         const leadCrm = String(lead.crmStatus || "New").toLowerCase();
         const crmMatch = crmVal === "all" || leadCrm === crmVal;
-        
+
         const leadPlatform = getLeadPlatform(lead);
         const platformMatch = platformVal === "all" || leadPlatform === platformVal;
-        
+
         return statusMatch && crmMatch && platformMatch;
     });
-    
+
     // Update dynamic dashboard metrics
     const statTotalEl = document.getElementById("archive-stat-total");
     const statHighEl = document.getElementById("archive-stat-high");
@@ -2292,13 +2378,13 @@ function renderArchiveLeads() {
         const contactPct = filtered.length > 0 ? Math.round((contactsFound / filtered.length) * 100) : 0;
         statContactsEl.innerText = `${contactPct}%`;
     }
-    
+
     // Update the badge count
     const tableBadge = document.getElementById("archive-table-badge");
     if (tableBadge) {
         tableBadge.innerText = `${filtered.length} leads`;
     }
-    
+
     const archivePagination = document.getElementById("archive-pagination");
     const archivePagPrev = document.getElementById("archive-pag-prev");
     const archivePagNext = document.getElementById("archive-pag-next");
@@ -2310,7 +2396,7 @@ function renderArchiveLeads() {
         if (archivePagination) archivePagination.style.display = "none";
         return;
     }
-    
+
     if (archiveEmptyState) archiveEmptyState.style.display = "none";
     if (archiveTableWrapper) archiveTableWrapper.style.display = "block";
     if (archivePagination) archivePagination.style.display = "flex";
@@ -2334,44 +2420,44 @@ function renderArchiveLeads() {
     paginatedLeads.forEach((lead, idx) => {
         const row = document.createElement("tr");
         row.style.cursor = "pointer";
-        
+
         row.addEventListener("click", (e) => {
             if (e.target.closest("a") || e.target.closest("button") || e.target.closest("input[type='checkbox']")) return;
             openDetailModal(lead);
         });
-        
+
         const displayAuthor = lead.authorName || "Unknown Poster";
         const displayCompany = lead.companyName || "No Company Details";
         const displayRole = Array.isArray(lead.serviceRequired)
             ? lead.serviceRequired.join(", ")
             : (lead.serviceRequired || lead.industry || "Prospect Partner");
-            
+
         let score = lead.leadScore;
         if (score === undefined || score === null) {
             score = parseFloat(lead.confidenceScore) || 0;
             if (score <= 1.0 && score > 0) score = Math.round(score * 100);
             if (score === 0) score = 40;
         }
-        
+
         let cleanIntent = lead.leadCategory || lead.buyingIntent || 'Low';
         if (cleanIntent.toLowerCase().includes("high")) cleanIntent = "High";
         else if (cleanIntent.toLowerCase().includes("medium") || cleanIntent.toLowerCase().includes("warm")) cleanIntent = "Medium";
         else if (cleanIntent.toLowerCase().includes("low")) cleanIntent = "Low";
         else if (cleanIntent.length > 15) cleanIntent = cleanIntent.substring(0, 15) + "...";
-        
+
         let displayIntent = cleanIntent;
         if (!displayIntent.toLowerCase().includes("intent")) {
             displayIntent = displayIntent + " Intent";
         }
-        
+
         let categoryClass = "badge-neutral";
         if (cleanIntent === "High") categoryClass = "badge-success";
         else if (cleanIntent === "Medium") categoryClass = "badge-warning";
-        
+
         const emailVal = lead.contactInfo || "";
         const isEmailValid = emailVal && emailVal.includes('@') && emailVal !== 'hello@company.com';
         const isEmailVerified = isEmailValid && lead.contactSource !== 'guessed';
-            
+
         const platform = getLeadPlatform(lead);
         let platformColor = "var(--primary)";
         let platformIconName = "linkedin";
@@ -2465,7 +2551,7 @@ function renderArchiveLeads() {
                 </div>
             </td>
         `;
-        
+
         row.querySelector(".btn-row-copy").addEventListener("click", () => {
             copyToClipboard(getFormattedLeadSummary(lead));
         });
@@ -2484,10 +2570,10 @@ function renderArchiveLeads() {
             }
             updateBulkActionsBar();
         });
-        
+
         archiveLeadsTbody.appendChild(row);
     });
-    
+
     lucide.createIcons();
 }
 
@@ -2601,12 +2687,12 @@ function syncPillsToDropdowns() {
     const viewFbBtn = document.getElementById("archive-view-fb");
     const viewRepliedBtn = document.getElementById("archive-view-replied");
     const viewsPills = [viewAllBtn, viewHighBtn, viewLiBtn, viewFbBtn, viewRepliedBtn];
-    
+
     viewsPills.forEach(btn => { if (btn) btn.classList.remove("active"); });
-    
+
     const platform = archiveFilterPlatform ? archiveFilterPlatform.value : "all";
     const crm = archiveFilterCrm ? archiveFilterCrm.value : "all";
-    
+
     if (platform === "linkedin") {
         archiveViewFilter = "all";
         if (viewLiBtn) viewLiBtn.classList.add("active");
@@ -2630,9 +2716,9 @@ function initArchiveViews() {
     const viewLiBtn = document.getElementById("archive-view-li");
     const viewFbBtn = document.getElementById("archive-view-fb");
     const viewRepliedBtn = document.getElementById("archive-view-replied");
-    
+
     const viewsPills = [viewAllBtn, viewHighBtn, viewLiBtn, viewFbBtn, viewRepliedBtn];
-    
+
     function setArchiveViewFilter(mode, activeBtn) {
         archiveViewFilter = mode;
         if (mode === "linkedin") {
@@ -2656,7 +2742,7 @@ function initArchiveViews() {
             if (archiveFilterCrm) archiveFilterCrm.value = "all";
             if (archiveFilterStatus) archiveFilterStatus.value = "all";
         }
-        
+
         viewsPills.forEach(btn => {
             if (btn) btn.classList.remove("active");
         });
@@ -2664,7 +2750,7 @@ function initArchiveViews() {
         archiveCurrentPage = 1;
         renderArchiveLeads();
     }
-    
+
     if (viewAllBtn) viewAllBtn.addEventListener("click", () => setArchiveViewFilter("all", viewAllBtn));
     if (viewHighBtn) viewHighBtn.addEventListener("click", () => setArchiveViewFilter("high", viewHighBtn));
     if (viewLiBtn) viewLiBtn.addEventListener("click", () => setArchiveViewFilter("linkedin", viewLiBtn));
@@ -2743,24 +2829,24 @@ function initArchiveViews() {
                 const result = await response.json();
                 if (response.ok && result.status === "success") {
                     await showCustomAlert(`Successfully deleted ${archiveSelectedUrls.length} leads.`, "Success", "primary");
-                    
+
                     // Remove deleted URLs from leadsData locally
                     leadsData = leadsData.filter(l => !archiveSelectedUrls.includes(l.sourceUrl));
-                    
+
                     // Clear selection arrays
                     archiveSelectedUrls = [];
                     const selectAllCheckbox = document.getElementById("archive-select-all-checkbox");
                     if (selectAllCheckbox) selectAllCheckbox.checked = false;
-                    
+
                     // Hide bulk actions bar
                     updateBulkActionsBar();
-                    
+
                     // Update global UI state
                     updateGlobalStats(leadsData);
                     if (typeof loadPerformanceAnalytics === "function") loadPerformanceAnalytics();
                     if (typeof renderRecommendedLeads === "function") renderRecommendedLeads();
                     if (typeof renderRecentActivity === "function") renderRecentActivity();
-                    
+
                     // Re-render
                     renderArchiveLeads();
                     renderArchiveHistory();
@@ -2776,7 +2862,7 @@ function initArchiveViews() {
 
 async function handleBulkAction(targetStage) {
     if (archiveSelectedUrls.length === 0) return;
-    
+
     const promises = archiveSelectedUrls.map(url => {
         const lead = leadsData.find(l => l.sourceUrl === url);
         return fetch("/api/leads/update", {
@@ -2789,7 +2875,7 @@ async function handleBulkAction(targetStage) {
             })
         });
     });
-    
+
     try {
         await Promise.all(promises);
         await showCustomAlert(`Bulk updated ${archiveSelectedUrls.length} leads to stage "${targetStage}"!`, "Bulk Action Success", "primary");
@@ -2821,7 +2907,7 @@ let configPreviewTab = "email";
 function initConfigPreviewTabs() {
     const configTabEmail = document.getElementById("config-preview-tab-email");
     const configTabLinkedin = document.getElementById("config-preview-tab-linkedin");
-    
+
     if (configTabEmail) {
         configTabEmail.addEventListener("click", () => {
             configTabEmail.classList.add("active");
@@ -2843,7 +2929,7 @@ function initConfigPreviewTabs() {
     const testVarAuthor = document.getElementById("test-var-author");
     const testVarCompany = document.getElementById("test-var-company");
     const testVarService = document.getElementById("test-var-service");
-    
+
     if (testVarAuthor) testVarAuthor.addEventListener("input", updateConfigPreview);
     if (testVarCompany) testVarCompany.addEventListener("input", updateConfigPreview);
     if (testVarService) testVarService.addEventListener("input", updateConfigPreview);
@@ -2852,62 +2938,98 @@ function initConfigPreviewTabs() {
 function updateConfigPreview() {
     const emailMockup = document.getElementById("email-composer-mockup");
     const linkedinMockup = document.getElementById("linkedin-chat-mockup");
-    
+
     const previewBodyEmail = document.getElementById("live-pitch-preview-body");
     const previewBodyLinkedin = document.getElementById("live-pitch-preview-body-linkedin");
-    
+
     const targetEmail = document.getElementById("preview-target-email");
     const targetSubject = document.getElementById("preview-target-subject");
-    
+
     const linkedinName = document.getElementById("linkedin-preview-name");
     const linkedinAvatar = document.getElementById("linkedin-preview-avatar");
-    
-    const agencyName = agencyNameInput ? agencyNameInput.value.trim() : "Silvia Team";
+
+    const agencyName = agencyNameInput ? agencyNameInput.value.trim() : "My Business";
     const agencyInfo = agencyInfoInput ? agencyInfoInput.value.trim() : "premier design & development services";
     const emailTone = emailToneSelect ? emailToneSelect.value : "Short & Conversational";
-    
+
     const testAuthorVal = document.getElementById("test-var-author")?.value.trim() || "Sarah Jenkins";
     const testCompanyVal = document.getElementById("test-var-company")?.value.trim() || "Acme Corp";
     const testServiceVal = document.getElementById("test-var-service")?.value.trim() || "React Development";
-    
+
     if (configPreviewTab === "email") {
         if (emailMockup) emailMockup.style.display = "flex";
         if (linkedinMockup) linkedinMockup.style.display = "none";
-        
+
         if (targetEmail) targetEmail.innerText = "contact@buyercompany.com";
-        if (targetSubject) targetSubject.innerText = `Outreach Pitch - ${agencyName}`;
-        
-        if (previewBodyEmail) {
-            previewBodyEmail.innerHTML = `Hi <mark>${testAuthorVal}</mark>,
 
-I saw your recent post mentioning that <mark>${testCompanyVal}</mark> is looking for support with <mark>${testServiceVal}</mark>.
+        let subjectText = `Outreach Pitch - ${agencyName}`;
+        let bodyHtml = "";
 
-We run <strong>${agencyName}</strong>, specializing in ${agencyInfo}. Given your requirements, I think our background aligns perfectly.
-
-I drafted this custom email pitch using our <strong>${emailTone}</strong> tone framework. Are you open to a brief chat or a free code review this week?
-
-Best,
+        if (emailTone === "Professional & Formal") {
+            subjectText = `Inquiry: Support with ${testServiceVal} for ${testCompanyVal} - ${agencyName}`;
+            bodyHtml = `Dear <mark>${testAuthorVal}</mark>,<br><br>
+I hope this message finds you well.<br><br>
+I am writing on behalf of <strong>${agencyName}</strong> regarding your recent request for assistance with <mark>${testServiceVal}</mark> at <mark>${testCompanyVal}</mark>.<br><br>
+Our organization specializes in delivering premium solutions in the area of ${agencyInfo}. We have a proven track record of helping companies optimize their operations and implement high-performing technologies.<br><br>
+I would welcome the opportunity to schedule a formal introduction call next week to discuss how we can support your team in achieving its goals. Please let me know your availability.<br><br>
+Sincerely,<br>
+The ${agencyName} Team`;
+        } else if (emailTone === "Value Pitch (Free Audit)") {
+            subjectText = `Free audit: ${testServiceVal} optimization for ${testCompanyVal}`;
+            bodyHtml = `Hi <mark>${testAuthorVal}</mark>,<br><br>
+I noticed <mark>${testCompanyVal}</mark> is sourcing support for <mark>${testServiceVal}</mark>. We specialize in ${agencyInfo} at <strong>${agencyName}</strong>.<br><br>
+To show you the value we can bring, we would love to conduct a complimentary audit of your current system or setup. No strings attached—we will simply identify 3 key performance or design bottlenecks and send over our recommendations.<br><br>
+Would you be open to a quick 10-minute session to kick off this audit?<br><br>
+Best regards,<br>
+The ${agencyName} Team`;
+        } else if (emailTone === "Aggressive Pitch (Meeting link)") {
+            subjectText = `10x your ${testServiceVal} delivery - ${agencyName} + ${testCompanyVal}`;
+            bodyHtml = `Hi <mark>${testAuthorVal}</mark>,<br><br>
+If you're looking for help with <mark>${testServiceVal}</mark>, let's get straight to the point. Most agencies promise results but fail to deliver. At <strong>${agencyName}</strong>, we are experts in ${agencyInfo}.<br><br>
+We guarantee to streamline your <mark>${testServiceVal}</mark> pipeline and deliver robust, production-ready code in half the time of standard timelines.<br><br>
+Let's skip the endless back-and-forth. Pick a time directly on my calendar here to discuss: <strong>calendly.com/${agencyName.toLowerCase().replace(/[^a-z0-9]/g, '')}/demo</strong><br><br>
+Thanks,<br>
+The ${agencyName} Team`;
+        } else {
+            // Default: Short & Conversational
+            subjectText = `Outreach Pitch - ${agencyName}`;
+            bodyHtml = `Hi <mark>${testAuthorVal}</mark>,<br><br>
+I saw your recent post mentioning that <mark>${testCompanyVal}</mark> is looking for support with <mark>${testServiceVal}</mark>.<br><br>
+We run <strong>${agencyName}</strong>, specializing in ${agencyInfo}. Given your requirements, I think our background aligns perfectly.<br><br>
+Are you open to a brief chat or a free code review this week?<br><br>
+Best,<br>
 The ${agencyName} Team`;
         }
+
+        if (targetSubject) targetSubject.innerText = subjectText;
+        if (previewBodyEmail) previewBodyEmail.innerHTML = bodyHtml;
+
     } else {
         if (emailMockup) emailMockup.style.display = "none";
         if (linkedinMockup) linkedinMockup.style.display = "flex";
-        
+
         if (linkedinName) linkedinName.innerText = testAuthorVal;
         if (linkedinAvatar) {
             const initials = testAuthorVal.split(" ").map(w => w.charAt(0)).join("").substring(0, 2).toUpperCase();
             linkedinAvatar.innerText = initials || "U";
         }
-        
-        if (previewBodyLinkedin) {
-            previewBodyLinkedin.innerHTML = `Hey <mark>${testAuthorVal}</mark>!
 
-Saw your post about <mark>${testCompanyVal}</mark> looking for help with <mark>${testServiceVal}</mark>. At <strong>${agencyName}</strong>, we build ${agencyInfo}.
+        let linkedinHtml = "";
 
-I think our design/dev capabilities match your request exactly. Do you have 5 minutes to discuss this?`;
+        if (emailTone === "Professional & Formal") {
+            linkedinHtml = `Hello <mark>${testAuthorVal}</mark>. I trust you are having a productive week. I observed your inquiry regarding support for <mark>${testServiceVal}</mark> at <mark>${testCompanyVal}</mark>. <strong>${agencyName}</strong> offers extensive expertise in ${agencyInfo}, and we would be pleased to evaluate your project needs. Let me know if we can arrange a brief introductory call.`;
+        } else if (emailTone === "Value Pitch (Free Audit)") {
+            linkedinHtml = `Hi <mark>${testAuthorVal}</mark>! Saw you're looking for support with <mark>${testServiceVal}</mark>. We run <strong>${agencyName}</strong> (specialists in ${agencyInfo}). To show you how we work, we'd love to run a free audit on your current setup and share 3 actionable optimization tips. Open to this?`;
+        } else if (emailTone === "Aggressive Pitch (Meeting link)") {
+            linkedinHtml = `Hey <mark>${testAuthorVal}</mark> - saw your post about <mark>${testServiceVal}</mark> for <mark>${testCompanyVal}</mark>. We build high-velocity ${agencyInfo} at <strong>${agencyName}</strong>. Let's hop on a quick 5-min call to see if we can help you hit your milestones ahead of schedule: calendly.com/${agencyName.toLowerCase().replace(/[^a-z0-9]/g, '')}/demo`;
+        } else {
+            // Default: Short & Conversational
+            linkedinHtml = `Hey <mark>${testAuthorVal}</mark>! Saw your post about <mark>${testCompanyVal}</mark> looking for help with <mark>${testServiceVal}</mark>. At <strong>${agencyName}</strong>, we build ${agencyInfo}. I think our design/dev capabilities match your request exactly. Do you have 5 minutes to discuss this?`;
         }
+
+        if (previewBodyLinkedin) previewBodyLinkedin.innerHTML = linkedinHtml;
     }
-    
+
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -3030,7 +3152,7 @@ function formatActivityDate(isoStr) {
     try {
         const date = new Date(isoStr);
         return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    } catch(e) {
+    } catch (e) {
         return "Recent";
     }
 }
@@ -3042,38 +3164,38 @@ async function loadSavedSearches() {
         const response = await fetch("/api/saved-searches");
         const data = await response.json();
         const searches = data.searches || [];
-        
+
         savedSearchesTbody.innerHTML = "";
-        
+
         if (searches.length === 0) {
             if (monitoringEmptyState) monitoringEmptyState.style.display = "block";
             return;
         }
-        
+
         if (monitoringEmptyState) monitoringEmptyState.style.display = "none";
-        
+
         searches.forEach(search => {
             const row = document.createElement("tr");
-            
+
             const keyword = search.keyword || "";
             const platform = search.platform || "linkedin";
             const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
-            
+
             let timeframe = "All Time";
             if (search.timeframe === "qdr:d") timeframe = "24 Hours";
             else if (search.timeframe === "qdr:w") timeframe = "Past Week";
             else if (search.timeframe === "qdr:m") timeframe = "Past Month";
             else if (search.timeframe === "qdr:m2") timeframe = "2 Months";
             else if (search.timeframe === "qdr:m3") timeframe = "3 Months";
-            
+
             let formattedLastRun = "Never";
             if (search.lastRun) {
                 try {
                     const runDate = new Date(search.lastRun);
                     formattedLastRun = runDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                } catch(e) {}
+                } catch (e) { }
             }
-            
+
             const isExact = search.matchType === "exact";
             const exactBadgeHtml = isExact ? ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px; background: rgba(3,113,114,0.15); color: var(--secondary);">Exact</span>` : ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px;">Partial</span>`;
 
@@ -3089,14 +3211,14 @@ async function loadSavedSearches() {
                     </button>
                 </td>
             `;
-            
+
             row.querySelector(".btn-delete-saved").addEventListener("click", async () => {
                 await showCustomAlert("Saved searches can be modified in config or run automatically!", "Information", "primary");
             });
-            
+
             savedSearchesTbody.appendChild(row);
         });
-        
+
         lucide.createIcons();
     } catch (err) {
         console.error("Failed to load saved searches:", err);
@@ -3109,17 +3231,17 @@ async function saveCurrentSearch() {
     const timeframe = timeframeSelect.value;
     const matchTypeSelect = document.getElementById("match-type");
     const match_type = matchTypeSelect ? matchTypeSelect.value : "partial";
-    
+
     if (!keyword) {
         await showCustomAlert("Please enter a keyword first!", "Keyword Required", "danger");
         return;
     }
-    
+
     btnSaveSearch.disabled = true;
     const origHtml = btnSaveSearch.innerHTML;
     btnSaveSearch.innerHTML = `<i data-lucide="loader" class="spinner spinner-tiny"></i> Saving...`;
     lucide.createIcons();
-    
+
     try {
         const response = await fetch("/api/saved-searches", {
             method: "POST",
@@ -3128,7 +3250,7 @@ async function saveCurrentSearch() {
             },
             body: JSON.stringify({ keyword, platform, timeframe, match_type })
         });
-        
+
         if (response.ok) {
             await showCustomAlert("Search configuration successfully saved to active monitoring database!", "Search Saved", "primary");
             keywordInput.value = "";
@@ -3156,7 +3278,7 @@ async function runActiveMonitoring() {
     const origHtml = btnRunMonitoring.innerHTML;
     btnRunMonitoring.innerHTML = `<i data-lucide="refresh-cw" class="spinner spinner-tiny" style="animation: spin 1s linear infinite;"></i> Running Monitoring...`;
     lucide.createIcons();
-    
+
     try {
         const response = await fetch("/api/saved-searches/run", {
             method: "POST",
@@ -3164,15 +3286,15 @@ async function runActiveMonitoring() {
                 "Content-Type": "application/json"
             }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             const summary = data.summary || {};
             const newFound = summary.newLeadsFound || 0;
             const runCount = summary.searchesRun || 0;
-            
+
             await showCustomAlert(`Monitoring run completed successfully!\nRan ${runCount} saved searches.\nFound ${newFound} new qualified leads (marked as 'New Discovery').`, "Monitoring Complete", "primary");
-            
+
             // Reload all leads database and saved searches
             await loadExistingLeads();
             loadSavedSearches();
@@ -3194,35 +3316,35 @@ async function loadPerformanceAnalytics() {
         const response = await fetch("/api/performance");
         const data = await response.json();
         const history = (data.history || []).slice(0, 5);
-        
+
         performanceTbody.innerHTML = "";
-        
+
         if (history.length === 0) {
             if (performanceEmptyState) performanceEmptyState.style.display = "block";
             return;
         }
-        
+
         if (performanceEmptyState) performanceEmptyState.style.display = "none";
-        
+
         history.forEach(search => {
             const row = document.createElement("tr");
-            
+
             const keyword = search.keyword || "";
             const platform = search.platform || "linkedin";
             const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
-            
+
             let formattedDate = "N/A";
             if (search.timestamp) {
                 try {
                     const date = new Date(search.timestamp);
                     formattedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                } catch(e) {}
+                } catch (e) { }
             }
-            
+
             const resultsFound = search.resultsFound !== undefined ? search.resultsFound : 0;
             const qualifiedLeads = search.qualifiedLeadsCount !== undefined ? search.qualifiedLeadsCount : 0;
             const rate = search.qualificationRate !== undefined ? search.qualificationRate : 0;
-            
+
             row.innerHTML = `
                 <td><strong style="color: var(--text-primary);">${keyword}</strong></td>
                 <td><span class="badge badge-neutral">${capPlatform}</span></td>
@@ -3240,7 +3362,7 @@ async function loadPerformanceAnalytics() {
             `;
             performanceTbody.appendChild(row);
         });
-    } catch(err) {
+    } catch (err) {
         console.error("Failed to load performance analytics:", err);
     }
 }
@@ -3252,7 +3374,7 @@ async function checkAuthentication() {
         showLoginOverlay();
         return;
     }
-    
+
     try {
         const response = await fetch("/api/auth/verify");
         if (response.status === 200) {
@@ -3275,14 +3397,19 @@ function showLoginOverlay() {
         overlay.style.display = "flex";
         overlay.style.opacity = "1";
     }
-    
+
     const loginCard = document.getElementById("login-card");
     const registerCard = document.getElementById("register-card");
-    if (loginCard && registerCard) {
-        loginCard.style.display = "flex";
-        registerCard.style.display = "none";
-    }
-    
+    const registerOtpCard = document.getElementById("register-otp-card");
+    const forgotRequestCard = document.getElementById("forgot-request-card");
+    const forgotVerifyCard = document.getElementById("forgot-verify-card");
+
+    if (loginCard) loginCard.style.display = "flex";
+    if (registerCard) registerCard.style.display = "none";
+    if (registerOtpCard) registerOtpCard.style.display = "none";
+    if (forgotRequestCard) forgotRequestCard.style.display = "none";
+    if (forgotVerifyCard) forgotVerifyCard.style.display = "none";
+
     const emailInput = document.getElementById("login-email");
     if (emailInput) {
         emailInput.value = "";
@@ -3292,7 +3419,7 @@ function showLoginOverlay() {
     if (pwdInput) {
         pwdInput.value = "";
     }
-    
+
     const errorMsg = document.getElementById("login-error-msg");
     if (errorMsg) {
         errorMsg.style.display = "none";
@@ -3300,6 +3427,22 @@ function showLoginOverlay() {
     const regErrorMsg = document.getElementById("register-error-msg");
     if (regErrorMsg) {
         regErrorMsg.style.display = "none";
+    }
+    const regOtpErrorMsg = document.getElementById("register-otp-error-msg");
+    if (regOtpErrorMsg) {
+        regOtpErrorMsg.style.display = "none";
+    }
+    const forgotReqErrorMsg = document.getElementById("forgot-request-error-msg");
+    if (forgotReqErrorMsg) {
+        forgotReqErrorMsg.style.display = "none";
+    }
+    const forgotVerifyErrorMsg = document.getElementById("forgot-verify-error-msg");
+    if (forgotVerifyErrorMsg) {
+        forgotVerifyErrorMsg.style.display = "none";
+    }
+    const forgotVerifySuccessMsg = document.getElementById("forgot-verify-success-msg");
+    if (forgotVerifySuccessMsg) {
+        forgotVerifySuccessMsg.style.display = "none";
     }
 }
 
@@ -3315,24 +3458,24 @@ function hideLoginOverlay() {
 
 async function submitLogin(e) {
     if (e) e.preventDefault();
-    
+
     const emailInput = document.getElementById("login-email");
     const pwdInput = document.getElementById("login-password");
     const errorMsg = document.getElementById("login-error-msg");
     const submitBtn = document.getElementById("login-submit-btn");
-    
+
     if (!emailInput || !pwdInput) return;
     const email = emailInput.value.trim();
     const password = pwdInput.value.trim();
     if (!email || !password) return;
-    
+
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<span>Signing In...</span><i data-lucide="loader" class="animate-spin"></i>`;
         if (window.lucide) window.lucide.createIcons();
     }
     if (errorMsg) errorMsg.style.display = "none";
-    
+
     try {
         const response = await fetch("/api/auth/login", {
             method: "POST",
@@ -3341,13 +3484,13 @@ async function submitLogin(e) {
             },
             body: JSON.stringify({ email, password })
         });
-        
+
         if (response.status === 200) {
             const data = await response.json();
             if (data.session_token) {
                 localStorage.setItem("APP_SECRET_KEY", data.session_token);
                 hideLoginOverlay();
-                
+
                 // Reload dashboard metrics and leads
                 loadExistingLeads();
                 renderArchiveHistory();
@@ -3381,18 +3524,18 @@ async function submitLogin(e) {
 
 async function submitRegister(e) {
     if (e) e.preventDefault();
-    
+
     const emailInput = document.getElementById("register-email");
     const pwdInput = document.getElementById("register-password");
     const errorMsg = document.getElementById("register-error-msg");
     const errorText = document.getElementById("register-error-text");
     const submitBtn = document.getElementById("register-submit-btn");
-    
+
     if (!emailInput || !pwdInput) return;
     const email = emailInput.value.trim();
     const password = pwdInput.value.trim();
     if (!email || !password) return;
-    
+
     if (password.length < 6) {
         if (errorMsg && errorText) {
             errorText.innerText = "Password must be at least 6 characters long";
@@ -3401,39 +3544,41 @@ async function submitRegister(e) {
         pwdInput.focus();
         return;
     }
-    
+
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<span>Creating Account...</span><i data-lucide="loader" class="animate-spin"></i>`;
+        submitBtn.innerHTML = `<span>Sending OTP Code...</span><i data-lucide="loader" class="animate-spin"></i>`;
         if (window.lucide) window.lucide.createIcons();
     }
     if (errorMsg) errorMsg.style.display = "none";
-    
+
     try {
-        const response = await fetch("/api/auth/register", {
+        const response = await fetch("/api/auth/register-request", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({ email, password })
         });
-        
+
         if (response.status === 200) {
-            const data = await response.json();
-            if (data.session_token) {
-                localStorage.setItem("APP_SECRET_KEY", data.session_token);
-                hideLoginOverlay();
-                
-                // Reload dashboard metrics and leads
-                loadExistingLeads();
-                renderArchiveHistory();
-                renderArchiveLeads();
-                if (typeof renderMetricsWidgets === "function") {
-                    renderMetricsWidgets();
+            pendingVerificationEmail = email;
+
+            // Transition to registration OTP card
+            const registerCard = document.getElementById("register-card");
+            const registerOtpCard = document.getElementById("register-otp-card");
+            if (registerCard && registerOtpCard) {
+                registerCard.style.display = "none";
+                registerOtpCard.style.display = "flex";
+
+                const otpInput = document.getElementById("register-otp-code");
+                if (otpInput) {
+                    otpInput.value = "";
+                    otpInput.focus();
                 }
-            } else {
-                throw new Error("Invalid registration token payload");
             }
+            // Clear passwords
+            pwdInput.value = "";
         } else {
             const errData = await response.json();
             if (errorMsg && errorText) {
@@ -3444,7 +3589,7 @@ async function submitRegister(e) {
             pwdInput.focus();
         }
     } catch (err) {
-        console.error("Registration error:", err);
+        console.error("Registration request error:", err);
         if (errorMsg && errorText) {
             errorText.innerText = "Registration failed. Try again later.";
             errorMsg.style.display = "flex";
@@ -3453,6 +3598,295 @@ async function submitRegister(e) {
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = `<span>Create Account</span><i data-lucide="arrow-right"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function submitRegisterOtp(e) {
+    if (e) e.preventDefault();
+
+    const otpInput = document.getElementById("register-otp-code");
+    const errorMsg = document.getElementById("register-otp-error-msg");
+    const errorText = document.getElementById("register-otp-error-text");
+    const submitBtn = document.getElementById("register-otp-submit-btn");
+
+    if (!otpInput) return;
+    const otp = otpInput.value.trim();
+    if (!otp || !pendingVerificationEmail) return;
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>Verifying Code...</span><i data-lucide="loader" class="animate-spin"></i>`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+    if (errorMsg) errorMsg.style.display = "none";
+
+    try {
+        const response = await fetch("/api/auth/register-verify", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email: pendingVerificationEmail, otp })
+        });
+
+        if (response.status === 200) {
+            const data = await response.json();
+            if (data.session_token) {
+                localStorage.setItem("APP_SECRET_KEY", data.session_token);
+                hideLoginOverlay();
+
+                // Reload dashboard metrics and leads
+                loadExistingLeads();
+                renderArchiveHistory();
+                renderArchiveLeads();
+                if (typeof renderMetricsWidgets === "function") {
+                    renderMetricsWidgets();
+                }
+            } else {
+                throw new Error("Invalid session token response");
+            }
+        } else {
+            const errData = await response.json();
+            if (errorMsg && errorText) {
+                errorText.innerText = errData.detail || "Invalid or expired OTP code";
+                errorMsg.style.display = "flex";
+            }
+            otpInput.value = "";
+            otpInput.focus();
+        }
+    } catch (err) {
+        console.error("Registration verify error:", err);
+        if (errorMsg && errorText) {
+            errorText.innerText = "Verification failed. Try again later.";
+            errorMsg.style.display = "flex";
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>Verify Code</span><i data-lucide="check"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function submitForgotRequest(e) {
+    if (e) e.preventDefault();
+
+    const emailInput = document.getElementById("forgot-request-email");
+    const errorMsg = document.getElementById("forgot-request-error-msg");
+    const errorText = document.getElementById("forgot-request-error-text");
+    const submitBtn = document.getElementById("forgot-request-submit-btn");
+
+    if (!emailInput) return;
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>Sending OTP...</span><i data-lucide="loader" class="animate-spin"></i>`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+    if (errorMsg) errorMsg.style.display = "none";
+
+    try {
+        const response = await fetch("/api/auth/forgot-request", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email })
+        });
+
+        if (response.status === 200) {
+            pendingVerificationEmail = email;
+
+            // Transition to forgot verification card
+            const forgotRequestCard = document.getElementById("forgot-request-card");
+            const forgotVerifyCard = document.getElementById("forgot-verify-card");
+            if (forgotRequestCard && forgotVerifyCard) {
+                forgotRequestCard.style.display = "none";
+                forgotVerifyCard.style.display = "flex";
+
+                const otpInput = document.getElementById("forgot-verify-otp-code");
+                const newPwdInput = document.getElementById("forgot-verify-new-password");
+                if (otpInput) {
+                    otpInput.value = "";
+                    otpInput.focus();
+                }
+                if (newPwdInput) newPwdInput.value = "";
+            }
+        } else {
+            const errData = await response.json();
+            if (errorMsg && errorText) {
+                errorText.innerText = errData.detail || "User with this email does not exist";
+                errorMsg.style.display = "flex";
+            }
+        }
+    } catch (err) {
+        console.error("Forgot request error:", err);
+        if (errorMsg && errorText) {
+            errorText.innerText = "Request failed. Try again later.";
+            errorMsg.style.display = "flex";
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>Send Recovery Code</span><i data-lucide="arrow-right"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function submitForgotVerify(e) {
+    if (e) e.preventDefault();
+
+    const otpInput = document.getElementById("forgot-verify-otp-code");
+    const pwdInput = document.getElementById("forgot-verify-new-password");
+    const errorMsg = document.getElementById("forgot-verify-error-msg");
+    const errorText = document.getElementById("forgot-verify-error-text");
+    const successMsg = document.getElementById("forgot-verify-success-msg");
+    const submitBtn = document.getElementById("forgot-verify-submit-btn");
+
+    if (!otpInput || !pwdInput) return;
+    const otp = otpInput.value.trim();
+    const new_password = pwdInput.value.trim();
+    if (!otp || !new_password || !pendingVerificationEmail) return;
+
+    if (new_password.length < 6) {
+        if (errorMsg && errorText) {
+            errorText.innerText = "New password must be at least 6 characters long";
+            errorMsg.style.display = "flex";
+        }
+        pwdInput.focus();
+        return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>Resetting Password...</span><i data-lucide="loader" class="animate-spin"></i>`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+    if (errorMsg) errorMsg.style.display = "none";
+    if (successMsg) successMsg.style.display = "none";
+
+    try {
+        const response = await fetch("/api/auth/forgot-verify", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email: pendingVerificationEmail, otp, new_password })
+        });
+
+        if (response.status === 200) {
+            const data = await response.json();
+            if (successMsg) successMsg.style.display = "flex";
+
+            // Wait 2 seconds to let the user see the success message, then log in
+            setTimeout(() => {
+                if (data.session_token) {
+                    localStorage.setItem("APP_SECRET_KEY", data.session_token);
+                    hideLoginOverlay();
+
+                    // Reload dashboard metrics and leads
+                    loadExistingLeads();
+                    renderArchiveHistory();
+                    renderArchiveLeads();
+                    if (typeof renderMetricsWidgets === "function") {
+                        renderMetricsWidgets();
+                    }
+                }
+            }, 2000);
+        } else {
+            const errData = await response.json();
+            if (errorMsg && errorText) {
+                errorText.innerText = errData.detail || "Invalid recovery code or email";
+                errorMsg.style.display = "flex";
+            }
+        }
+    } catch (err) {
+        console.error("Forgot verify error:", err);
+        if (errorMsg && errorText) {
+            errorText.innerText = "Reset failed. Try again later.";
+            errorMsg.style.display = "flex";
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>Reset Password</span><i data-lucide="check"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+async function submitProfilePasswordReset(e) {
+    if (e) e.preventDefault();
+
+    const currentInput = document.getElementById("profile-current-password");
+    const newInput = document.getElementById("profile-new-password");
+    const confirmInput = document.getElementById("profile-confirm-password");
+    const submitBtn = document.getElementById("btn-profile-change-password");
+
+    if (!currentInput || !newInput || !confirmInput) return;
+    const current_password = currentInput.value;
+    const new_password = newInput.value;
+    const confirm_password = confirmInput.value;
+
+    if (!current_password || !new_password || !confirm_password) {
+        showCustomAlert("Please fill in all password fields.", "Incomplete Fields", "warning");
+        return;
+    }
+
+    if (new_password.length < 6) {
+        showCustomAlert("New password must be at least 6 characters long.", "Invalid Password", "warning");
+        newInput.focus();
+        return;
+    }
+
+    if (new_password !== confirm_password) {
+        showCustomAlert("New password and confirm password do not match.", "Mismatch", "warning");
+        confirmInput.focus();
+        return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i data-lucide="loader" class="animate-spin" style="width: 16px; height: 16px;"></i> Updating...`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    try {
+        const response = await fetch("/api/auth/reset-password", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ current_password, new_password })
+        });
+
+        if (response.status === 200) {
+            const data = await response.json();
+            if (data.session_token) {
+                // Update local secret token since previous session token got deleted/rotated
+                localStorage.setItem("APP_SECRET_KEY", data.session_token);
+            }
+            showCustomAlert("Your password has been successfully updated!", "Success", "success");
+            currentInput.value = "";
+            newInput.value = "";
+            confirmInput.value = "";
+        } else {
+            const errData = await response.json();
+            showCustomAlert(errData.detail || "Failed to reset password.", "Error Resetting", "danger");
+        }
+    } catch (err) {
+        console.error("Profile password reset error:", err);
+        showCustomAlert("An error occurred during password update. Please try again.", "Error", "danger");
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i data-lucide="key-round" style="width: 16px; height: 16px;"></i> Change Password`;
             if (window.lucide) window.lucide.createIcons();
         }
     }
@@ -3478,9 +3912,9 @@ async function loadImapConfig() {
     const imapPortInput = document.getElementById("settings-imap-port");
     const imapEmailInput = document.getElementById("settings-imap-email");
     const imapPasswordInput = document.getElementById("settings-imap-password");
-    
+
     if (!imapServerInput) return;
-    
+
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
         const response = await fetch("/api/outreach/config", {
@@ -3504,24 +3938,24 @@ async function saveImapConfig() {
     const imapPortInput = document.getElementById("settings-imap-port");
     const imapEmailInput = document.getElementById("settings-imap-email");
     const imapPasswordInput = document.getElementById("settings-imap-password");
-    
+
     if (!imapServerInput) return;
-    
+
     const payload = {
         imap_server: imapServerInput.value.trim(),
         imap_port: imapPortInput.value.trim(),
         imap_email: imapEmailInput.value.trim(),
         imap_password: imapPasswordInput.value
     };
-    
+
     if (!payload.imap_server || !payload.imap_port || !payload.imap_email || !payload.imap_password) {
         await showCustomAlert("Please fill in all IMAP settings fields.", "Incomplete Fields", "warning");
         return;
     }
-    
+
     const btnSave = document.getElementById("btn-save-imap-config");
     if (btnSave) btnSave.disabled = true;
-    
+
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
         const response = await fetch("/api/outreach/config", {
@@ -3551,21 +3985,21 @@ async function syncReplies() {
         btnSync.disabled = true;
         btnSync.innerHTML = `<span class="spinner spinner-tiny"></span> Syncing...`;
     }
-    
+
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
         const response = await fetch("/api/outreach/sync-replies", {
             method: "POST",
             headers: { "X-API-Key": secretKey }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             const count = data.newRepliesCount || 0;
-            
+
             // Always reload the leads database to pull cleaned/updated messages
             await loadExistingLeads();
-            
+
             // If the lead drawer is currently open, refresh its content with updated data
             if (activeLead) {
                 const freshLead = leadsData.find(l => l.sourceUrl === activeLead.sourceUrl);
@@ -3573,7 +4007,7 @@ async function syncReplies() {
                     openDetailModal(freshLead);
                 }
             }
-            
+
             if (count > 0) {
                 await showCustomAlert(`Success! Sync detected ${count} new email replies. Leads updated in pipeline!`, "Sync Completed", "success");
             } else {
@@ -3600,7 +4034,7 @@ async function loadUserProfile() {
     const businessNameInput = document.getElementById("profile-business-name");
     const joinedDateInput = document.getElementById("profile-joined-date");
     const apiTokenInput = document.getElementById("profile-api-token");
-    
+
     const displayNameHeading = document.getElementById("profile-display-name-heading");
     const emailSubheading = document.getElementById("profile-email-subheading");
     const avatarCircle = document.getElementById("profile-avatar-circle");
@@ -3614,12 +4048,12 @@ async function loadUserProfile() {
             const data = await response.json();
             const profile = data.profile || {};
             const stats = data.stats || {};
-            
+
             // Populate Details
             if (displayNameInput) displayNameInput.value = profile.displayName || "";
             if (businessNameInput) businessNameInput.value = profile.businessName || "";
             if (agencyInfoInput) agencyInfoInput.value = profile.agencyInfo || "";
-            
+
             // Sync with Outreach Config variables & localStorage
             if (profile.businessName) {
                 if (typeof agencyNameInput !== 'undefined' && agencyNameInput) {
@@ -3636,19 +4070,22 @@ async function loadUserProfile() {
                 localStorage.setItem("silvia_agency_info", profile.agencyInfo);
             }
             if (typeof updateConfigPreview === 'function') updateConfigPreview();
-            
+
             if (profile.joinedDate) {
                 const date = new Date(profile.joinedDate);
-                if (joinedDateInput) joinedDateInput.value = date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+                const dateStr = date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+                if (joinedDateInput) joinedDateInput.value = dateStr;
+                const joinedText = document.getElementById("profile-joined-date-text");
+                if (joinedText) joinedText.innerText = dateStr;
             }
-            
+
             // Mask or set token
             if (apiTokenInput) {
                 apiTokenInput.value = profile.apiToken || "silvia_dev_key";
                 apiTokenInput.dataset.token = profile.apiToken || "silvia_dev_key";
                 apiTokenInput.type = "password"; // Default hidden
             }
-            
+
             const webhookPill = document.getElementById("profile-health-webhook");
             if (webhookPill) {
                 if (profile.webhookUrl) {
@@ -3659,39 +4096,39 @@ async function loadUserProfile() {
                     webhookPill.querySelector(".status-text").innerText = "Inactive";
                 }
             }
-            
+
             // Set headings
             if (displayNameHeading) displayNameHeading.innerText = profile.displayName || "User";
             if (emailSubheading) emailSubheading.innerText = profile.email || "user@example.com";
-            
+
             // Set Avatar Initials
             if (avatarCircle) {
                 const name = profile.displayName || profile.email || "U";
                 const initials = name.split(" ").map(w => w.charAt(0)).join("").substring(0, 2).toUpperCase();
                 avatarCircle.innerText = initials;
             }
-            
+
             // Populate Quota Stats
             const totalScans = stats.scansCount || 0;
             const totalLeads = stats.leadsCount || 0;
             const totalQualified = stats.qualifiedLeadsCount || 0;
-            
+
             const scansPct = Math.min((totalScans / 100) * 100, 100);
             const leadsPct = Math.min((totalLeads / 1000) * 100, 100);
             const qualifiedPct = Math.min((totalQualified / 500) * 100, 100);
-            
+
             const txtScans = document.getElementById("profile-usage-scans");
             const txtLeads = document.getElementById("profile-usage-leads");
             const txtQualified = document.getElementById("profile-usage-qualified");
-            
+
             const barScans = document.getElementById("profile-progress-scans");
             const barLeads = document.getElementById("profile-progress-leads");
             const barQualified = document.getElementById("profile-progress-qualified");
-            
+
             if (txtScans) txtScans.innerText = `${totalScans.toLocaleString()} / 100`;
             if (txtLeads) txtLeads.innerText = `${totalLeads.toLocaleString()} / 1,000`;
             if (txtQualified) txtQualified.innerText = `${totalQualified.toLocaleString()} / 500`;
-            
+
             // Wrap in setTimeout to ensure layout reflow occurs before transition animations start
             setTimeout(() => {
                 if (barScans) barScans.style.width = `${scansPct.toFixed(1)}%`;
@@ -3731,20 +4168,20 @@ async function saveUserProfile() {
     const displayNameInput = document.getElementById("profile-display-name");
     const businessNameInput = document.getElementById("profile-business-name");
     const btnSave = document.getElementById("btn-save-user-profile");
-    
+
     if (!displayNameInput) return;
-    
+
     const payload = {
         displayName: displayNameInput.value.trim(),
         businessName: businessNameInput ? businessNameInput.value.trim() : "",
         agencyInfo: agencyInfoInput ? agencyInfoInput.value.trim() : ""
     };
-    
+
     if (btnSave) {
         btnSave.disabled = true;
         btnSave.innerHTML = `<span class="spinner spinner-tiny"></span> Saving...`;
     }
-    
+
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
         const response = await fetch("/api/user/profile/update", {
@@ -3779,16 +4216,16 @@ async function saveUserProfile() {
 async function saveWebhookUrl() {
     const webhookUrlInput = document.getElementById("settings-webhook-url");
     const btnSave = document.getElementById("btn-save-webhook-url");
-    
+
     if (!webhookUrlInput) return;
-    
+
     const webhookUrl = webhookUrlInput.value.trim();
-    
+
     if (btnSave) {
         btnSave.disabled = true;
         btnSave.innerHTML = `<span class="spinner spinner-tiny"></span> Saving...`;
     }
-    
+
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
         const response = await fetch("/api/outreach/webhook", {
@@ -3820,7 +4257,7 @@ async function saveWebhookUrl() {
 async function loadWebhookUrl() {
     const webhookUrlInput = document.getElementById("settings-webhook-url");
     if (!webhookUrlInput) return;
-    
+
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
         const response = await fetch("/api/outreach/webhook", {
@@ -3838,9 +4275,9 @@ async function loadWebhookUrl() {
 function toggleProfileTokenVisibility() {
     const apiTokenInput = document.getElementById("profile-api-token");
     const toggleBtn = document.getElementById("btn-toggle-profile-token");
-    
+
     if (!apiTokenInput) return;
-    
+
     if (apiTokenInput.type === "password") {
         apiTokenInput.type = "text";
         if (toggleBtn) toggleBtn.innerHTML = `<i data-lucide="eye-off" style="width: 15px; height: 15px;"></i>`;
@@ -3854,9 +4291,9 @@ function toggleProfileTokenVisibility() {
 async function copyProfileTokenToClipboard() {
     const apiTokenInput = document.getElementById("profile-api-token");
     if (!apiTokenInput) return;
-    
+
     const rawToken = apiTokenInput.dataset.token || apiTokenInput.value;
-    
+
     try {
         await copyToClipboard(rawToken);
         await showCustomAlert("Developer API Secret Key copied to clipboard!", "Key Copied", "success");

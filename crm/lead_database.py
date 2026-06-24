@@ -888,3 +888,130 @@ def get_webhook_config(user_email: str) -> str:
         print(f"Error loading webhook url from MongoDB: {e}")
         return ""
 
+
+def update_user_password(email: str, new_password: str) -> bool:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        sessions_col = db["sessions"]
+        
+        email_clean = email.strip().lower()
+        user = users_col.find_one({"email": email_clean})
+        if not user:
+            return False
+            
+        pw_hash, salt = hash_password(new_password)
+        users_col.update_one(
+            {"email": email_clean},
+            {"$set": {"password_hash": pw_hash, "salt": salt}}
+        )
+        # Delete active sessions for the user to force relogin
+        sessions_col.delete_many({"user_email": email_clean})
+        return True
+    except Exception as e:
+        print(f"Error updating user password in MongoDB: {e}")
+        return False
+
+
+def generate_and_save_otp(email: str, purpose: str, pending_data: dict = None) -> str:
+    import secrets
+    try:
+        db = get_mongo_db()
+        otps_col = db["otps"]
+        
+        email_clean = email.strip().lower()
+        # Delete existing OTPs for same email and purpose
+        otps_col.delete_many({"email": email_clean, "purpose": purpose})
+        
+        # Generate 6-digit OTP code
+        otp_code = "".join(str(secrets.randbelow(10)) for _ in range(6))
+        
+        otps_col.insert_one({
+            "email": email_clean,
+            "otp": otp_code,
+            "purpose": purpose,
+            "pending_data": pending_data,
+            "created_at": datetime.datetime.utcnow()
+        })
+        return otp_code
+    except Exception as e:
+        print(f"Error generating OTP in MongoDB: {e}")
+        return ""
+
+
+def verify_and_delete_otp(email: str, purpose: str, otp_code: str) -> dict:
+    try:
+        db = get_mongo_db()
+        otps_col = db["otps"]
+        
+        email_clean = email.strip().lower()
+        otp_doc = otps_col.find_one({"email": email_clean, "purpose": purpose, "otp": otp_code.strip()})
+        if not otp_doc:
+            return None
+            
+        # Check expiration (10 minutes)
+        created_at = otp_doc.get("created_at")
+        if created_at:
+            age = datetime.datetime.utcnow() - created_at
+            if age.total_seconds() > 600:
+                otps_col.delete_one({"_id": otp_doc["_id"]})
+                return None
+                
+        # OTP is valid, delete it
+        otps_col.delete_one({"_id": otp_doc["_id"]})
+        return otp_doc.get("pending_data") or {}
+    except Exception as e:
+        print(f"Error verifying OTP in MongoDB: {e}")
+        return None
+
+
+def send_otp_email(email: str, otp: str, purpose: str):
+    email_clean = email.strip().lower()
+    subject = ""
+    body = ""
+    if purpose == "signup":
+        subject = "Verify your LeadFlow Workspace Registration"
+        body = f"Hello,\n\nThank you for registering at LeadFlow. Your email verification code is:\n\n{otp}\n\nThis OTP is valid for 10 minutes."
+    elif purpose == "forgot_password":
+        subject = "Reset your LeadFlow Password"
+        body = f"Hello,\n\nYou requested a password reset for your LeadFlow account. Your OTP code is:\n\n{otp}\n\nThis OTP is valid for 10 minutes."
+    
+    # Try sending via smtplib using ENV configurations
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = os.getenv("SMTP_PORT")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASSWORD")
+    
+    if smtp_host and smtp_port and smtp_user and smtp_pass:
+        import smtplib
+        from email.mime.text import MIMEText
+        try:
+            msg = MIMEText(body)
+            msg["Subject"] = subject
+            msg["From"] = smtp_user
+            msg["To"] = email_clean
+            
+            # Connect and send
+            port = int(smtp_port)
+            if port == 465:
+                server = smtplib.SMTP_SSL(smtp_host, port, timeout=10.0)
+            else:
+                server = smtplib.SMTP(smtp_host, port, timeout=10.0)
+                if port == 587:
+                    server.starttls()
+            
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, [email_clean], msg.as_string())
+            server.quit()
+            print(f"[Email] Successfully sent OTP email to {email_clean}")
+            return
+        except Exception as e:
+            print(f"[Email] Failed to send OTP email to {email_clean} via SMTP: {e}")
+            
+    # Fallback developer log
+    print("\n" + "="*80)
+    print(f"  [DEVELOPER ALERT] OTP CODE GENERATED FOR {email_clean.upper()}")
+    print(f"  PURPOSE: {purpose.upper()}")
+    print(f"  OTP CODE: {otp}")
+    print("="*80 + "\n")
+
