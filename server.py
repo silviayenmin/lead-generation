@@ -142,6 +142,8 @@ class SearchRequest(BaseModel):
     limit: Optional[int] = 10
     platform: Optional[str] = "linkedin"
     match_type: Optional[str] = "partial"
+    location: Optional[str] = None
+    industry: Optional[str] = None
 
 class UpdateCRMRequest(BaseModel):
     sourceUrl: str
@@ -172,6 +174,8 @@ class SavedSearchRequest(BaseModel):
     platform: str
     timeframe: str
     match_type: Optional[str] = "partial"
+    location: Optional[str] = None
+    industry: Optional[str] = None
 
 class BulkDeleteRequest(BaseModel):
     urls: List[str]
@@ -183,6 +187,13 @@ class UpdateProfileRequest(BaseModel):
 
 class WebhookConfigPayload(BaseModel):
     webhook_url: str
+
+class ModelConfigPayload(BaseModel):
+    provider: str
+    model: Optional[str] = ""
+    openai_api_key: Optional[str] = ""
+    groq_api_key: Optional[str] = ""
+    ollama_host: Optional[str] = "http://localhost:11434"
 
 def fire_webhook_sync(webhook_url: str, event_type: str, lead_data: dict):
     import urllib.request
@@ -247,7 +258,7 @@ async def run_search(payload: SearchRequest, request: Request):
         adapter = get_adapter(plat)
         for q in intent_queries:
             try:
-                res = adapter.search(q, timeframe=timeframe, match_type=payload.match_type or "partial")
+                res = adapter.search(q, timeframe=timeframe, match_type=payload.match_type or "partial", location=payload.location, industry=payload.industry)
                 if res:
                     raw_results.extend(res)
             except Exception as e:
@@ -416,13 +427,15 @@ async def run_search(payload: SearchRequest, request: Request):
 
     # Save search performance metrics
     searches = load_searches(user_email)
-    existing_search = next((s for s in searches if s.get("keyword") == payload.keyword and s.get("platform", "linkedin") == platform and s.get("matchType", "partial") == (payload.match_type or "partial")), None)
+    existing_search = next((s for s in searches if s.get("keyword") == payload.keyword and s.get("platform", "linkedin") == platform and s.get("matchType", "partial") == (payload.match_type or "partial") and s.get("location") == payload.location and s.get("industry") == payload.industry), None)
     if existing_search:
         searches.remove(existing_search)
         existing_search["timestamp"] = datetime.datetime.now().isoformat()
         existing_search["timeframe"] = timeframe
         existing_search["limit"] = payload.limit
         existing_search["matchType"] = payload.match_type or "partial"
+        existing_search["location"] = payload.location
+        existing_search["industry"] = payload.industry
         existing_search["resultsFound"] = total_results_found
         existing_search["qualifiedLeadsCount"] = qualified_count
         existing_search["qualificationRate"] = rate
@@ -434,6 +447,8 @@ async def run_search(payload: SearchRequest, request: Request):
             "keyword": payload.keyword,
             "platform": platform,
             "matchType": payload.match_type or "partial",
+            "location": payload.location,
+            "industry": payload.industry,
             "timestamp": datetime.datetime.now().isoformat(),
             "timeframe": timeframe,
             "limit": payload.limit,
@@ -665,7 +680,15 @@ async def get_saved_searches_endpoint(request: Request):
 @app.post("/api/saved-searches")
 async def add_saved_search_endpoint(payload: SavedSearchRequest, request: Request):
     user_email = request.state.user
-    ns = add_saved_search(user_email, payload.keyword, payload.platform, payload.timeframe, match_type=(payload.match_type or "partial"))
+    ns = add_saved_search(
+        user_email, 
+        payload.keyword, 
+        payload.platform, 
+        payload.timeframe, 
+        match_type=(payload.match_type or "partial"), 
+        location=payload.location, 
+        industry=payload.industry
+    )
     return {"status": "success", "search": ns}
 
 @app.post("/api/saved-searches/run")
@@ -674,6 +697,72 @@ async def run_monitoring_endpoint(request: Request):
     db = load_db(user_email)
     summary = run_monitoring_for_user(user_email, db, lambda d: save_db(d, user_email))
     return {"status": "success", "summary": summary}
+
+@app.get("/api/model-config")
+async def get_model_config_endpoint(request: Request):
+    config_path = "config.json"
+    config = {
+        "provider": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "openai_api_key": "",
+        "groq_api_key": "",
+        "ollama_host": "http://localhost:11434"
+    }
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config.update(json.load(f))
+        except Exception:
+            pass
+    # Mask API keys for security in UI output
+    masked_config = dict(config)
+    if masked_config.get("openai_api_key"):
+        masked_config["openai_api_key"] = masked_config["openai_api_key"][:6] + "..." + masked_config["openai_api_key"][-4:] if len(masked_config["openai_api_key"]) > 10 else "..."
+    if masked_config.get("groq_api_key"):
+        masked_config["groq_api_key"] = masked_config["groq_api_key"][:6] + "..." + masked_config["groq_api_key"][-4:] if len(masked_config["groq_api_key"]) > 10 else "..."
+    return masked_config
+
+@app.post("/api/model-config")
+async def update_model_config_endpoint(payload: ModelConfigPayload, request: Request):
+    config_path = "config.json"
+    config = {
+        "provider": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "openai_api_key": "",
+        "groq_api_key": "",
+        "ollama_host": "http://localhost:11434"
+    }
+    # Read existing config first to avoid overwriting masked keys
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config.update(json.load(f))
+        except Exception:
+            pass
+            
+    new_openai = payload.openai_api_key.strip() if payload.openai_api_key else ""
+    if new_openai and "..." not in new_openai:
+        config["openai_api_key"] = new_openai
+    elif new_openai == "":
+        config["openai_api_key"] = ""
+        
+    new_groq = payload.groq_api_key.strip() if payload.groq_api_key else ""
+    if new_groq and "..." not in new_groq:
+        config["groq_api_key"] = new_groq
+    elif new_groq == "":
+        config["groq_api_key"] = ""
+
+    config["provider"] = payload.provider.strip().lower()
+    config["model"] = payload.model.strip() if payload.model else ""
+    config["ollama_host"] = payload.ollama_host.strip() if payload.ollama_host else "http://localhost:11434"
+    
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write config.json: {e}")
+        
+    return {"status": "success", "config": config}
 
 # Lead Quality Analytics Endpoints (Requirement 2 & 9)
 @app.get("/api/performance")

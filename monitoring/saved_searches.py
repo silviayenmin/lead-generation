@@ -56,12 +56,12 @@ def save_saved_searches(searches: list, user_email: str):
     except Exception as e:
         print(f"Error saving saved searches: {e}")
 
-def add_saved_search(user_email: str, keyword: str, platform: str, timeframe: str, match_type: str = "partial") -> dict:
+def add_saved_search(user_email: str, keyword: str, platform: str, timeframe: str, match_type: str = "partial", location: str = None, industry: str = None) -> dict:
     searches = load_saved_searches(user_email)
     
     # Check if already exists
     for s in searches:
-        if s.get("keyword") == keyword and s.get("platform") == platform and s.get("timeframe") == timeframe and s.get("matchType", "partial") == match_type:
+        if s.get("keyword") == keyword and s.get("platform") == platform and s.get("timeframe") == timeframe and s.get("matchType", "partial") == match_type and s.get("location") == location and s.get("industry") == industry:
             return s
             
     new_search = {
@@ -70,6 +70,8 @@ def add_saved_search(user_email: str, keyword: str, platform: str, timeframe: st
         "platform": platform,
         "timeframe": timeframe,
         "matchType": match_type,
+        "location": location,
+        "industry": industry,
         "createdAt": datetime.datetime.now().isoformat(),
         "lastRun": None,
         "leadsFoundCount": 0,
@@ -105,6 +107,8 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
         platform = s.get("platform", "linkedin")
         timeframe = s.get("timeframe", "qdr:m3")
         match_type = s.get("matchType", "partial")
+        location = s.get("location")
+        industry = s.get("industry")
         
         # Generate Intent Queries
         intent_queries = IntentQueryGenerator.generate(keyword)
@@ -118,7 +122,7 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
             adapter = get_adapter(plat)
             for query in intent_queries:
                 try:
-                    res = adapter.search(query, timeframe=timeframe, match_type=match_type)
+                    res = adapter.search(query, timeframe=timeframe, match_type=match_type, location=location, industry=industry)
                     if res:
                         raw_results.extend(res)
                 except Exception as ex:

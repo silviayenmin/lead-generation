@@ -56,12 +56,20 @@ def calculate_lead_score(lead: dict) -> dict:
 
     total_score = intent_score + service_score + need_score + company_score + location_score + author_score
 
-    if total_score >= 70:
-        category = "High Intent"
-    elif total_score >= 40:
-        category = "Medium Intent"
-    else:
+    # Force Category to "Low Intent" if intent is explicitly None/Low, or if intent type is General Discussion
+    bi = str(buying_intent).strip().lower()
+    it = str(intent_type).strip().lower()
+    
+    if bi in ["none", "low"] or it in ["general discussion", "none"]:
         category = "Low Intent"
+        total_score = min(total_score, 35)  # Cap the score to reflect lack of true buying intent
+    else:
+        if total_score >= 70:
+            category = "High Intent"
+        elif total_score >= 40:
+            category = "Medium Intent"
+        else:
+            category = "Low Intent"
 
     lead["leadScore"] = total_score
     lead["leadCategory"] = category

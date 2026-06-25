@@ -1,12 +1,99 @@
 import os
+import json
 
-from groq import Groq
+class ChatCompletions:
+    def __init__(self, client_instance):
+        self.client_instance = client_instance
 
-client = Groq(
-    api_key=os.getenv(
-        "GROQ_API_KEY"
-    )
-)
+    def create(self, model=None, messages=None, response_format=None, temperature=0.7):
+        return self.client_instance.create_completion(
+            messages=messages,
+            response_format=response_format,
+            temperature=temperature
+        )
+
+class Chat:
+    def __init__(self, client_instance):
+        self.completions = ChatCompletions(client_instance)
+
+class DynamicLLMClient:
+    def __init__(self):
+        self.chat = Chat(self)
+
+    def get_config(self):
+        config_path = "config.json"
+        config = {
+            "provider": "groq",
+            "model": "llama-3.3-70b-versatile",
+            "openai_api_key": "",
+            "groq_api_key": "",
+            "ollama_host": "http://localhost:11434"
+        }
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    user_config = json.load(f)
+                    config.update(user_config)
+            except Exception as e:
+                print(f"[LLM Client] Error loading config.json: {e}")
+        return config
+
+    def create_completion(self, messages, response_format=None, temperature=0.7):
+        config = self.get_config()
+        provider = config.get("provider", "groq").lower().strip()
+        model = config.get("model", "")
+        
+        # Load API keys
+        groq_key = config.get("groq_api_key") or os.getenv("GROQ_API_KEY")
+        openai_key = config.get("openai_api_key") or os.getenv("OPENAI_API_KEY")
+        ollama_host = config.get("ollama_host") or os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        
+        if provider == "openai":
+            import openai
+            if not model:
+                model = "gpt-4o-mini"
+            api_client = openai.OpenAI(api_key=openai_key)
+            kwargs = {
+                "model": model,
+                "messages": messages,
+                "temperature": temperature
+            }
+            if response_format:
+                kwargs["response_format"] = response_format
+            return api_client.chat.completions.create(**kwargs)
+            
+        elif provider == "ollama":
+            import openai
+            if not model:
+                model = "llama3"
+            api_client = openai.OpenAI(
+                base_url=f"{ollama_host.rstrip('/')}/v1",
+                api_key="ollama"
+            )
+            kwargs = {
+                "model": model,
+                "messages": messages,
+                "temperature": temperature
+            }
+            if response_format:
+                kwargs["response_format"] = response_format
+            return api_client.chat.completions.create(**kwargs)
+            
+        else: # Default: groq
+            from groq import Groq
+            if not model:
+                model = "llama-3.3-70b-versatile"
+            api_client = Groq(api_key=groq_key)
+            kwargs = {
+                "model": model,
+                "messages": messages,
+                "temperature": temperature
+            }
+            if response_format:
+                kwargs["response_format"] = response_format
+            return api_client.chat.completions.create(**kwargs)
+
+client = DynamicLLMClient()
 
 
 

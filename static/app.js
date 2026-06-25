@@ -615,6 +615,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnOpenQueriesModal) {
         btnOpenQueriesModal.addEventListener("click", openQueriesModal);
     }
+
+    // AI Model Configuration listeners
+    const providerSelect = document.getElementById("settings-model-provider");
+    if (providerSelect) {
+        providerSelect.addEventListener("change", (e) => {
+            updateModelFieldsVisibility(e.target.value);
+        });
+    }
+
+    const btnSaveModelConfig = document.getElementById("btn-save-model-config");
+    if (btnSaveModelConfig) {
+        btnSaveModelConfig.addEventListener("click", saveModelConfig);
+    }
+
+    // Initial load of model config to populate UI status pills on startup
+    loadModelConfig();
 });
 
 // View Tabs Switcher
@@ -655,6 +671,7 @@ function switchTab(tabName) {
         updateConfigPreview();
         loadImapConfig();
         loadWebhookUrl();
+        loadModelConfig();
     } else if (tabName === "profile") {
         loadUserProfile();
     }
@@ -696,6 +713,10 @@ async function handleSearchSubmit(e) {
     const platform = platformSelect ? platformSelect.value : "linkedin";
     const matchTypeSelect = document.getElementById("match-type");
     const match_type = matchTypeSelect ? matchTypeSelect.value : "partial";
+    const locationEl = document.getElementById("wizard-location");
+    const industryEl = document.getElementById("wizard-industry");
+    const location = locationEl ? locationEl.value.trim() : "";
+    const industry = industryEl ? industryEl.value.trim() : "";
 
     if (!keyword) return;
 
@@ -723,7 +744,7 @@ async function handleSearchSubmit(e) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ keyword, timeframe, limit, platform, match_type })
+            body: JSON.stringify({ keyword, timeframe, limit, platform, match_type, location, industry })
         });
 
         if (!response.ok) {
@@ -738,11 +759,10 @@ async function handleSearchSubmit(e) {
 
         setTimeout(() => {
             setSearchLoading(false);
-            // Reset wizard step
             wizardCurrentStep = 1;
-            const wizardPanels = document.querySelectorAll(".wizard-step-panel");
-            wizardPanels.forEach(p => p.classList.remove("active"));
-            document.querySelector(".wizard-step-panel[data-step='1']").classList.add("active");
+            if (typeof window.updateWizardUI === "function") {
+                window.updateWizardUI();
+            }
 
             switchTab("dashboard");
         }, 500);
@@ -1564,9 +1584,19 @@ async function generateAiPitch() {
     modalEmailBody.style.display = "none";
 
     try {
-        const agencyName = agencyNameInput.value.trim() || "My Business";
-        const agencyInfo = agencyInfoInput.value.trim() || "premier design & development services";
-        const emailTone = emailToneSelect.value || "Short & Conversational";
+        const profileBusInput = document.getElementById("profile-business-name");
+        const agencyName = (agencyNameInput ? agencyNameInput.value.trim() : "") || 
+                           (profileBusInput ? profileBusInput.value.trim() : "") || 
+                           localStorage.getItem("silvia_agency_name") || 
+                           "My Business";
+
+        const agencyInfo = (agencyInfoInput ? agencyInfoInput.value.trim() : "") || 
+                           localStorage.getItem("silvia_agency_info") || 
+                           "premier design & development services";
+
+        const emailTone = (emailToneSelect ? emailToneSelect.value : "") || 
+                          localStorage.getItem("silvia_email_tone") || 
+                          "Short & Conversational";
 
         const response = await fetch("/api/generate-pitch", {
             method: "POST",
@@ -2622,10 +2652,14 @@ function initWizard() {
             if (btnContinue) {
                 btnContinue.style.display = "inline-flex";
                 btnContinue.innerHTML = `Continue <i data-lucide="arrow-right"></i>`;
-                lucide.createIcons();
             }
         }
+
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
     }
+    window.updateWizardUI = updateWizardUI;
 
     if (btnContinue) {
         btnContinue.addEventListener("click", async () => {
@@ -2635,6 +2669,40 @@ function initWizard() {
                     await showCustomAlert("Please specify an audience search keyword query!", "Keyword Required", "danger");
                     return;
                 }
+            }
+            if (wizardCurrentStep === 3) {
+                // Populate review summary card dynamically
+                const keywordEl = document.getElementById("keyword");
+                const industryEl = document.getElementById("wizard-industry");
+                const locationEl = document.getElementById("wizard-location");
+                const platformEl = document.getElementById("platform");
+                const timeframeEl = document.getElementById("timeframe");
+                const limitEl = document.getElementById("limit");
+                const sliderEl = document.getElementById("wizard-intent-score-min");
+
+                const keyword = keywordEl ? keywordEl.value.trim() : "";
+                const industry = industryEl ? industryEl.value.trim() : "";
+                const location = locationEl ? locationEl.value.trim() : "";
+                let audienceText = keyword;
+                if (industry) audienceText += ` in ${industry}`;
+                if (location) audienceText += ` (${location})`;
+                
+                const summaryAudience = document.getElementById("review-summary-audience");
+                if (summaryAudience) summaryAudience.innerText = audienceText || "Any";
+
+                const platformVal = platformEl ? platformEl.value : "linkedin";
+                const platformText = platformVal.charAt(0).toUpperCase() + platformVal.slice(1);
+                const summarySource = document.getElementById("review-summary-source");
+                if (summarySource) summarySource.innerText = platformText;
+
+                const timeframe = timeframeEl ? timeframeEl.options[timeframeEl.selectedIndex].text : "Past 3 Months";
+                const limit = limitEl ? limitEl.value : "10";
+                const summaryFilters = document.getElementById("review-summary-filters");
+                if (summaryFilters) summaryFilters.innerText = `${timeframe} (${limit} leads)`;
+
+                const threshold = sliderEl ? sliderEl.value : "40";
+                const summaryScore = document.getElementById("review-summary-score");
+                if (summaryScore) summaryScore.innerText = `${threshold}% Min Match`;
             }
             if (wizardCurrentStep < 4) {
                 wizardCurrentStep++;
@@ -3199,8 +3267,23 @@ async function loadSavedSearches() {
             const isExact = search.matchType === "exact";
             const exactBadgeHtml = isExact ? ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px; background: rgba(3,113,114,0.15); color: var(--secondary);">Exact</span>` : ` <span class="badge badge-neutral" style="font-size: 0.65rem; padding: 2px 4px; line-height: 1; vertical-align: middle; margin-left: 4px;">Partial</span>`;
 
+            let metaHtml = "";
+            if (search.location || search.industry) {
+                metaHtml += `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: flex; gap: 6px; align-items: center;">`;
+                if (search.industry) {
+                    metaHtml += `<span style="display: inline-flex; align-items: center; gap: 3px;"><i data-lucide="building" style="width: 10px; height: 10px;"></i> ${search.industry}</span>`;
+                }
+                if (search.location) {
+                    metaHtml += `<span style="display: inline-flex; align-items: center; gap: 3px;"><i data-lucide="map-pin" style="width: 10px; height: 10px;"></i> ${search.location}</span>`;
+                }
+                metaHtml += `</div>`;
+            }
+
             row.innerHTML = `
-                <td><strong style="color: var(--text-primary);">${keyword}</strong>${exactBadgeHtml}</td>
+                <td>
+                    <strong style="color: var(--text-primary);">${keyword}</strong>${exactBadgeHtml}
+                    ${metaHtml}
+                </td>
                 <td><span class="badge badge-neutral">${capPlatform}</span></td>
                 <td><span>${timeframe}</span></td>
                 <td><span>${formattedLastRun}</span></td>
@@ -3231,6 +3314,10 @@ async function saveCurrentSearch() {
     const timeframe = timeframeSelect.value;
     const matchTypeSelect = document.getElementById("match-type");
     const match_type = matchTypeSelect ? matchTypeSelect.value : "partial";
+    const locationEl = document.getElementById("wizard-location");
+    const industryEl = document.getElementById("wizard-industry");
+    const location = locationEl ? locationEl.value.trim() : "";
+    const industry = industryEl ? industryEl.value.trim() : "";
 
     if (!keyword) {
         await showCustomAlert("Please enter a keyword first!", "Keyword Required", "danger");
@@ -3248,18 +3335,17 @@ async function saveCurrentSearch() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ keyword, platform, timeframe, match_type })
+            body: JSON.stringify({ keyword, platform, timeframe, match_type, location, industry })
         });
 
         if (response.ok) {
             await showCustomAlert("Search configuration successfully saved to active monitoring database!", "Search Saved", "primary");
             keywordInput.value = "";
             loadSavedSearches();
-            // Reset stepper wizard
             wizardCurrentStep = 1;
-            const wizardPanels = document.querySelectorAll(".wizard-step-panel");
-            wizardPanels.forEach(p => p.classList.remove("active"));
-            document.querySelector(".wizard-step-panel[data-step='1']").classList.add("active");
+            if (typeof window.updateWizardUI === "function") {
+                window.updateWizardUI();
+            }
             switchTab("discovery");
         } else {
             throw new Error("API rejected saved search request");
@@ -4299,6 +4385,116 @@ async function copyProfileTokenToClipboard() {
         await showCustomAlert("Developer API Secret Key copied to clipboard!", "Key Copied", "success");
     } catch (err) {
         await showCustomAlert("Failed to copy token: " + err.message, "Copy Failed", "danger");
+    }
+}
+
+function updateModelFieldsVisibility(provider) {
+    const groqGroup = document.getElementById("settings-model-groq-key-group");
+    const openaiGroup = document.getElementById("settings-model-openai-key-group");
+    const ollamaGroup = document.getElementById("settings-model-ollama-host-group");
+
+    if (groqGroup) groqGroup.style.display = provider === "groq" ? "block" : "none";
+    if (openaiGroup) openaiGroup.style.display = provider === "openai" ? "block" : "none";
+    if (ollamaGroup) ollamaGroup.style.display = provider === "ollama" ? "block" : "none";
+}
+
+async function loadModelConfig() {
+    const providerSelect = document.getElementById("settings-model-provider");
+    const modelNameInput = document.getElementById("settings-model-name");
+    const groqKeyInput = document.getElementById("settings-model-groq-key");
+    const openaiKeyInput = document.getElementById("settings-model-openai-key");
+    const ollamaHostInput = document.getElementById("settings-model-ollama-host");
+    const statusTextModel = document.getElementById("status-text-model");
+
+    if (!providerSelect) return;
+
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/model-config", {
+            headers: { "X-API-Key": secretKey }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            providerSelect.value = data.provider || "groq";
+            modelNameInput.value = data.model || "";
+            groqKeyInput.value = data.groq_api_key || "";
+            openaiKeyInput.value = data.openai_api_key || "";
+            ollamaHostInput.value = data.ollama_host || "http://localhost:11434";
+
+            // Update visible fields based on the loaded provider
+            updateModelFieldsVisibility(data.provider || "groq");
+
+            // Update status text on the card header
+            if (statusTextModel) {
+                const providerMap = {
+                    "groq": "Groq",
+                    "openai": "OpenAI",
+                    "ollama": "Ollama"
+                };
+                const providerName = providerMap[data.provider] || data.provider;
+                let displayModel = data.model || "";
+                if (!displayModel) {
+                    if (data.provider === "groq") displayModel = "llama-3.3-70b-versatile";
+                    else if (data.provider === "openai") displayModel = "gpt-4o-mini";
+                    else if (data.provider === "ollama") displayModel = "llama3";
+                }
+                statusTextModel.innerText = `${providerName} (${displayModel})`;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load AI Model Configuration:", err);
+    }
+}
+
+async function saveModelConfig() {
+    const providerSelect = document.getElementById("settings-model-provider");
+    const modelNameInput = document.getElementById("settings-model-name");
+    const groqKeyInput = document.getElementById("settings-model-groq-key");
+    const openaiKeyInput = document.getElementById("settings-model-openai-key");
+    const ollamaHostInput = document.getElementById("settings-model-ollama-host");
+    const btnSave = document.getElementById("btn-save-model-config");
+
+    if (!providerSelect) return;
+
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<span class="loading-spinner" style="border-top-color: white;"></span> Saving...`;
+    }
+
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const payload = {
+            provider: providerSelect.value,
+            model: modelNameInput.value.trim(),
+            groq_api_key: groqKeyInput.value.trim(),
+            openai_api_key: openaiKeyInput.value.trim(),
+            ollama_host: ollamaHostInput.value.trim()
+        };
+
+        const response = await fetch("/api/model-config", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": secretKey
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            await showCustomAlert("AI Model Configuration saved successfully!", "Settings Saved", "success");
+            await loadModelConfig(); // Reload to refresh status pill & mask inputs
+        } else {
+            const errData = await response.json();
+            await showCustomAlert(errData.detail || "Failed to save AI Model Configuration.", "Error Saving", "danger");
+        }
+    } catch (err) {
+        await showCustomAlert("Network error saving AI Model Configuration: " + err.message, "Connection Error", "danger");
+    } finally {
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = `<i data-lucide="save" style="width: 12px; height: 12px;"></i> Save Model Configuration`;
+            if (window.lucide) window.lucide.createIcons();
+        }
     }
 }
 
