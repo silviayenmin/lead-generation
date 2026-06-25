@@ -54,7 +54,9 @@ from crm import (
     update_user_password,
     generate_and_save_otp,
     verify_and_delete_otp,
-    send_otp_email
+    send_otp_email,
+    save_places_api_key,
+    get_places_api_key
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
@@ -188,6 +190,9 @@ class UpdateProfileRequest(BaseModel):
 class WebhookConfigPayload(BaseModel):
     webhook_url: str
 
+class PlacesConfigPayload(BaseModel):
+    places_api_key: str
+
 class ModelConfigPayload(BaseModel):
     active_provider: str
     providers: dict
@@ -257,7 +262,20 @@ async def run_search(payload: SearchRequest, request: Request):
         adapter = get_adapter(plat)
         for q in intent_queries:
             try:
-                res = adapter.search(q, timeframe=timeframe, match_type=payload.match_type or "partial", location=payload.location, industry=payload.industry)
+                if plat == "google_maps":
+                    places_key = get_places_api_key(user_email)
+                    if not places_key:
+                        places_key = os.getenv("PLACES_API_KEY")
+                    res = adapter.search(
+                        q, 
+                        timeframe=timeframe, 
+                        match_type=payload.match_type or "partial", 
+                        location=payload.location, 
+                        industry=payload.industry,
+                        api_key=places_key
+                    )
+                else:
+                    res = adapter.search(q, timeframe=timeframe, match_type=payload.match_type or "partial", location=payload.location, industry=payload.industry)
                 if res:
                     raw_results.extend(res)
             except Exception as e:
@@ -293,13 +311,21 @@ async def run_search(payload: SearchRequest, request: Request):
                 lead["sourceUrl"] = source_url
                 lead["platform"] = determine_lead_platform(source_url)
                 
+                # Overrides for Google Maps leads
+                if lead.get("platform") == "google_maps":
+                    lead["companyName"] = result.get("meta_business_name", "Unknown Business")
+                    lead["location"] = result.get("meta_address", "Not Specified")
+                
                 # 5. Lead Intent Scoring Engine (Requirement 3)
                 lead = calculate_lead_score(lead)
                 
                 # Ensure author name is populated (use fallback parser if missing)
                 author = lead.get("authorName")
                 if is_empty_value(author):
-                    author = await asyncio.to_thread(extract_fallback_author, title, source_url)
+                    if lead.get("platform") == "google_maps":
+                        author = "Business Owner"
+                    else:
+                        author = await asyncio.to_thread(extract_fallback_author, title, source_url)
                 
                 # Apply author name validation
                 author = validate_author_name(author, lead.get("platform"))
@@ -308,9 +334,9 @@ async def run_search(payload: SearchRequest, request: Request):
                 # Apply company name validation
                 company = validate_company_name(lead.get("companyName"))
                 lead["companyName"] = company
-                    
+                
                 # Secondary Enrichment search if company details are missing
-                if not is_empty_value(author) and is_empty_value(company):
+                if lead.get("platform") != "google_maps" and not is_empty_value(author) and is_empty_value(company):
                     enriched_data = await asyncio.to_thread(enrich_profile_details, author)
                     ec = enriched_data.get("companyName")
                     ei = enriched_data.get("industry")
@@ -323,28 +349,34 @@ async def run_search(payload: SearchRequest, request: Request):
                         lead["location"] = el
  
                 # 6. Contact Enrichment / Email Guessing (Requirement 7)
-                enrich_mgr = ContactEnrichmentManager()
-                enrich_details = enrich_mgr.enrich(lead.get("authorName"), lead.get("companyName"))
-                c_info = enrich_details.get("email")
-                if c_info == "hello@company.com" or is_empty_value(c_info):
-                    c_info = None
-                lead["contactInfo"] = c_info
-                lead["contactSource"] = enrich_details.get("contactSource")
-                lead["contactConfidence"] = enrich_details.get("contactConfidence")
-                
-                # Extract companyName from enrichment APIs if not already present
-                if is_empty_value(lead.get("companyName")) and enrich_details.get("companyName"):
-                    lead["companyName"] = validate_company_name(enrich_details.get("companyName"))
-                
-                # Update authorName if we found a valid email address and current authorName is fallback/Unknown
-                if not is_empty_value(c_info):
-                    current_author = lead.get("authorName")
-                    if is_empty_value(current_author) or (lead.get("platform") == "facebook" and is_facebook_fallback_name(current_author, source_url)):
-                        email_author = extract_author_from_email_or_url(c_info, source_url)
-                        if email_author and email_author != "Unknown":
-                            validated_email_author = validate_author_name(email_author, lead.get("platform"))
-                            if validated_email_author and validated_email_author != "Unknown":
-                                lead["authorName"] = validated_email_author
+                if lead.get("platform") == "google_maps":
+                    c_info = result.get("meta_contact_info")
+                    lead["contactInfo"] = c_info
+                    lead["contactSource"] = "google_maps_crawl" if c_info else "none"
+                    lead["contactConfidence"] = "high" if c_info else "none"
+                else:
+                    enrich_mgr = ContactEnrichmentManager()
+                    enrich_details = enrich_mgr.enrich(lead.get("authorName"), lead.get("companyName"))
+                    c_info = enrich_details.get("email")
+                    if c_info == "hello@company.com" or is_empty_value(c_info):
+                        c_info = None
+                    lead["contactInfo"] = c_info
+                    lead["contactSource"] = enrich_details.get("contactSource")
+                    lead["contactConfidence"] = enrich_details.get("contactConfidence")
+                    
+                    # Extract companyName from enrichment APIs if not already present
+                    if is_empty_value(lead.get("companyName")) and enrich_details.get("companyName"):
+                        lead["companyName"] = validate_company_name(enrich_details.get("companyName"))
+                    
+                    # Update authorName if we found a valid email address and current authorName is fallback/Unknown
+                    if not is_empty_value(c_info):
+                        current_author = lead.get("authorName")
+                        if is_empty_value(current_author) or (lead.get("platform") == "facebook" and is_facebook_fallback_name(current_author, source_url)):
+                            email_author = extract_author_from_email_or_url(c_info, source_url)
+                            if email_author and email_author != "Unknown":
+                                validated_email_author = validate_author_name(email_author, lead.get("platform"))
+                                if validated_email_author and validated_email_author != "Unknown":
+                                    lead["authorName"] = validated_email_author
                 
                 # Print debug information (Requirement 5)
                 print("\n" + "="*50)
@@ -1074,6 +1106,36 @@ async def save_webhook_endpoint(payload: WebhookConfigPayload, request: Request)
         return {"status": "success", "message": "Webhook URL saved successfully"}
     else:
         raise HTTPException(status_code=500, detail="Failed to save Webhook URL")
+
+@app.get("/api/outreach/places")
+async def get_places_endpoint(request: Request):
+    user_email = request.state.user
+    api_key = get_places_api_key(user_email)
+    
+    masked_key = ""
+    if api_key:
+        if len(api_key) <= 8:
+            masked_key = "********"
+        else:
+            masked_key = f"{api_key[:4]}********{api_key[-4:]}"
+            
+    return {"status": "success", "places_api_key": masked_key, "is_configured": bool(api_key)}
+
+@app.post("/api/outreach/places")
+async def save_places_endpoint(payload: PlacesConfigPayload, request: Request):
+    user_email = request.state.user
+    key_to_save = payload.places_api_key.strip()
+    
+    if "********" in key_to_save:
+        existing_key = get_places_api_key(user_email)
+        if existing_key:
+            key_to_save = existing_key
+            
+    success = save_places_api_key(user_email, key_to_save)
+    if success:
+        return {"status": "success", "message": "Places API Key saved successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to save Places API Key")
 
 @app.post("/api/outreach/sync-replies")
 async def sync_replies_endpoint(request: Request):

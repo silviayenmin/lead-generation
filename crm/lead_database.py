@@ -15,7 +15,7 @@ def is_empty_value(v): return not v or str(v).strip().lower() in EMPTY_VALUES
 
 def determine_lead_platform(url: str) -> str:
     """
-    Determines the source platform (linkedin, facebook, twitter, reddit) based on the URL domain.
+    Determines the source platform (linkedin, facebook, twitter, reddit, google_maps) based on the URL domain.
     """
     if not url:
         return "other"
@@ -28,6 +28,8 @@ def determine_lead_platform(url: str) -> str:
         return "twitter"
     elif "reddit.com" in url_lower:
         return "reddit"
+    elif "google.com/maps" in url_lower or "places.googleapis.com" in url_lower:
+        return "google_maps"
     return "other"
 
 def generate_fingerprint(author_name: str, company_name: str, need_description: str) -> str:
@@ -623,8 +625,8 @@ def validate_author_name(author: str, platform: str = None) -> str:
     if "?" in author_clean:
         return "Unknown"
         
-    # 2. Reject names with more than 3 words (relaxed to 6 words for facebook to support page/group names)
-    max_words = 6 if platform == "facebook" else 3
+    # 2. Reject names with more than 3 words (relaxed to 6 words for facebook and 15 for google_maps to support business names)
+    max_words = 6 if platform == "facebook" else (15 if platform == "google_maps" else 3)
     if len(author_clean.split()) > max_words:
         return "Unknown"
         
@@ -1014,4 +1016,32 @@ def send_otp_email(email: str, otp: str, purpose: str):
     print(f"  PURPOSE: {purpose.upper()}")
     print(f"  OTP CODE: {otp}")
     print("="*80 + "\n")
+
+
+def save_places_api_key(user_email: str, api_key: str) -> bool:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        result = users_col.update_one(
+            {"email": user_email.strip().lower()},
+            {"$set": {"places_api_key": api_key.strip()}}
+        )
+        return result.modified_count > 0 or result.matched_count > 0
+    except Exception as e:
+        print(f"Error saving places api key in MongoDB: {e}")
+        return False
+
+
+def get_places_api_key(user_email: str) -> str:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        user = users_col.find_one({"email": user_email.strip().lower()})
+        if user:
+            return user.get("places_api_key") or ""
+        return ""
+    except Exception as e:
+        print(f"Error loading places api key from MongoDB: {e}")
+        return ""
+
 

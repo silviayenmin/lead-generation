@@ -194,6 +194,11 @@ function getPlatformIconSvg(platform, size = 14, style = "") {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>`;
+    } else if (cleanPlatform === "google_maps" || cleanPlatform === "google-maps" || cleanPlatform === "googlemaps") {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+        </svg>`;
     } else {
         // Default globe icon for general web
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="brand-svg" style="${style}">
@@ -603,6 +608,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnSyncReplies = document.getElementById("btn-sync-replies-trigger");
     if (btnSyncReplies) btnSyncReplies.addEventListener("click", syncReplies);
 
+    // Google Places API Key save & eye toggles
+    const btnSavePlaces = document.getElementById("btn-save-places-key");
+    if (btnSavePlaces) btnSavePlaces.addEventListener("click", savePlacesConfig);
+
+    const btnTogglePlacesKey = document.getElementById("btn-toggle-places-key");
+    if (btnTogglePlacesKey) {
+        btnTogglePlacesKey.addEventListener("click", () => {
+            const input = document.getElementById("settings-places-key");
+            if (input) {
+                const icon = btnTogglePlacesKey.querySelector("i");
+                if (input.type === "password") {
+                    input.type = "text";
+                    if (icon) {
+                        icon.setAttribute("data-lucide", "eye-off");
+                        lucide.createIcons();
+                    }
+                } else {
+                    input.type = "password";
+                    if (icon) {
+                        icon.setAttribute("data-lucide", "eye");
+                        lucide.createIcons();
+                    }
+                }
+            }
+        });
+    }
+
     // Drag-and-Drop Columns Listener
     initDragAndDrop();
 
@@ -676,6 +708,7 @@ function switchTab(tabName) {
         updateConfigPreview();
         loadImapConfig();
         loadModelConfig();
+        loadPlacesConfig();
     } else if (tabName === "profile") {
         loadUserProfile();
         loadWebhookUrl();
@@ -1094,6 +1127,11 @@ function renderLeads() {
             platformColor = "var(--highlight)";
             platformIconName = "message-square";
             displayPlatform = "Reddit";
+        } else if (platform === "google_maps") {
+            platformBadgeColor = "rgba(255, 159, 67, 0.1)";
+            platformColor = "#FF9F43";
+            platformIconName = "map-pin";
+            displayPlatform = "Google Maps";
         }
 
         const avatarUrl = getLeadAvatarUrl(displayAuthor);
@@ -1249,6 +1287,9 @@ function renderKanban() {
             } else if (platform === "twitter") {
                 platformColor = "#9CA3AF";
                 platformIcon = "twitter";
+            } else if (platform === "google_maps") {
+                platformColor = "#FF9F43";
+                platformIcon = "map-pin";
             }
 
             const avatarUrl = getLeadAvatarUrl(lead.authorName || "Unknown");
@@ -2512,6 +2553,10 @@ function renderArchiveLeads() {
             platformColor = "var(--highlight)";
             platformIconName = "message-square";
             displayPlatform = "Reddit";
+        } else if (platform === "google_maps") {
+            platformColor = "#FF9F43";
+            platformIconName = "map-pin";
+            displayPlatform = "Google Maps";
         }
 
         const avatarUrl = getLeadAvatarUrl(displayAuthor);
@@ -4128,6 +4173,69 @@ async function syncReplies() {
             btnSync.innerHTML = `<i data-lucide="refresh-cw"></i> Sync Replies`;
             if (window.lucide) window.lucide.createIcons();
         }
+    }
+}
+
+async function loadPlacesConfig() {
+    const placesKeyInput = document.getElementById("settings-places-key");
+    const placesPill = document.getElementById("profile-health-places");
+
+    if (!placesKeyInput) return;
+
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/places", {
+            headers: { "X-API-Key": secretKey }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            placesKeyInput.value = data.places_api_key || "";
+            
+            if (placesPill) {
+                if (data.is_configured) {
+                    placesPill.className = "status-pulse-pill status-active";
+                    placesPill.querySelector(".status-text").innerText = "Active";
+                } else {
+                    placesPill.className = "status-pulse-pill status-inactive";
+                    placesPill.querySelector(".status-text").innerText = "Fallback: Playwright";
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load Google Places settings:", err);
+    }
+}
+
+async function savePlacesConfig() {
+    const placesKeyInput = document.getElementById("settings-places-key");
+    if (!placesKeyInput) return;
+
+    const placesKey = placesKeyInput.value.trim();
+
+    const btnSave = document.getElementById("btn-save-places-key");
+    if (btnSave) btnSave.disabled = true;
+
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/places", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": secretKey
+            },
+            body: JSON.stringify({ places_api_key: placesKey })
+        });
+        if (response.ok) {
+            await showCustomAlert("Google Places configuration saved successfully!", "Settings Saved", "success");
+            await loadPlacesConfig();
+        } else {
+            const errData = await response.json();
+            await showCustomAlert(errData.detail || "Failed to save Google Places configuration.", "Error Saving", "danger");
+        }
+    } catch (err) {
+        await showCustomAlert("Network error saving Google Places configuration: " + err.message, "Connection Error", "danger");
+    } finally {
+        if (btnSave) btnSave.disabled = false;
     }
 }
 

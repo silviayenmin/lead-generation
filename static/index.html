@@ -1032,9 +1032,8 @@
 
                     <div class="config-split-grid">
 
-                        <!-- Left Column Stack: Configuration Inputs -->
-                        <div class="config-inputs-column" style="display: flex; flex-direction: column; gap: 1.5rem;">
-
+                        <!-- Row 1: IMAP & Preview -->
+                        <div class="config-split-row">
                             <!-- IMAP configuration card -->
                             <div class="card settings-card" style="margin-bottom: 0;">
                                 <div class="card-title"
@@ -1096,94 +1095,16 @@
                                 </div>
                             </div>
 
-                            <!-- AI Model Configuration card -->
-                            <div class="card settings-card" style="margin-bottom: 0;">
-                                <div class="card-title"
-                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <i data-lucide="cpu"></i>
-                                        <span>AI LLM Model Configuration</span>
-                                    </div>
-                                    <div id="profile-health-model" class="status-pulse-pill status-active"
-                                        style="background: rgba(14,165,164,0.15); color: var(--secondary);">
-                                        <span class="pulse-dot"></span>
-                                        <span class="status-text" id="status-text-model">Groq (Llama-3.3)</span>
-                                    </div>
-                                </div>
-                                <div class="settings-body"
-                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
-                                    <div
-                                        style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 480px;">
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-preset-select">Active Preset</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="cpu" class="input-icon"></i>
-                                                <select id="settings-model-preset-select" class="form-control"
-                                                    style="padding-left: 2.25rem;">
-                                                    <!-- Filled dynamically from app.js -->
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-type-select">Provider Type</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="server" class="input-icon"></i>
-                                                <select id="settings-model-type-select" class="form-control"
-                                                    style="padding-left: 2.25rem;">
-                                                    <option value="groq">Groq</option>
-                                                    <option value="openai">OpenAI</option>
-                                                    <option value="ollama">Ollama</option>
-                                                    <option value="anthropic">Anthropic (Claude)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-name">Model ID / Name (Optional)</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="hash" class="input-icon"></i>
-                                                <input type="text" id="settings-model-name" class="form-control"
-                                                    placeholder="e.g. llama-3.3-70b-versatile or gpt-4o-mini"
-                                                    style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-
-                                        <div id="settings-model-ollama-host-group" class="form-group" style="margin-bottom: 0; display: none;">
-                                            <label for="settings-model-ollama-host">Ollama Server Endpoint</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="link" class="input-icon"></i>
-                                                <input type="text" id="settings-model-ollama-host" class="form-control"
-                                                    placeholder="e.g. http://localhost:11434"
-                                                    style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-temperature">Temperature: <span id="settings-model-temperature-val">0.7</span></label>
-                                            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
-                                                <input type="range" id="settings-model-temperature" min="0" max="1" step="0.1" value="0.7" style="flex: 1; accent-color: var(--primary-color);">
-                                            </div>
-                                        </div>
-
-                                        <button type="button" id="btn-save-model-config" class="btn btn-primary"
-                                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                            <i data-lucide="save"></i> Save Model Configuration
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="config-preview-column">
-                            <div class="unified-preview-browser">
-                                <!-- Browser Header / Tabs -->
-                                <div class="browser-header-bar">
-                                    <div class="browser-header-left">
-                                        <div class="browser-window-dots">
-                                            <span class="dot red"></span>
-                                            <span class="dot yellow"></span>
+                            <!-- Unified Preview Column -->
+                            <div class="config-preview-column">
+                                <!-- Unified Preview Browser Mockup -->
+                                <div class="unified-preview-browser">
+                                    <!-- Browser Header / Tabs -->
+                                    <div class="browser-header-bar">
+                                        <div class="browser-header-left">
+                                            <div class="browser-window-dots">
+                                                <span class="dot red"></span>
+                                                <span class="dot yellow"></span>
                                             <span class="dot green"></span>
                                         </div>
                                         <div class="browser-tabs-container">
@@ -1337,12 +1258,134 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
+                        <!-- Row 2: AI Model & Google Places -->
+                        <div class="config-split-row">
+                            <!-- AI Model Configuration card -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title"
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="cpu"></i>
+                                        <span>AI LLM Model Configuration</span>
+                                    </div>
+                                    <div id="profile-health-model" class="status-pulse-pill status-active"
+                                        style="background: rgba(14,165,164,0.15); color: var(--secondary);">
+                                        <span class="pulse-dot"></span>
+                                        <span class="status-text" id="status-text-model">Groq (Llama-3.3)</span>
+                                    </div>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
+                                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 480px;">
 
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-model-preset-select">Active Preset</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="cpu" class="input-icon"></i>
+                                                <select id="settings-model-preset-select" class="form-control"
+                                                    style="padding-left: 2.25rem;">
+                                                    <!-- Filled dynamically from app.js -->
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-model-type-select">Provider Type</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="server" class="input-icon"></i>
+                                                <select id="settings-model-type-select" class="form-control"
+                                                    style="padding-left: 2.25rem;">
+                                                    <option value="groq">Groq</option>
+                                                    <option value="openai">OpenAI</option>
+                                                    <option value="ollama">Ollama</option>
+                                                    <option value="anthropic">Anthropic (Claude)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-model-name">Model ID / Name (Optional)</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="hash" class="input-icon"></i>
+                                                <input type="text" id="settings-model-name" class="form-control"
+                                                    placeholder="e.g. llama-3.3-70b-versatile or gpt-4o-mini"
+                                                    style="padding-left: 2.25rem;">
+                                            </div>
+                                        </div>
+
+                                        <div id="settings-model-ollama-host-group" class="form-group" style="margin-bottom: 0; display: none;">
+                                            <label for="settings-model-ollama-host">Ollama Server Endpoint</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="link" class="input-icon"></i>
+                                                <input type="text" id="settings-model-ollama-host" class="form-control"
+                                                    placeholder="e.g. http://localhost:11434"
+                                                    style="padding-left: 2.25rem;">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-model-temperature">Temperature: <span id="settings-model-temperature-val">0.7</span></label>
+                                            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
+                                                <input type="range" id="settings-model-temperature" min="0" max="1" step="0.1" value="0.7" style="flex: 1; accent-color: var(--primary-color);">
+                                            </div>
+                                        </div>
+
+                                        <button type="button" id="btn-save-model-config" class="btn btn-primary"
+                                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                            <i data-lucide="save"></i> Save Model Configuration
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Google Places API configuration card -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title"
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="map-pin"></i>
+                                        <span>Google Places API Configuration</span>
+                                    </div>
+                                    <div id="profile-health-places" class="status-pulse-pill status-inactive">
+                                        <span class="pulse-dot"></span>
+                                        <span class="status-text">Fallback: Playwright</span>
+                                    </div>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
+                                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-places-key">Google Places API Key</label>
+                                            <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                                                <div class="input-wrapper" style="flex-grow: 1; position: relative;">
+                                                    <i data-lucide="key" class="input-icon" style="color: var(--warning); position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
+                                                    <input type="password" id="settings-places-key" class="form-control"
+                                                        placeholder="e.g. AIzaSy..."
+                                                        style="padding-left: 2.25rem; font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em; height: 2.8rem; width: 100%;">
+                                                    <button type="button" id="btn-toggle-places-key"
+                                                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; z-index: 10;"
+                                                        title="Show/Hide Key">
+                                                        <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+                                                If left empty, the pipeline will fall back to local Google Maps scraping using Playwright automation.
+                                            </p>
+                                        </div>
+                                        <button type="button" id="btn-save-places-key" class="btn btn-primary"
+                                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                            <i data-lucide="save"></i> Save Places Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
-
                 </div>
 
                 <!-- View 6: User Profile Dashboard -->

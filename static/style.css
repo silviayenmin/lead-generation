@@ -1861,10 +1861,17 @@ body {
 
 /* Split-Screen Settings Configuration view */
 .config-split-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.config-split-row {
     display: grid;
     grid-template-columns: 528px 1fr;
     gap: 1.5rem;
     align-items: stretch;
+    width: 100%;
 }
 
 .chevron-icon {
@@ -1976,6 +1983,10 @@ body {
 
 @media (max-width: 992px) {
     .config-split-grid {
+        display: flex;
+        flex-direction: column;
+    }
+    .config-split-row {
         grid-template-columns: 1fr;
     }
 }
@@ -4682,18 +4693,31 @@ textarea.form-control {
     color: #0f172a !important;
 }
 
-/* Equal height cards and button alignment for Profile and Integrations */
-.profile-container .settings-card {
+/* Equal height cards and button alignment for settings cards */
+.settings-card {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.profile-container .settings-body {
+.settings-card .settings-body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+}
+
+.settings-card .settings-body > div {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-grow: 1;
+}
+
+/* Push Save buttons and action button containers to the bottom of the card */
+.settings-card button.btn,
+.settings-card button.btn-primary,
+.settings-card .settings-body > div > div:not(.form-group):last-child {
+    margin-top: auto !important;
 }
 
 /* Compact search input */

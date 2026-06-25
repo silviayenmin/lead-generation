@@ -5,3 +5,5 @@ fastapi
 uvicorn
 pydantic
 pymongo
+beautifulsoup4
+lxml
