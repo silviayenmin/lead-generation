@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LeadFlow - Premium Lead Intelligence Portal</title>
     <!-- CSS Reference -->
-    <link rel="stylesheet" href="/static/style.css?v=20260624_v2">
+    <link rel="stylesheet" href="/static/style.css?v=20260624_v3">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -40,7 +40,7 @@
                 </div>
                 <div style="text-align: right; margin-top: -0.25rem; margin-bottom: 0.75rem;">
                     <a href="#" id="link-show-forgot"
-                        style="font-size: 0.75rem; color: var(--text-muted); text-decoration: none; transition: var(--transition-smooth);"
+                        style="font-size: 0.82rem; color: var(--text-muted); text-decoration: none; transition: var(--transition-smooth);"
                         onmouseover="this.style.color='var(--primary)'"
                         onmouseout="this.style.color='var(--text-muted)'">Forgot Password?</a>
                 </div>
@@ -53,7 +53,7 @@
                     <i data-lucide="arrow-right"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
                 Don't have an account? <a href="#" id="link-show-register"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -94,7 +94,7 @@
                     <i data-lucide="arrow-right"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
                 Already have an account? <a href="#" id="link-show-login"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -129,7 +129,7 @@
                     <i data-lucide="check"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
                 Back to <a href="#" id="link-register-otp-back"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -161,7 +161,7 @@
                     <i data-lucide="arrow-right"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
                 Back to <a href="#" id="link-forgot-request-back"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -209,7 +209,7 @@
                     <i data-lucide="check"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
                 Back to <a href="#" id="link-forgot-verify-back"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -525,55 +525,60 @@
                 </div>
 
                 <!-- View 2: Lead Discovery (Redesigned into a Guided Stepper Wizard) -->
+                <!-- View 2: Lead Discovery (Single-page AI Scraper v2.0) -->
                 <div id="view-discovery" class="tab-view">
-                    <div class="view-header">
-                        <h2>Lead Discovery</h2>
-                        <p>Guided AI scanner targeting buying signals across LinkedIn, Facebook, Twitter, and Reddit.
-                        </p>
-                    </div>
-
-                    <div class="discovery-wizard-card">
-
-                        <!-- Stepper progress indicator header -->
-                        <div class="stepper-header">
-                            <div class="stepper-line"></div>
-                            <div class="stepper-progress-fill" id="wizard-progress-fill"></div>
-                            <div class="stepper-node active" data-step="1">
-                                <div class="stepper-circle">1</div>
-                                <span class="stepper-label">Audience</span>
-                            </div>
-                            <div class="stepper-node" data-step="2">
-                                <div class="stepper-circle">2</div>
-                                <span class="stepper-label">Sources</span>
-                            </div>
-                            <div class="stepper-node" data-step="3">
-                                <div class="stepper-circle">3</div>
-                                <span class="stepper-label">Filters</span>
-                            </div>
-                            <div class="stepper-node" data-step="4">
-                                <div class="stepper-circle">4</div>
-                                <span class="stepper-label">Qualify</span>
-                            </div>
+                    <div class="discovery-wizard-container">
+                        <div class="view-header">
+                            <h2>Lead Discovery</h2>
+                            <p>Guided AI scanner targeting buying signals across LinkedIn, Facebook, Twitter, and Reddit.
+                            </p>
                         </div>
+
+                        <div class="discovery-wizard-card">
+
+                            <!-- Stepper progress indicator header -->
+                            <div class="stepper-header">
+                                <div class="stepper-line"></div>
+                                <div class="stepper-progress-fill" id="wizard-progress-fill"></div>
+                                <div class="stepper-node active" data-step="1">
+                                    <div class="stepper-circle"><i data-lucide="users"></i></div>
+                                    <span class="stepper-label">Audience</span>
+                                </div>
+                                <div class="stepper-node" data-step="2">
+                                    <div class="stepper-circle"><i data-lucide="database"></i></div>
+                                    <span class="stepper-label">Sources</span>
+                                </div>
+                                <div class="stepper-node" data-step="3">
+                                    <div class="stepper-circle"><i data-lucide="sliders"></i></div>
+                                    <span class="stepper-label">Filters</span>
+                                </div>
+                                <div class="stepper-node" data-step="4">
+                                    <div class="stepper-circle"><i data-lucide="sparkles"></i></div>
+                                    <span class="stepper-label">Qualify</span>
+                                </div>
+                            </div>
 
                         <form id="search-form">
 
                             <!-- Step 1: Define Audience -->
                             <div class="wizard-step-panel active" data-step="1">
+                                <div class="step-heading">
+                                    <h3><i data-lucide="users"></i> Define Target Audience</h3>
+                                    <p>Specify the search keywords and industry context for our Llama-3.3 AI scanner.</p>
+                                </div>
                                 <div class="form-group">
-                                    <label for="keyword">Search keyword / intent query</label>
+                                    <label for="keyword">Search Intent Query / Keyword</label>
                                     <div class="input-wrapper">
                                         <i data-lucide="search" class="input-icon"></i>
                                         <input type="text" id="keyword" class="form-control"
                                             placeholder="e.g. looking for ui/ux designer, contract react developer"
                                             required>
                                     </div>
-                                    <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match varied
-                                        social phrasing.</span>
+                                    <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
                                 </div>
                                 <div class="wizard-grid-2">
                                     <div class="form-group">
-                                        <label for="wizard-industry">Target industry (optional)</label>
+                                        <label for="wizard-industry">Target Industry (Optional)</label>
                                         <div class="input-wrapper">
                                             <i data-lucide="building" class="input-icon"></i>
                                             <input type="text" id="wizard-industry" class="form-control"
@@ -581,7 +586,7 @@
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="wizard-location">Target location (optional)</label>
+                                        <label for="wizard-location">Target Location (Optional)</label>
                                         <div class="input-wrapper">
                                             <i data-lucide="map-pin" class="input-icon"></i>
                                             <input type="text" id="wizard-location" class="form-control"
@@ -593,12 +598,10 @@
 
                             <!-- Step 2: Select Platform Sources -->
                             <div class="wizard-step-panel" data-step="2">
-                                <div class="form-group wizard-group-margin-sm">
-                                    <label>Select target data sources</label>
-                                    <span class="wizard-help-text-margin">Choose social networks to scan for buying
-                                        signals.</span>
+                                <div class="step-heading">
+                                    <h3><i data-lucide="database"></i> Select Platform Sources</h3>
+                                    <p>Choose target networks to crawl and parse for matching B2B intent signals.</p>
                                 </div>
-
                                 <div class="platform-options-grid">
                                     <div class="platform-option-card active" data-platform="linkedin">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -640,9 +643,13 @@
 
                             <!-- Step 3: Configure Intent Filters -->
                             <div class="wizard-step-panel" data-step="3">
+                                <div class="step-heading">
+                                    <h3><i data-lucide="sliders"></i> Configure Filters & Thresholds</h3>
+                                    <p>Tune recency limits, search strictness, and the minimum AI qualification match score.</p>
+                                </div>
                                 <div class="wizard-grid-3">
                                     <div class="form-group">
-                                        <label for="timeframe">Post recency</label>
+                                        <label for="timeframe">Post Recency</label>
                                         <div class="input-wrapper">
                                             <i data-lucide="calendar" class="input-icon"></i>
                                             <select id="timeframe" class="form-control">
@@ -656,7 +663,7 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="limit">Maximum records scanned</label>
+                                        <label for="limit">Maximum Records Scanned</label>
                                         <div class="input-wrapper">
                                             <i data-lucide="hash" class="input-icon"></i>
                                             <select id="limit" class="form-control">
@@ -669,7 +676,7 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="match-type">Search match type</label>
+                                        <label for="match-type">Search Match Type</label>
                                         <div class="input-wrapper">
                                             <i data-lucide="sliders" class="input-icon"></i>
                                             <select id="match-type" class="form-control">
@@ -682,9 +689,8 @@
 
                                 <div class="form-group wizard-group-margin-top-sm">
                                     <div class="wizard-flex-header">
-                                        <label for="wizard-intent-score-min">Minimum AI intent threshold</label>
-                                        <span id="wizard-intent-score-val" class="wizard-intent-score-val">40%
-                                            Match</span>
+                                        <label for="wizard-intent-score-min">Minimum AI Intent Threshold</label>
+                                        <span id="wizard-intent-score-val" class="wizard-intent-score-val">40% Match</span>
                                     </div>
                                     <input type="range" id="wizard-intent-score-min" class="custom-range-slider"
                                         min="10" max="90" value="40">
@@ -697,17 +703,34 @@
 
                             <!-- Step 4: AI Qualification & Estimate -->
                             <div class="wizard-step-panel" data-step="4">
-                                <div class="form-group estimate-leads-margin">
-                                    <label>Review & launch</label>
-                                    <span class="wizard-help-text-margin">Confirm details to launch Llama-3.3 parsing
-                                        scan.</span>
+                                <div class="step-heading">
+                                    <h3><i data-lucide="sparkles"></i> Review & Launch Scraper</h3>
+                                    <p>Verify the configuration summary below before deploying the automated search.</p>
+                                </div>
+
+                                <div class="review-summary-card">
+                                    <div class="summary-item">
+                                        <span class="summary-label"><i data-lucide="users"></i> Target Audience</span>
+                                        <span class="summary-value" id="review-summary-audience">Any</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label"><i data-lucide="database"></i> Platform Source</span>
+                                        <span class="summary-value" id="review-summary-source">LinkedIn</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label"><i data-lucide="calendar"></i> Recency / Recs</span>
+                                        <span class="summary-value" id="review-summary-filters">Past 3 Months (10 leads)</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label"><i data-lucide="activity"></i> Intent Threshold</span>
+                                        <span class="summary-value" id="review-summary-score">40% Min Match</span>
+                                    </div>
                                 </div>
 
                                 <div class="estimate-leads-panel estimate-leads-margin">
                                     <div class="estimate-count" id="wizard-estimate-count">10 - 25</div>
                                     <div class="estimate-label">Estimated qualified lead targets</div>
-                                    <span class="estimate-help-text">Based on your filter metrics, matching history, and
-                                        domain indexes.</span>
+                                    <span class="estimate-help-text">Based on your filter metrics, matching history, and domain indexes.</span>
                                 </div>
 
                                 <div class="form-actions-row wizard-actions-row">
@@ -715,8 +738,7 @@
                                         <i data-lucide="sparkles"></i>
                                         <span>Launch AI scan</span>
                                     </button>
-                                    <button type="button" id="btn-save-search"
-                                        class="btn btn-secondary btn-wizard-save">
+                                    <button type="button" id="btn-save-search" class="btn btn-secondary btn-wizard-save">
                                         <i data-lucide="bookmark"></i>
                                         <span>Save scraper</span>
                                     </button>
@@ -746,7 +768,7 @@
                                 <span>Saved monitoring scrapers</span>
                             </div>
                             <button type="button" id="btn-run-monitoring" class="btn btn-glow-outline"
-                                style="width: auto; padding: 0.45rem 0.85rem; font-size: 0.8rem; height: 32px; display: flex; align-items: center; gap: 0.35rem;">
+                                style="width: auto; padding: 0.45rem 0.85rem; font-size: 0.82rem; height: 32px; display: flex; align-items: center; gap: 0.35rem;">
                                 <i data-lucide="refresh-cw"></i> Scan all active scrapers
                             </button>
                         </div>
@@ -790,6 +812,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
                 <!-- View 3: Outreach Pipeline (Kanban Board) -->
                 <div id="view-pipeline" class="tab-view">
@@ -920,7 +943,7 @@
                                             placeholder="Filter queries...">
                                     </div>
                                     <button type="button" id="btn-open-queries-modal" class="btn btn-glow-outline"
-                                        style="width: auto; padding: 0 0.65rem; font-size: 0.8rem; height: 32px; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; border-color: var(--border-color); background: rgba(255,255,255,0.02);"
+                                        style="width: auto; padding: 0 0.65rem; font-size: 0.82rem; height: 32px; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; border-color: var(--border-color); background: rgba(255,255,255,0.02);"
                                         title="View all saved queries in a grid">
                                         <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i> View All
                                     </button>
@@ -1135,7 +1158,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
 
                         <div class="config-preview-column">
@@ -1218,13 +1240,13 @@
                                         </div>
                                         <div class="composer-body preview-body-content" id="live-pitch-preview-body"
                                             contenteditable="true"
-                                            style="flex-grow: 1; padding: 1.25rem; overflow-y: auto; min-height: 250px; outline: none;">
+                                            style="flex-grow: 1; padding: 1.25rem; overflow-y: auto; min-height: 150px; outline: none;">
                                             <!-- Rendered dynamically -->
                                         </div>
                                         <div class="composer-footer"
                                             style="padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 1rem; border-top: 1px solid var(--border-color); background: var(--bg-trans-1);">
                                             <button type="button" class="btn btn-primary"
-                                                style="height: 32px; padding: 0 1rem; font-size: 0.78rem; font-weight: 600; pointer-events: none;">Send</button>
+                                                style="height: 32px; padding: 0 1rem; font-size: 0.82rem; font-weight: 600; pointer-events: none;">Send</button>
                                             <div class="composer-toolbar-icons"
                                                 style="display: flex; gap: 0.75rem; color: var(--text-muted); cursor: pointer;">
                                                 <i data-lucide="type" style="width: 16px; height: 16px;"></i>
@@ -1245,7 +1267,7 @@
                                         <div class="chat-header"
                                             style="padding: 0.75rem 1.25rem; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); background: var(--bg-trans-1);">
                                             <div class="chat-avatar" id="linkedin-preview-avatar"
-                                                style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; margin-right: 0.75rem;">
+                                                style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.82rem; margin-right: 0.75rem;">
                                                 SJ</div>
                                             <div class="chat-user-details"
                                                 style="display: flex; flex-direction: column;">
@@ -1257,7 +1279,7 @@
                                                     <span class="chat-status-dot"
                                                         style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
                                                     <span class="chat-status-text"
-                                                        style="font-size: 0.65rem; color: #10b981; font-weight: 500;">Active
+                                                        style="font-size: 0.82rem; color: #10b981; font-weight: 500;">Active
                                                         now</span>
                                                 </div>
                                             </div>
@@ -1269,16 +1291,16 @@
                                             </div>
                                         </div>
                                         <div class="chat-history"
-                                            style="flex-grow: 1; padding: 1.25rem; overflow-y: auto; background: var(--bg-trans-1); min-height: 250px; display: flex; flex-direction: column; justify-content: flex-end;">
+                                            style="flex-grow: 1; padding: 1.25rem; overflow-y: auto; background: var(--bg-trans-1); min-height: 150px; display: flex; flex-direction: column; justify-content: flex-end;">
                                             <div class="chat-message-bubble-container sent"
                                                 style="align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; max-width: 85%;">
                                                 <div class="chat-message-bubble preview-body-content"
                                                     id="live-pitch-preview-body-linkedin" contenteditable="true"
-                                                    style="background: var(--primary); color: white; padding: 0.75rem 1rem; border-radius: 12px 12px 0 12px; font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; outline: none;">
+                                                    style="background: var(--primary); color: white; padding: 0.75rem 1rem; border-radius: 12px 12px 0 12px; font-size: 0.82rem; line-height: 1.5; white-space: pre-wrap; outline: none;">
                                                     <!-- Rendered dynamically -->
                                                 </div>
                                                 <span class="chat-message-time"
-                                                    style="font-size: 0.6rem; color: var(--text-muted); margin-top: 0.25rem;">1:56
+                                                    style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">1:56
                                                     PM · Sent</span>
                                             </div>
                                         </div>
@@ -1286,16 +1308,93 @@
                                             style="padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-trans-1);">
                                             <input type="text" class="form-control chat-input-field"
                                                 placeholder="Write a message..." readonly
-                                                style="font-size: 0.78rem; height: 32px; padding: 0 0.75rem; background: var(--bg-trans-2); border: 1px solid var(--border-color);">
+                                                style="font-size: 0.82rem; height: 32px; padding: 0 0.75rem; background: var(--bg-trans-2); border: 1px solid var(--border-color);">
                                             <div class="chat-footer-actions"
                                                 style="display: flex; align-items: center; gap: 0.85rem; color: var(--text-muted); cursor: pointer;">
                                                 <i data-lucide="image" style="width: 16px; height: 16px;"></i>
                                                 <i data-lucide="paperclip" style="width: 16px; height: 16px;"></i>
                                                 <i data-lucide="smile" style="width: 16px; height: 16px;"></i>
                                                 <button type="button"
-                                                    style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.78rem; margin-left: auto; cursor: pointer; pointer-events: none;">Send</button>
+                                                    style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.82rem; margin-left: auto; cursor: pointer; pointer-events: none;">Send</button>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Model Configuration card -->
+                            <div class="card settings-card" style="margin-top: 1.5rem;">
+                                <div class="card-title"
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="cpu"></i>
+                                        <span>AI LLM Model Configuration</span>
+                                    </div>
+                                    <div id="profile-health-model" class="status-pulse-pill status-active" style="background: rgba(14,165,164,0.15); color: var(--secondary);">
+                                        <span class="pulse-dot"></span>
+                                        <span class="status-text" id="status-text-model">Groq (Llama-3.3)</span>
+                                    </div>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 1rem; width: 100%;">
+                                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 480px;">
+                                        
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-model-provider">AI Model Provider</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="cpu" class="input-icon"></i>
+                                                <select id="settings-model-provider" class="form-control" style="padding-left: 2.25rem;">
+                                                    <option value="groq" selected>Groq (Llama 3.3 / Fast Inference)</option>
+                                                    <option value="openai">OpenAI (GPT-4o / High Quality)</option>
+                                                    <option value="ollama">Ollama (Local LLM / Free)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-model-name">Model ID / Name (Optional)</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="hash" class="input-icon"></i>
+                                                <input type="text" id="settings-model-name" class="form-control"
+                                                    placeholder="e.g. llama-3.3-70b-versatile or gpt-4o-mini"
+                                                    style="padding-left: 2.25rem;">
+                                            </div>
+                                        </div>
+
+                                        <div id="settings-model-groq-key-group" class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-model-groq-key">Groq API Key (Optional)</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="key" class="input-icon"></i>
+                                                <input type="password" id="settings-model-groq-key" class="form-control"
+                                                    placeholder="Overrides GROQ_API_KEY from .env"
+                                                    style="padding-left: 2.25rem;">
+                                            </div>
+                                        </div>
+
+                                        <div id="settings-model-openai-key-group" class="form-group" style="margin-bottom: 0; display: none;">
+                                            <label for="settings-model-openai-key">OpenAI API Key (Optional)</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="key" class="input-icon"></i>
+                                                <input type="password" id="settings-model-openai-key" class="form-control"
+                                                    placeholder="Overrides OPENAI_API_KEY from .env"
+                                                    style="padding-left: 2.25rem;">
+                                            </div>
+                                        </div>
+
+                                        <div id="settings-model-ollama-host-group" class="form-group" style="margin-bottom: 0; display: none;">
+                                            <label for="settings-model-ollama-host">Ollama Server Endpoint</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="link" class="input-icon"></i>
+                                                <input type="text" id="settings-model-ollama-host" class="form-control"
+                                                    placeholder="e.g. http://localhost:11434"
+                                                    style="padding-left: 2.25rem;">
+                                            </div>
+                                        </div>
+
+                                        <button type="button" id="btn-save-model-config" class="btn btn-primary"
+                                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                            <i data-lucide="save"></i> Save Model Configuration
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1336,7 +1435,7 @@
                                             <span id="profile-email-subheading"
                                                 style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 0.15rem;">user@example.com</span>
                                             <div class="badge badge-info"
-                                                style="font-size: 0.72rem; margin-top: 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 12px; background: var(--bg-trans-5); color: var(--text-secondary); border: 1px solid var(--border-color);">
+                                                style="font-size: 0.82rem; margin-top: 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 12px; background: var(--bg-trans-5); color: var(--text-secondary); border: 1px solid var(--border-color);">
                                                 <i data-lucide="calendar"
                                                     style="width: 11px; height: 11px; color: var(--primary);"></i>
                                                 Member since <span id="profile-joined-date-text">June 19, 2026</span>
@@ -1408,7 +1507,7 @@
                                                     style="color: var(--warning);"></i>
                                                 <input type="password" id="profile-api-token" class="form-control"
                                                     readonly value="****************"
-                                                    style="padding-left: 2.25rem; background: var(--bg-trans-2); font-family: monospace; font-size: 0.8rem; letter-spacing: 0.05em;">
+                                                    style="padding-left: 2.25rem; background: var(--bg-trans-2); font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em;">
                                                 <button type="button" id="btn-toggle-profile-token"
                                                     style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer;"
                                                     title="Show/Hide Key">
@@ -1700,7 +1799,7 @@
     </div>
 
     <!-- Script Reference -->
-    <script src="/static/app.js?v=20260624_v2"></script>
+    <script src="/static/app.js?v=20260624_v3"></script>
 </body>
 
 </html>

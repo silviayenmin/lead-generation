@@ -4,11 +4,20 @@ class FacebookAdapter:
     def __init__(self):
         self.platform_name = "facebook"
         
-    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial") -> list:
+    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial", location: str = None, industry: str = None) -> list:
+        q_parts = []
         if match_type == "exact":
-            query = f'site:facebook.com "{keyword}"'
+            q_parts.append(f'"{keyword}"')
         else:
-            query = f'site:facebook.com {keyword}'
+            q_parts.append(keyword)
+            
+        if location and location.strip():
+            q_parts.append(f'"{location.strip()}"')
+            
+        if industry and industry.strip():
+            q_parts.append(f'"{industry.strip()}"')
+            
+        query = f'site:facebook.com {" ".join(q_parts)}'
             
         print(f"[FacebookAdapter] Searching query: {query}")
         try:
