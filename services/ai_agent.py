@@ -23,11 +23,47 @@ class DynamicLLMClient:
     def get_config(self):
         config_path = "config.json"
         config = {
-            "provider": "groq",
-            "model": "llama-3.3-70b-versatile",
-            "openai_api_key": "",
-            "groq_api_key": "",
-            "ollama_host": "http://localhost:11434"
+            "active_provider": "groq",
+            "workspace_dir": "output",
+            "providers": {
+                "groq": {
+                    "provider_type": "groq",
+                    "model": "llama-3.3-70b-versatile",
+                    "temperature": 0.7
+                },
+                "openai": {
+                    "provider_type": "openai",
+                    "model": "gpt-4o",
+                    "temperature": 0
+                },
+                "ollama_llama": {
+                    "provider_type": "ollama",
+                    "model": "llama3.1:8b",
+                    "base_url": "http://localhost:11434",
+                    "temperature": 0
+                },
+                "ollama_qwen": {
+                    "provider_type": "ollama",
+                    "model": "qwen2.5-coder:14b",
+                    "base_url": "http://localhost:11434",
+                    "temperature": 0
+                },
+                "ollama_cloud": {
+                    "provider_type": "ollama",
+                    "model": "qwen3-coder:480b-cloud",
+                    "base_url": "http://localhost:11434",
+                    "temperature": 0
+                },
+                "anthropic": {
+                    "provider_type": "anthropic",
+                    "model": "claude-3-5-sonnet-20240620",
+                    "temperature": 0
+                }
+            },
+            "memory": {
+                "type": "buffer",
+                "max_token_limit": 2000
+            }
         }
         if os.path.exists(config_path):
             try:
@@ -40,54 +76,98 @@ class DynamicLLMClient:
 
     def create_completion(self, messages, response_format=None, temperature=0.7):
         config = self.get_config()
-        provider = config.get("provider", "groq").lower().strip()
-        model = config.get("model", "")
+        active_provider_name = config.get("active_provider", "groq")
+        providers = config.get("providers", {})
         
-        # Load API keys
-        groq_key = config.get("groq_api_key") or os.getenv("GROQ_API_KEY")
-        openai_key = config.get("openai_api_key") or os.getenv("OPENAI_API_KEY")
-        ollama_host = config.get("ollama_host") or os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        provider_config = providers.get(active_provider_name, {})
+        provider_type = provider_config.get("provider_type", "groq").lower().strip()
+        model = provider_config.get("model", "")
+        base_url = provider_config.get("base_url")
+        temp = provider_config.get("temperature", temperature)
         
-        if provider == "openai":
+        if provider_type == "openai":
             import openai
+            openai_key = os.getenv("OPENAI_API_KEY")
             if not model:
                 model = "gpt-4o-mini"
             api_client = openai.OpenAI(api_key=openai_key)
             kwargs = {
                 "model": model,
                 "messages": messages,
-                "temperature": temperature
+                "temperature": temp
             }
             if response_format:
                 kwargs["response_format"] = response_format
             return api_client.chat.completions.create(**kwargs)
             
-        elif provider == "ollama":
+        elif provider_type == "ollama":
             import openai
             if not model:
                 model = "llama3"
+            host = base_url or os.getenv("OLLAMA_HOST", "http://localhost:11434")
             api_client = openai.OpenAI(
-                base_url=f"{ollama_host.rstrip('/')}/v1",
+                base_url=f"{host.rstrip('/')}/v1",
                 api_key="ollama"
             )
             kwargs = {
                 "model": model,
                 "messages": messages,
-                "temperature": temperature
+                "temperature": temp
             }
             if response_format:
                 kwargs["response_format"] = response_format
             return api_client.chat.completions.create(**kwargs)
+
+        elif provider_type == "anthropic":
+            import anthropic
+            anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+            if not model:
+                model = "claude-3-5-sonnet-20240620"
+            api_client = anthropic.Anthropic(api_key=anthropic_key)
+            
+            # Format messages for Anthropic
+            system_prompt = ""
+            filtered_messages = []
+            for msg in messages:
+                if msg.get("role") == "system":
+                    system_prompt += msg.get("content", "") + "\n"
+                else:
+                    filtered_messages.append(msg)
+            
+            kwargs = {
+                "model": model,
+                "messages": filtered_messages,
+                "temperature": temp,
+                "max_tokens": 1024
+            }
+            if system_prompt:
+                kwargs["system"] = system_prompt.strip()
+
+            message = api_client.messages.create(**kwargs)
+
+            # Mock OpenAI response wrapper
+            class MockMessage:
+                def __init__(self, text):
+                    self.content = text
+            class MockChoice:
+                def __init__(self, text):
+                    self.message = MockMessage(text)
+            class MockResponse:
+                def __init__(self, text):
+                    self.choices = [MockChoice(text)]
+            
+            return MockResponse(message.content[0].text)
             
         else: # Default: groq
             from groq import Groq
+            groq_key = os.getenv("GROQ_API_KEY")
             if not model:
                 model = "llama-3.3-70b-versatile"
             api_client = Groq(api_key=groq_key)
             kwargs = {
                 "model": model,
                 "messages": messages,
-                "temperature": temperature
+                "temperature": temp
             }
             if response_format:
                 kwargs["response_format"] = response_format

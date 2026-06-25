@@ -189,11 +189,10 @@ class WebhookConfigPayload(BaseModel):
     webhook_url: str
 
 class ModelConfigPayload(BaseModel):
-    provider: str
-    model: Optional[str] = ""
-    openai_api_key: Optional[str] = ""
-    groq_api_key: Optional[str] = ""
-    ollama_host: Optional[str] = "http://localhost:11434"
+    active_provider: str
+    providers: dict
+    workspace_dir: Optional[str] = "output"
+    memory: Optional[dict] = None
 
 def fire_webhook_sync(webhook_url: str, event_type: str, lead_data: dict):
     import urllib.request
@@ -700,62 +699,23 @@ async def run_monitoring_endpoint(request: Request):
 
 @app.get("/api/model-config")
 async def get_model_config_endpoint(request: Request):
-    config_path = "config.json"
-    config = {
-        "provider": "groq",
-        "model": "llama-3.3-70b-versatile",
-        "openai_api_key": "",
-        "groq_api_key": "",
-        "ollama_host": "http://localhost:11434"
-    }
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                config.update(json.load(f))
-        except Exception:
-            pass
-    # Mask API keys for security in UI output
-    masked_config = dict(config)
-    if masked_config.get("openai_api_key"):
-        masked_config["openai_api_key"] = masked_config["openai_api_key"][:6] + "..." + masked_config["openai_api_key"][-4:] if len(masked_config["openai_api_key"]) > 10 else "..."
-    if masked_config.get("groq_api_key"):
-        masked_config["groq_api_key"] = masked_config["groq_api_key"][:6] + "..." + masked_config["groq_api_key"][-4:] if len(masked_config["groq_api_key"]) > 10 else "..."
-    return masked_config
+    from services.ai_agent import client
+    return client.get_config()
 
 @app.post("/api/model-config")
 async def update_model_config_endpoint(payload: ModelConfigPayload, request: Request):
     config_path = "config.json"
-    config = {
-        "provider": "groq",
-        "model": "llama-3.3-70b-versatile",
-        "openai_api_key": "",
-        "groq_api_key": "",
-        "ollama_host": "http://localhost:11434"
-    }
-    # Read existing config first to avoid overwriting masked keys
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                config.update(json.load(f))
-        except Exception:
-            pass
-            
-    new_openai = payload.openai_api_key.strip() if payload.openai_api_key else ""
-    if new_openai and "..." not in new_openai:
-        config["openai_api_key"] = new_openai
-    elif new_openai == "":
-        config["openai_api_key"] = ""
-        
-    new_groq = payload.groq_api_key.strip() if payload.groq_api_key else ""
-    if new_groq and "..." not in new_groq:
-        config["groq_api_key"] = new_groq
-    elif new_groq == "":
-        config["groq_api_key"] = ""
-
-    config["provider"] = payload.provider.strip().lower()
-    config["model"] = payload.model.strip() if payload.model else ""
-    config["ollama_host"] = payload.ollama_host.strip() if payload.ollama_host else "http://localhost:11434"
+    config = payload.dict()
     
+    # Strictly ensure no API keys are present in config dictionary
+    if "providers" in config:
+        for p_name, p_conf in config["providers"].items():
+            if isinstance(p_conf, dict):
+                p_conf.pop("openai_api_key", None)
+                p_conf.pop("groq_api_key", None)
+                p_conf.pop("api_key", None)
+                p_conf.pop("anthropic_api_key", None)
+                
     try:
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
