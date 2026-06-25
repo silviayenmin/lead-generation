@@ -91,6 +91,8 @@ const filterPlatform = document.getElementById("filter-platform");
 const filterStatus = document.getElementById("filter-status");
 const filterCrm = document.getElementById("filter-crm");
 const globalSearch = document.getElementById("global-search");
+const dashboardSearchInput = document.getElementById("dashboard-search-input");
+const archiveSearchInput = document.getElementById("archive-search-input");
 
 // Containers
 const loadingState = document.getElementById("loading-state");
@@ -232,17 +234,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Theme toggle setup
     const btnThemeToggle = document.getElementById("btn-theme-toggle");
-    const themeToggleIcon = document.getElementById("theme-toggle-icon");
 
     function updateThemeIcon() {
+        const themeToggleIcon = document.getElementById("theme-toggle-icon");
         if (!themeToggleIcon) return;
         const isLight = document.documentElement.classList.contains('light-theme');
-        if (isLight) {
-            themeToggleIcon.setAttribute('data-lucide', 'moon');
-        } else {
-            themeToggleIcon.setAttribute('data-lucide', 'sun');
+        
+        const newIcon = document.createElement("i");
+        newIcon.id = "theme-toggle-icon";
+        newIcon.setAttribute("data-lucide", isLight ? "moon" : "sun");
+        themeToggleIcon.parentNode.replaceChild(newIcon, themeToggleIcon);
+        
+        if (window.lucide) {
+            window.lucide.createIcons();
         }
-        lucide.createIcons();
     }
 
     updateThemeIcon();
@@ -484,6 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filterStatus) filterStatus.addEventListener("change", renderLeads);
     if (filterCrm) filterCrm.addEventListener("change", renderLeads);
     if (globalSearch) globalSearch.addEventListener("input", renderLeads);
+    if (dashboardSearchInput) dashboardSearchInput.addEventListener("input", renderLeads);
 
     if (archiveFilterPlatform) archiveFilterPlatform.addEventListener("change", () => {
         archiveCurrentPage = 1;
@@ -500,6 +506,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (typeof syncPillsToDropdowns === "function") syncPillsToDropdowns();
         renderArchiveLeads();
     });
+    if (archiveSearchInput) {
+        archiveSearchInput.addEventListener("input", () => {
+            archiveCurrentPage = 1;
+            renderArchiveLeads();
+        });
+    }
 
     const archiveHistorySearch = document.getElementById("archive-history-search");
     if (archiveHistorySearch) {
@@ -670,10 +682,10 @@ function switchTab(tabName) {
     } else if (tabName === "settings") {
         updateConfigPreview();
         loadImapConfig();
-        loadWebhookUrl();
         loadModelConfig();
     } else if (tabName === "profile") {
         loadUserProfile();
+        loadWebhookUrl();
     }
 }
 
@@ -957,7 +969,7 @@ function renderLeads() {
     const statusVal = filterStatus ? filterStatus.value.toLowerCase() : "all";
     const crmVal = filterCrm ? filterCrm.value.toLowerCase() : "all";
     const platformVal = filterPlatform ? filterPlatform.value.toLowerCase() : "all";
-    const searchVal = globalSearch ? globalSearch.value.trim().toLowerCase() : "";
+    const searchVal = dashboardSearchInput ? dashboardSearchInput.value.trim().toLowerCase() : "";
 
     const filtered = leadsData.filter(lead => {
         const leadStatus = String(lead.leadStatus || "").toLowerCase().trim();
@@ -998,16 +1010,8 @@ function renderLeads() {
         let searchMatch = true;
         if (searchVal) {
             const searchWords = searchVal.split(/\s+/).filter(w => w.length > 0);
-            const combinedText = [author, company, need, service, industry, location].join(" ");
             searchMatch = searchWords.every(word => {
-                if (combinedText.includes(word)) return true;
-                if (word === "manager" && combinedText.includes("management")) return true;
-                if (word === "management" && combinedText.includes("manager")) return true;
-                if (word === "designer" && combinedText.includes("design")) return true;
-                if (word === "design" && combinedText.includes("designer")) return true;
-                if (word === "developer" && combinedText.includes("develop")) return true;
-                if (word === "dev" && combinedText.includes("develop")) return true;
-                return false;
+                return author.includes(word) || company.includes(word);
             });
         }
 
@@ -2327,6 +2331,7 @@ function renderArchiveLeads() {
     const statusVal = archiveFilterStatus ? archiveFilterStatus.value.toLowerCase() : "all";
     const crmVal = archiveFilterCrm ? archiveFilterCrm.value.toLowerCase() : "all";
     const platformVal = archiveFilterPlatform ? archiveFilterPlatform.value.toLowerCase() : "all";
+    const searchVal = archiveSearchInput ? archiveSearchInput.value.trim().toLowerCase() : "";
 
     let leadsToRender = [];
     if (activeSearchId === "all") {
@@ -2382,7 +2387,17 @@ function renderArchiveLeads() {
         const leadPlatform = getLeadPlatform(lead);
         const platformMatch = platformVal === "all" || leadPlatform === platformVal;
 
-        return statusMatch && crmMatch && platformMatch;
+        let searchMatch = true;
+        if (searchVal) {
+            const searchWords = searchVal.split(/\s+/).filter(w => w.length > 0);
+            const author = String(lead.authorName || "").toLowerCase();
+            const company = String(lead.companyName || "").toLowerCase();
+            searchMatch = searchWords.every(word => {
+                return author.includes(word) || company.includes(word);
+            });
+        }
+
+        return statusMatch && crmMatch && platformMatch && searchMatch;
     });
 
     // Update dynamic dashboard metrics
@@ -2805,6 +2820,7 @@ function initArchiveViews() {
             if (archiveFilterPlatform) archiveFilterPlatform.value = "all";
             if (archiveFilterCrm) archiveFilterCrm.value = "all";
             if (archiveFilterStatus) archiveFilterStatus.value = "all";
+            if (archiveSearchInput) archiveSearchInput.value = "";
         } else if (mode === "high") {
             if (archiveFilterPlatform) archiveFilterPlatform.value = "all";
             if (archiveFilterCrm) archiveFilterCrm.value = "all";
@@ -4186,6 +4202,8 @@ async function loadUserProfile() {
             // Set headings
             if (displayNameHeading) displayNameHeading.innerText = profile.displayName || "User";
             if (emailSubheading) emailSubheading.innerText = profile.email || "user@example.com";
+            const businessSubheading = document.getElementById("profile-business-subheading");
+            if (businessSubheading) businessSubheading.innerText = profile.businessName || "Company";
 
             // Set Avatar Initials
             if (avatarCircle) {

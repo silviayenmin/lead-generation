@@ -1,7 +1,7 @@
 {
   "provider": "groq",
-  "model": "llama-3.3-70b-versatile",
+  "model": "",
   "openai_api_key": "",
-  "groq_api_key": "",
+  "groq_api_key": "gsk_testkey_12345abcdef",
   "ollama_host": "http://localhost:11434"
 }
