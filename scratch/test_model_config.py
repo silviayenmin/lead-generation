@@ -46,11 +46,20 @@ if __name__ == "__main__":
     
     # Save a test config
     test_payload = {
-        "provider": "openai",
-        "model": "gpt-4o-mini",
-        "openai_api_key": "sk-proj-test12345678901234567890",
-        "groq_api_key": "",
-        "ollama_host": "http://localhost:11434"
+        "active_provider": "openai",
+        "providers": {
+            "openai": {
+                "provider_type": "openai",
+                "model": "gpt-4o",
+                "temperature": 0.1,
+                "openai_api_key": "should_be_stripped"
+            },
+            "groq": {
+                "provider_type": "groq",
+                "model": "llama-3.3-70b-versatile",
+                "temperature": 0.7
+            }
+        }
     }
     test_post(test_payload)
     
@@ -59,14 +68,5 @@ if __name__ == "__main__":
     
     # Restore original config if we had one
     if current_config:
-        # We need to unmask the keys if they were masked
-        # Note: server.py doesn't overwrite if payload contains "..."
-        restore_payload = {
-            "provider": current_config.get("provider", "groq"),
-            "model": current_config.get("model", ""),
-            "openai_api_key": current_config.get("openai_api_key", ""),
-            "groq_api_key": current_config.get("groq_api_key", ""),
-            "ollama_host": current_config.get("ollama_host", "http://localhost:11434")
-        }
-        test_post(restore_payload)
+        test_post(current_config)
         print("\nRestored original configuration.")

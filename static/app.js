@@ -629,13 +629,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // AI Model Configuration listeners
-    const providerSelect = document.getElementById("settings-model-provider");
-    if (providerSelect) {
-        providerSelect.addEventListener("change", (e) => {
-            updateModelFieldsVisibility(e.target.value);
-        });
-    }
-
     const btnSaveModelConfig = document.getElementById("btn-save-model-config");
     if (btnSaveModelConfig) {
         btnSaveModelConfig.addEventListener("click", saveModelConfig);
@@ -3884,22 +3877,30 @@ async function submitForgotVerify(e) {
 
         if (response.status === 200) {
             const data = await response.json();
-            if (successMsg) successMsg.style.display = "flex";
+            if (successMsg) {
+                const successText = successMsg.querySelector("span");
+                if (successText) successText.innerText = "Password successfully updated! Redirecting to login...";
+                successMsg.style.display = "flex";
+            }
 
-            // Wait 2 seconds to let the user see the success message, then log in
+            // Wait 2 seconds to let the user see the success message, then redirect to login screen
             setTimeout(() => {
-                if (data.session_token) {
-                    localStorage.setItem("APP_SECRET_KEY", data.session_token);
-                    hideLoginOverlay();
-
-                    // Reload dashboard metrics and leads
-                    loadExistingLeads();
-                    renderArchiveHistory();
-                    renderArchiveLeads();
-                    if (typeof renderMetricsWidgets === "function") {
-                        renderMetricsWidgets();
+                const loginCard = document.getElementById("login-card");
+                const forgotVerifyCard = document.getElementById("forgot-verify-card");
+                if (loginCard && forgotVerifyCard) {
+                    forgotVerifyCard.style.display = "none";
+                    loginCard.style.display = "flex";
+                    const loginEmailInput = document.getElementById("login-email");
+                    if (loginEmailInput) {
+                        loginEmailInput.value = pendingVerificationEmail || "";
+                        const loginPasswordInput = document.getElementById("login-password");
+                        if (loginPasswordInput) {
+                            loginPasswordInput.value = "";
+                            loginPasswordInput.focus();
+                        }
                     }
                 }
+                if (successMsg) successMsg.style.display = "none";
             }, 2000);
         } else {
             const errData = await response.json();
@@ -4406,25 +4407,25 @@ async function copyProfileTokenToClipboard() {
     }
 }
 
-function updateModelFieldsVisibility(provider) {
-    const groqGroup = document.getElementById("settings-model-groq-key-group");
-    const openaiGroup = document.getElementById("settings-model-openai-key-group");
-    const ollamaGroup = document.getElementById("settings-model-ollama-host-group");
+let cachedModelConfig = null;
 
-    if (groqGroup) groqGroup.style.display = provider === "groq" ? "block" : "none";
-    if (openaiGroup) openaiGroup.style.display = provider === "openai" ? "block" : "none";
-    if (ollamaGroup) ollamaGroup.style.display = provider === "ollama" ? "block" : "none";
+function updateModelFieldsVisibility(providerType) {
+    const ollamaGroup = document.getElementById("settings-model-ollama-host-group");
+    if (ollamaGroup) {
+        ollamaGroup.style.display = providerType === "ollama" ? "block" : "none";
+    }
 }
 
 async function loadModelConfig() {
-    const providerSelect = document.getElementById("settings-model-provider");
+    const presetSelect = document.getElementById("settings-model-preset-select");
+    const providerTypeSelect = document.getElementById("settings-model-type-select");
     const modelNameInput = document.getElementById("settings-model-name");
-    const groqKeyInput = document.getElementById("settings-model-groq-key");
-    const openaiKeyInput = document.getElementById("settings-model-openai-key");
     const ollamaHostInput = document.getElementById("settings-model-ollama-host");
+    const tempSlider = document.getElementById("settings-model-temperature");
+    const tempValLabel = document.getElementById("settings-model-temperature-val");
     const statusTextModel = document.getElementById("status-text-model");
 
-    if (!providerSelect) return;
+    if (!presetSelect) return;
 
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
@@ -4433,28 +4434,84 @@ async function loadModelConfig() {
         });
         if (response.ok) {
             const data = await response.json();
-            providerSelect.value = data.provider || "groq";
-            modelNameInput.value = data.model || "";
-            groqKeyInput.value = data.groq_api_key || "";
-            openaiKeyInput.value = data.openai_api_key || "";
-            ollamaHostInput.value = data.ollama_host || "http://localhost:11434";
+            cachedModelConfig = data;
 
-            // Update visible fields based on the loaded provider
-            updateModelFieldsVisibility(data.provider || "groq");
+            // Populate the presets dropdown
+            presetSelect.innerHTML = "";
+            const presets = Object.keys(data.providers || {});
+            presets.forEach(presetName => {
+                const opt = document.createElement("option");
+                opt.value = presetName;
+                opt.textContent = presetName;
+                presetSelect.appendChild(opt);
+            });
+
+            // Set current active preset
+            const activePreset = data.active_provider || "groq";
+            presetSelect.value = activePreset;
+
+            // Load preset settings into the form fields
+            const loadPresetIntoForm = (presetName) => {
+                const pConf = (data.providers || {})[presetName] || {};
+                providerTypeSelect.value = pConf.provider_type || "groq";
+                modelNameInput.value = pConf.model || "";
+                ollamaHostInput.value = pConf.base_url || "http://localhost:11434";
+                
+                const temp = pConf.temperature !== undefined ? pConf.temperature : 0.7;
+                tempSlider.value = temp;
+                tempValLabel.innerText = temp;
+
+                updateModelFieldsVisibility(pConf.provider_type || "groq");
+            };
+
+            loadPresetIntoForm(activePreset);
+
+            // Bind events for preset selection change
+            presetSelect.onchange = (e) => {
+                loadPresetIntoForm(e.target.value);
+            };
+
+            // Bind change events to sync input edits into cachedModelConfig in memory
+            const syncInputsToCache = () => {
+                const selectedPreset = presetSelect.value;
+                if (!cachedModelConfig.providers[selectedPreset]) {
+                    cachedModelConfig.providers[selectedPreset] = {};
+                }
+                const pConf = cachedModelConfig.providers[selectedPreset];
+                pConf.provider_type = providerTypeSelect.value;
+                pConf.model = modelNameInput.value.trim();
+                pConf.base_url = ollamaHostInput.value.trim();
+                pConf.temperature = parseFloat(tempSlider.value);
+            };
+
+            providerTypeSelect.onchange = (e) => {
+                updateModelFieldsVisibility(e.target.value);
+                syncInputsToCache();
+            };
+            modelNameInput.oninput = syncInputsToCache;
+            ollamaHostInput.oninput = syncInputsToCache;
+            tempSlider.oninput = (e) => {
+                tempValLabel.innerText = e.target.value;
+                syncInputsToCache();
+            };
 
             // Update status text on the card header
             if (statusTextModel) {
+                const activePresetConf = (data.providers || {})[activePreset] || {};
+                const activeType = activePresetConf.provider_type || "groq";
                 const providerMap = {
                     "groq": "Groq",
                     "openai": "OpenAI",
-                    "ollama": "Ollama"
+                    "ollama": "Ollama",
+                    "anthropic": "Anthropic"
                 };
-                const providerName = providerMap[data.provider] || data.provider;
-                let displayModel = data.model || "";
+                const providerName = providerMap[activeType] || activeType;
+                let displayModel = activePresetConf.model || "";
                 if (!displayModel) {
-                    if (data.provider === "groq") displayModel = "llama-3.3-70b-versatile";
-                    else if (data.provider === "openai") displayModel = "gpt-4o-mini";
-                    else if (data.provider === "ollama") displayModel = "llama3";
+                    if (activeType === "groq") displayModel = "llama-3.3-70b-versatile";
+                    else if (activeType === "openai") displayModel = "gpt-4o-mini";
+                    else if (activeType === "ollama") displayModel = "llama3";
+                    else if (activeType === "anthropic") displayModel = "claude-3-5-sonnet-20240620";
                 }
                 statusTextModel.innerText = `${providerName} (${displayModel})`;
             }
@@ -4465,14 +4522,10 @@ async function loadModelConfig() {
 }
 
 async function saveModelConfig() {
-    const providerSelect = document.getElementById("settings-model-provider");
-    const modelNameInput = document.getElementById("settings-model-name");
-    const groqKeyInput = document.getElementById("settings-model-groq-key");
-    const openaiKeyInput = document.getElementById("settings-model-openai-key");
-    const ollamaHostInput = document.getElementById("settings-model-ollama-host");
+    const presetSelect = document.getElementById("settings-model-preset-select");
     const btnSave = document.getElementById("btn-save-model-config");
 
-    if (!providerSelect) return;
+    if (!presetSelect || !cachedModelConfig) return;
 
     if (btnSave) {
         btnSave.disabled = true;
@@ -4481,13 +4534,9 @@ async function saveModelConfig() {
 
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
-        const payload = {
-            provider: providerSelect.value,
-            model: modelNameInput.value.trim(),
-            groq_api_key: groqKeyInput.value.trim(),
-            openai_api_key: openaiKeyInput.value.trim(),
-            ollama_host: ollamaHostInput.value.trim()
-        };
+        
+        // Update active provider in the cached config object
+        cachedModelConfig.active_provider = presetSelect.value;
 
         const response = await fetch("/api/model-config", {
             method: "POST",
@@ -4495,7 +4544,7 @@ async function saveModelConfig() {
                 "Content-Type": "application/json",
                 "X-API-Key": secretKey
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(cachedModelConfig)
         });
 
         if (response.ok) {
