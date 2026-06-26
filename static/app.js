@@ -818,8 +818,13 @@ function setSearchLoading(isLoading, platform = "linkedin") {
         btnSearch.disabled = true;
         btnSearch.querySelector("span").innerText = "Scanning...";
         loadingState.style.display = "flex";
-        const capPlatform = platform === "all" ? "All Web Sources" : platform.charAt(0).toUpperCase() + platform.slice(1);
-        loadingStatusText.innerText = `Querying ${capPlatform} via Google Serper API...`;
+        let capPlatform = platform === "all" ? "All Web Sources" : platform.charAt(0).toUpperCase() + platform.slice(1);
+        if (platform === "google_maps") {
+            capPlatform = "Google Maps";
+        }
+        loadingStatusText.innerText = platform === "google_maps"
+            ? "Launching Playwright Google Maps scraper..."
+            : `Querying ${capPlatform} via Google Serper API...`;
     } else {
         btnSearch.disabled = false;
         btnSearch.querySelector("span").innerText = "Launch AI Scan";
@@ -1484,6 +1489,8 @@ function openDetailModal(lead) {
         modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("twitter", 14)} View Twitter/X`;
     } else if (lead.sourceUrl.includes("reddit.com")) {
         modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("reddit", 14)} View Reddit`;
+    } else if (lead.sourceUrl.includes("google.com/maps") || lead.sourceUrl.includes("google.co.in/maps") || (lead.platform && lead.platform.toLowerCase() === "google_maps")) {
+        modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("google_maps", 14)} Show in Google Maps`;
     } else {
         modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("linkedin", 14)} View LinkedIn`;
     }
@@ -2744,7 +2751,10 @@ function initWizard() {
                 if (summaryAudience) summaryAudience.innerText = audienceText || "Any";
 
                 const platformVal = platformEl ? platformEl.value : "linkedin";
-                const platformText = platformVal.charAt(0).toUpperCase() + platformVal.slice(1);
+                let platformText = platformVal.charAt(0).toUpperCase() + platformVal.slice(1);
+                if (platformVal === "google_maps") {
+                    platformText = "Google Maps";
+                }
                 const summarySource = document.getElementById("review-summary-source");
                 if (summarySource) summarySource.innerText = platformText;
 

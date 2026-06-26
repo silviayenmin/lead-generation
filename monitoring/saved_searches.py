@@ -92,7 +92,8 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
         
     from crm.lead_database import (
         check_and_save_lead, extract_fallback_author, enrich_profile_details, 
-        determine_lead_platform, is_empty_value, validate_author_name, validate_company_name
+        determine_lead_platform, is_empty_value, validate_author_name, validate_company_name,
+        get_places_api_key
     )
     
     summary = {
@@ -111,7 +112,10 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
         industry = s.get("industry")
         
         # Generate Intent Queries
-        intent_queries = IntentQueryGenerator.generate(keyword)
+        if platform == "google_maps":
+            intent_queries = [keyword]
+        else:
+            intent_queries = IntentQueryGenerator.generate(keyword)
         if platform == "all":
             platforms = ["linkedin", "facebook", "twitter", "reddit"]
         else:
@@ -122,7 +126,21 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
             adapter = get_adapter(plat)
             for query in intent_queries:
                 try:
-                    res = adapter.search(query, timeframe=timeframe, match_type=match_type, location=location, industry=industry)
+                    if plat == "google_maps":
+                        places_key = get_places_api_key(user_email)
+                        if not places_key:
+                            places_key = os.getenv("PLACES_API_KEY")
+                        res = adapter.search(
+                            query,
+                            timeframe=timeframe,
+                            match_type=match_type,
+                            location=location,
+                            industry=industry,
+                            api_key=places_key,
+                            limit=s.get("limit", 10)
+                        )
+                    else:
+                        res = adapter.search(query, timeframe=timeframe, match_type=match_type, location=location, industry=industry)
                     if res:
                         raw_results.extend(res)
                 except Exception as ex:

@@ -1265,7 +1265,7 @@ body {
 /* Platform Select Option Cards */
 .platform-options-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1rem;
 }
 
@@ -1359,6 +1359,18 @@ body {
 .platform-option-card[data-platform="reddit"].active svg,
 .platform-option-card[data-platform="reddit"].active span {
     color: #FF4500;
+}
+
+.platform-option-card[data-platform="google_maps"].active {
+    border-color: #037172;
+    background: rgba(3, 113, 114, 0.08);
+    box-shadow: 0 0 16px rgba(3, 113, 114, 0.25);
+    color: #037172;
+}
+.platform-option-card[data-platform="google_maps"].active i,
+.platform-option-card[data-platform="google_maps"].active svg,
+.platform-option-card[data-platform="google_maps"].active span {
+    color: #037172;
 }
 
 /* Custom styled range sliders */
