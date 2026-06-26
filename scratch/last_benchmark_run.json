@@ -1,0 +1,145 @@
+{
+    "extraction": {
+        "linkedin": {
+            "count": 10,
+            "status": "Success",
+            "sample": [
+                {
+                    "title": "Marketing Agencies Must Evolve or Risk Extinction - LinkedIn",
+                    "link": "https://www.linkedin.com/posts/marcussheridan_if-most-marketing-agencies-do-not-dramatically-activity-7465741249204125696-ZSgX",
+                    "snippet": "If most marketing agencies do not dramatically pivot/evolve their business model over the next year, I think the majority won't have a business in 36 months ...",
+                    "date": "May 28, 2026",
+                    "position": 1
+                },
+                {
+                    "title": "Warning Signs of a Complacent Marketing Agency | Jackie Hermes ...",
+                    "link": "https://www.linkedin.com/posts/thejackiehermes_psa-if-your-marketing-agency-never-pushes-activity-7449442859545677825-wf-8",
+                    "snippet": "Your agency's job isn't to execute your vision. It's to execute a strategy that actually works\u2014and to tell you when those two things aren't the same. If your ...",
+                    "date": "Apr 13, 2026",
+                    "position": 2
+                }
+            ]
+        },
+        "facebook": {
+            "count": 10,
+            "status": "Success",
+            "sample": [
+                {
+                    "title": "Any marketing agencies in here? I've got some referrals, message me.",
+                    "link": "https://www.facebook.com/groups/581100099416488/posts/2060589871467496/",
+                    "snippet": "Some agencies send us referrals, others white-label the work and charge their clients while we handle everything on the back end. We're already partnered with ...",
+                    "date": "Apr 9, 2026",
+                    "position": 1
+                },
+                {
+                    "title": "Gastonia tell the owner,general sales manager AND marketing ...",
+                    "link": "https://www.facebook.com/tarik.cranke.3/videos/gastonia-tell-the-ownergeneral-sales-manager-and-marketing-agency-of-my-beloved-/983112674083758/",
+                    "snippet": "Gastonia tell the owner,general sales manager AND marketing agency of my beloved Gastonia Nissan why y'all buy cars from Gastonia Nissan\u2026.. Because y'all...",
+                    "date": "May 28, 2026",
+                    "position": 2
+                }
+            ]
+        },
+        "twitter": {
+            "count": 10,
+            "status": "Success",
+            "sample": [
+                {
+                    "title": "Today was humbling. I may be able to run a marketing agency but I ...",
+                    "link": "https://x.com/TexanMeg/status/2065978757358428210",
+                    "snippet": "I may be able to run a marketing agency but I am not able to change a downlight. High ceilings, old connections and small prongs do not mix well with Meg",
+                    "date": "Jun 13, 2026",
+                    "position": 1
+                },
+                {
+                    "title": "how we took an ecom marketing agency from 1 call in 2 weeks \u2192 10 ...",
+                    "link": "https://x.com/scaling_shields/article/2066226967310225821",
+                    "snippet": "ecom marketing agency with a good offer and actual results, a clean 10x in two weeks, they can sell and deliver like animals we've booked over 1,800 sales ...",
+                    "date": "Jun 14, 2026",
+                    "position": 2
+                }
+            ]
+        }
+    },
+    "accuracy": {
+        "tp": 4,
+        "fp": 1,
+        "tn": 4,
+        "fn": 1,
+        "accuracy": 0.8,
+        "precision": 0.8,
+        "recall": 0.8,
+        "logs": [
+            {
+                "title": "Looking for web development agency to design our e-commerce site",
+                "ground_truth": "Lead",
+                "predicted_category": "High Intent",
+                "score": 75,
+                "status": "True Positive (Correct Lead)"
+            },
+            {
+                "title": "Hiring remote React developer immediately",
+                "ground_truth": "Lead",
+                "predicted_category": "Medium Intent",
+                "score": 65,
+                "status": "True Positive (Correct Lead)"
+            },
+            {
+                "title": "Recommend a good SEO consultant?",
+                "ground_truth": "Lead",
+                "predicted_category": "High Intent",
+                "score": 75,
+                "status": "True Positive (Correct Lead)"
+            },
+            {
+                "title": "Need a copywriter for email marketing campaign",
+                "ground_truth": "Lead",
+                "predicted_category": "High Intent",
+                "score": 75,
+                "status": "True Positive (Correct Lead)"
+            },
+            {
+                "title": "Hiring manager role open at Acme Corp",
+                "ground_truth": "Lead",
+                "predicted_category": "Low Intent",
+                "score": 35,
+                "status": "False Negative (Lead classified as Junk)"
+            },
+            {
+                "title": "Just launched my portfolio website!",
+                "ground_truth": "Junk",
+                "predicted_category": "Low Intent",
+                "score": 10,
+                "status": "True Negative (Correct Junk)"
+            },
+            {
+                "title": "How to optimize WordPress speed?",
+                "ground_truth": "Junk",
+                "predicted_category": "High Intent",
+                "score": 75,
+                "status": "False Positive (Junk classified as Lead)"
+            },
+            {
+                "title": "5 tips for landing a freelance web design client",
+                "ground_truth": "Junk",
+                "predicted_category": "Low Intent",
+                "score": 10,
+                "status": "True Negative (Correct Junk)"
+            },
+            {
+                "title": "Remote work is the future",
+                "ground_truth": "Junk",
+                "predicted_category": "Low Intent",
+                "score": 10,
+                "status": "True Negative (Correct Junk)"
+            },
+            {
+                "title": "Sharing my Figma templates for landing pages",
+                "ground_truth": "Junk",
+                "predicted_category": "Low Intent",
+                "score": 10,
+                "status": "True Negative (Correct Junk)"
+            }
+        ]
+    }
+}

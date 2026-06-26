@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LeadFlow - Premium Lead Intelligence Portal</title>
     <!-- CSS Reference -->
-    <link rel="stylesheet" href="/static/style.css?v=20260624_v3">
+    <link rel="stylesheet" href="/static/style.css?v=20260626_v11">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -541,10 +541,10 @@
 
                         <div class="discovery-wizard-card">
 
-                            <!-- Stepper progress indicator header -->
                             <div class="stepper-header">
-                                <div class="stepper-line"></div>
-                                <div class="stepper-progress-fill" id="wizard-progress-fill"></div>
+                                <div class="stepper-line">
+                                    <div class="stepper-progress-fill" id="wizard-progress-fill"></div>
+                                </div>
                                 <div class="stepper-node active" data-step="1">
                                     <div class="stepper-circle"><i data-lucide="users"></i></div>
                                     <span class="stepper-label">Audience</span>
@@ -752,10 +752,6 @@
                                         <i data-lucide="sparkles"></i>
                                         <span>Launch AI scan</span>
                                     </button>
-                                    <button type="button" id="btn-save-search" class="btn btn-secondary btn-wizard-save">
-                                        <i data-lucide="bookmark"></i>
-                                        <span>Save scraper</span>
-                                    </button>
                                 </div>
                             </div>
 
@@ -776,15 +772,17 @@
 
 
                     <!-- Scan Loader Progress Panel -->
-                    <div id="loading-state" class="loading-container card loading-state-panel" style="display: none;">
-                        <div class="pulsing-ai-indicator loading-ai-indicator">
-                            <div class="pulsing-dot"></div>
-                            <span>LeadFlow scraper engaged...</span>
-                        </div>
-                        <div id="loading-status-text" class="loading-text loading-status-text">Querying LinkedIn posts
-                            via Google Serper API...</div>
-                        <div class="loading-bar-container">
-                            <div id="loading-progress" class="loading-bar-progress" style="width: 0%;"></div>
+                    <div id="loading-state" class="loading-container loading-state-panel" style="display: none;">
+                        <div class="card loading-state-card">
+                            <div class="pulsing-ai-indicator loading-ai-indicator">
+                                <div class="pulsing-dot"></div>
+                                <span>LeadFlow scraper engaged...</span>
+                            </div>
+                            <div id="loading-status-text" class="loading-text loading-status-text">Querying LinkedIn posts
+                                via Google Serper API...</div>
+                            <div class="loading-bar-container">
+                                <div id="loading-progress" class="loading-bar-progress" style="width: 0%;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1557,9 +1555,8 @@
                                             </div>
                                         </div>
                                         <button type="button" id="btn-profile-change-password" class="btn btn-primary"
-                                            style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                            <i data-lucide="key-round" style="width: 16px; height: 16px;"></i> Change
-                                            Password
+                                            style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
+                                            <i data-lucide="key-round" style="width: 16px; height: 16px;"></i> Change Password
                                         </button>
                                     </div>
                                 </div>
@@ -1591,10 +1588,10 @@
                                         </div>
                                     </div>
                                     <div class="settings-body"
-                                        style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
-                                        <div class="form-group" style="margin-bottom: 0; width: 100%;">
-                                            <label style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">API Developer Secret Key</label>
-                                            <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                                         style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%; justify-content: center; height: 100%;">
+                                         <div class="form-group" style="margin-bottom: 0; width: 100%; height: auto !important;">
+                                             <label style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">API Developer Secret Key</label>
+                                             <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem !important;">
                                                 <div class="input-wrapper" style="flex-grow: 1;">
                                                     <i data-lucide="key" class="input-icon"
                                                         style="color: var(--warning);"></i>
@@ -1643,8 +1640,8 @@
                                             </div>
                                         </div>
                                         <button type="button" id="btn-save-webhook-url" class="btn btn-primary"
-                                            style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                            <i data-lucide="save"></i> Save Webhook URL
+                                            style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
+                                            <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Webhook URL
                                         </button>
                                     </div>
                                 </div>
@@ -1884,7 +1881,7 @@
     </div>
 
     <!-- Script Reference -->
-    <script src="/static/app.js?v=20260624_v3"></script>
+    <script src="/static/app.js?v=20260626_v14"></script>
 </body>
 
 </html>
