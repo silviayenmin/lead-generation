@@ -248,7 +248,10 @@ async def run_search(payload: SearchRequest, request: Request):
     timeframe = payload.timeframe or "qdr:m3"
     
     # 1. Generate intent queries (Requirement 1)
-    intent_queries = IntentQueryGenerator.generate(payload.keyword)
+    if platform == "google_maps":
+        intent_queries = [payload.keyword]
+    else:
+        intent_queries = IntentQueryGenerator.generate(payload.keyword)
     print(f"\n[Search] Generating intent-based search terms: {intent_queries}")
     
     # 2. Collect and search across adapters (Requirement 6)
@@ -266,16 +269,25 @@ async def run_search(payload: SearchRequest, request: Request):
                     places_key = get_places_api_key(user_email)
                     if not places_key:
                         places_key = os.getenv("PLACES_API_KEY")
-                    res = adapter.search(
-                        q, 
-                        timeframe=timeframe, 
-                        match_type=payload.match_type or "partial", 
-                        location=payload.location, 
+                    res = await asyncio.to_thread(
+                        adapter.search,
+                        q,
+                        timeframe=timeframe,
+                        match_type=payload.match_type or "partial",
+                        location=payload.location,
                         industry=payload.industry,
-                        api_key=places_key
+                        api_key=places_key,
+                        limit=payload.limit or 10
                     )
                 else:
-                    res = adapter.search(q, timeframe=timeframe, match_type=payload.match_type or "partial", location=payload.location, industry=payload.industry)
+                    res = await asyncio.to_thread(
+                        adapter.search,
+                        q,
+                        timeframe=timeframe,
+                        match_type=payload.match_type or "partial",
+                        location=payload.location,
+                        industry=payload.industry
+                    )
                 if res:
                     raw_results.extend(res)
             except Exception as e:
@@ -726,7 +738,12 @@ async def add_saved_search_endpoint(payload: SavedSearchRequest, request: Reques
 async def run_monitoring_endpoint(request: Request):
     user_email = request.state.user
     db = load_db(user_email)
-    summary = run_monitoring_for_user(user_email, db, lambda d: save_db(d, user_email))
+    summary = await asyncio.to_thread(
+        run_monitoring_for_user,
+        user_email,
+        db,
+        lambda d: save_db(d, user_email)
+    )
     return {"status": "success", "summary": summary}
 
 @app.get("/api/model-config")

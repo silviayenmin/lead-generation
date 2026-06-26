@@ -10,7 +10,7 @@ class GoogleMapsAdapter:
     def __init__(self):
         self.platform_name = "google_maps"
 
-    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial", location: str = None, industry: str = None, api_key: str = None) -> list:
+    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial", location: str = None, industry: str = None, api_key: str = None, limit: int = 10) -> list:
         # Build search query
         query_parts = [keyword]
         if location and location.strip():
@@ -27,7 +27,7 @@ class GoogleMapsAdapter:
             # FALLBACK: Playwright maps scraper
             print("[GoogleMapsAdapter] No API Key provided or found in environment. Falling back to Playwright scraper...")
             
-            raw_leads = self.scrape_playwright(keyword, location)
+            raw_leads = self.scrape_playwright(keyword, location, max_results=limit)
             
             # Convert raw_leads to standard results format
             results = []
@@ -82,8 +82,8 @@ class GoogleMapsAdapter:
             return []
 
         results = []
-        # Restrict loop to process up to 10 or 15 items maximum to manage quotas/timeouts
-        for pid in place_ids[:15]:
+        # Restrict loop to process up to limit items maximum to manage quotas/timeouts
+        for pid in place_ids[:limit]:
             # Step 2: Place Details - Enrich Each Business
             details_url = f"https://places.googleapis.com/v1/places/{pid}"
             details_headers = {
@@ -135,129 +135,178 @@ class GoogleMapsAdapter:
         return results
 
     def scrape_playwright(self, business_type: str, location: str, max_results: int = 15) -> list:
-        from playwright.sync_api import sync_playwright
+        import concurrent.futures
         
-        print(f"[GoogleMapsAdapter] Running Playwright scraper fallback for '{business_type}' in '{location}'")
-        leads = []
-        
-        try:
-            with sync_playwright() as pw:
-                browser = pw.chromium.launch(headless=True)
-                ctx = browser.new_context(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    locale="en-US"
-                )
-                page = ctx.new_page()
-                
-                # 1. Navigate to Maps search
-                loc_clean = location.strip() if location else ""
-                query = f"{business_type} in {loc_clean}".strip().replace(" ", "+")
-                page.goto(f"https://www.google.com/maps/search/{query}", wait_until="domcontentloaded", timeout=30000)
-                
-                # Accept consent banners if present
-                try:
-                    btn = page.locator('button:has-text("Accept all"), button:has-text("Reject all")').first
-                    if btn.is_visible(timeout=3000):
-                        btn.click()
-                        time.sleep(1.5)
-                except Exception:
-                    pass
-                
-                # 2. Wait for result panel
-                PANEL = 'div[role="feed"]'
-                try:
-                    page.wait_for_selector(PANEL, timeout=15000)
-                except Exception:
-                    print("[GoogleMapsAdapter] Results panel not found. Google may have changed layout.")
-                    browser.close()
-                    return []
-                
-                # 3. Scroll to load listings
-                print("[GoogleMapsAdapter] Scrolling to load results...")
-                page.evaluate("""
-                    async ({ sel, scrolls }) => {
-                        const panel = document.querySelector(sel);
-                        if (!panel) return;
-                        for (let i = 0; i < scrolls; i++) {
-                            panel.scrollBy(0, 600);
-                            await new Promise(r => setTimeout(r, 800));
-                        }
-                    }
-                """, {"sel": PANEL, "scrolls": 8})
-                time.sleep(2)
-                
-                # 4. Collect listing URLs
-                links = page.eval_on_selector_all(
-                    'a[href*="/maps/place/"]',
-                    f"""(els) => {{
-                        const seen = new Set();
-                        return els
-                            .map(e => e.href)
-                            .filter(h => h.includes('/maps/place/') && !seen.has(h) && seen.add(h))
-                            .slice(0, {max_results});
-                    }}"""
-                )
-                
-                print(f"[GoogleMapsAdapter] Found {len(links)} listings. Extracting details...")
-                
-                # 5. Visit each listing
-                for i, url in enumerate(links):
-                    print(f"  [{i+1}/{len(links)}] {url[:80]}...")
-                    try:
-                        page.goto(url, wait_until="domcontentloaded", timeout=20000)
-                        time.sleep(1.8)
-                        
-                        # Extract lead details
-                        lead = page.evaluate("""
-                            () => {
-                                const text = sel => document.querySelector(sel)?.textContent?.trim() || '';
-
-                                const name     = text('h1.DUwDvf') || text('h1[class*="fontHeadlineLarge"]') || text('h1');
-                                const category = text('button[jsaction*="category"]') || text('.DkEaL') || '';
-
-                                const ratingEl  = document.querySelector('div.F7nice span[aria-hidden="true"]');
-                                const rating    = ratingEl?.textContent?.trim() || '';
-                                const reviewEl  = document.querySelector('div.F7nice span[aria-label*="review"]');
-                                const reviews   = reviewEl?.textContent?.replace(/[()]/g,'').trim() || '';
-
-                                const addrBtn   = document.querySelector('button[data-item-id="address"]');
-                                const address   = addrBtn?.textContent?.trim() || '';
-
-                                const phoneBtn  = document.querySelector('button[data-tooltip="Copy phone number"]');
-                                const phone     = phoneBtn?.textContent?.trim() || '';
-
-                                const webA      = document.querySelector('a[data-item-id="authority"]');
-                                const website   = webA?.href || '';
-
-                                const mapsUrl   = window.location.href;
-
-                                return { name, category, address, phone, rating, reviews, website, mapsUrl };
-                            }
-                        """)
-                        
-                        if lead.get("name"):
-                            # Clean string values from PUA (Private Use Area) icons to prevent cp1252 print errors on Windows
-                            for key in ["name", "category", "address", "phone", "rating", "reviews", "website"]:
-                                val = lead.get(key)
-                                if isinstance(val, str):
-                                    val_clean = "".join(c for c in val if not (0xe000 <= ord(c) <= 0xf8ff))
-                                    lead[key] = val_clean.strip()
-                            
-                            leads.append(lead)
-                            phone = lead["phone"] or "no phone"
-                            safe_name = lead["name"].encode('ascii', errors='ignore').decode('ascii')
-                            print(f"      -> {safe_name} | {phone}")
-                            
-                    except Exception as e:
-                        print(f"      [WARN] Skipped ({str(e)[:60]})")
-                        
-                    time.sleep(1.0 + random.random() * 0.5)
-                    
-                browser.close()
-        except Exception as ex:
-            print(f"[GoogleMapsAdapter] Playwright scraping failed: {ex}")
+        def run_in_thread():
+            from playwright.sync_api import sync_playwright
             
-        return leads
+            print(f"[GoogleMapsAdapter] Running Playwright scraper fallback for '{business_type}' in '{location}'")
+            leads = []
+            
+            try:
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch(headless=True)
+                    ctx = browser.new_context(
+                        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                        locale="en-US"
+                    )
+                    page = ctx.new_page()
+                    
+                    # 1. Navigate to Maps search
+                    loc_clean = location.strip() if location else ""
+                    query = f"{business_type} in {loc_clean}".strip().replace(" ", "+")
+                    page.goto(f"https://www.google.com/maps/search/{query}", wait_until="domcontentloaded", timeout=30000)
+                    
+                    # Accept consent banners if present
+                    try:
+                        btn = page.locator('button:has-text("Accept all"), button:has-text("Reject all")').first
+                        if btn.is_visible(timeout=3000):
+                            btn.click()
+                            time.sleep(1.5)
+                    except Exception:
+                        pass
+                    
+                    # 2. Wait for result panel
+                    PANEL = 'div[role="feed"]'
+                    try:
+                        page.wait_for_selector(PANEL, timeout=15000)
+                    except Exception:
+                        print("[GoogleMapsAdapter] Results panel not found. Google may have changed layout.")
+                        browser.close()
+                        return []
+                    
+                    # 3. Scroll to load listings
+                    print("[GoogleMapsAdapter] Scrolling to load results...")
+                    scrolls = min(8, max(2, int(max_results / 3)))
+                    page.evaluate("""
+                        async ({ sel, scrolls }) => {
+                            const panel = document.querySelector(sel);
+                            if (!panel) return;
+                            for (let i = 0; i < scrolls; i++) {
+                                panel.scrollBy(0, 600);
+                                await new Promise(r => setTimeout(r, 1000));
+                            }
+                        }
+                    """, {"sel": PANEL, "scrolls": scrolls})
+                    time.sleep(2.0)
+                    
+                    # 4. Scrape details directly from card elements
+                    print(f"[GoogleMapsAdapter] Extracting details from cards (limit: {max_results})...")
+                    raw_leads = page.evaluate("""
+                        ({ maxResults }) => {
+                            const cards = Array.from(document.querySelectorAll('div.Nv2PK')).slice(0, maxResults);
+                            return cards.map(card => {
+                                const name = card.getAttribute('aria-label') || card.querySelector('a.hfpxzc')?.getAttribute('aria-label') || '';
+                                const mapsUrl = card.querySelector('a.hfpxzc')?.href || '';
+                                
+                                // Website
+                                let website = '';
+                                const links = Array.from(card.querySelectorAll('a'));
+                                for (const a of links) {
+                                    const href = a.href;
+                                    const text = a.textContent.trim().toLowerCase();
+                                    const label = (a.getAttribute('aria-label') || '').toLowerCase();
+                                    if (href && (!href.includes('/maps/place/') && !href.includes('google.com/maps') || href.includes('/aclk'))) {
+                                        if (text === 'website' || text === 'visit site' || label.includes('website') || label.includes('visit')) {
+                                            website = href;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!website) {
+                                    for (const a of links) {
+                                        const href = a.href;
+                                        if (href && !href.includes('/maps/place/') && !href.includes('google.com/maps') && !href.includes('google.com/url')) {
+                                            website = href;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                // Text nodes traversal
+                                const walk = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, null, false);
+                                const texts = [];
+                                let node;
+                                while (node = walk.nextNode()) {
+                                    const t = node.textContent.trim();
+                                    // Filter out empty, very short, or bullet/separator strings
+                                    if (t && t.length > 2 && t !== 'Sponsored' && t !== 'Website' && t !== 'Directions' && !t.includes('Closes') && !t.includes('Open') && !t.includes('Closed') && !t.includes('Reopens')) {
+                                        if (!texts.includes(t)) {
+                                            texts.push(t);
+                                        }
+                                    }
+                                }
+                                
+                                let rating = '';
+                                let reviews = '';
+                                let phone = '';
+                                let category = '';
+                                let address = '';
+                                
+                                const allSpans = Array.from(card.querySelectorAll('span')).map(s => s.textContent.trim()).filter(Boolean);
+                                for (const s of allSpans) {
+                                    if (/^[1-5]\.[0-9]$/.test(s)) {
+                                        rating = s;
+                                    }
+                                    if (/^\(\d+[\d,]*\)$/.test(s)) {
+                                        reviews = s.replace(/[()]/g, '').trim();
+                                    }
+                                }
+                                
+                                const phoneRegex = /^(\+?\d{1,4}[- ]?)?\d{3,5}[- ]?\d{3,5}[- ]?\d{2,6}$/;
+                                for (const s of allSpans) {
+                                    if (phoneRegex.test(s) && s.replace(/[- ]/g, '').length >= 8) {
+                                        phone = s;
+                                        break;
+                                    }
+                                }
+                                if (!phone) {
+                                    phone = card.querySelector('span.UsdlK')?.textContent?.trim() || '';
+                                }
+                                
+                                let nameIdx = texts.indexOf(name);
+                                if (nameIdx === -1) {
+                                    nameIdx = 0;
+                                }
+                                
+                                let dataTexts = texts.slice(nameIdx + 1);
+                                dataTexts = dataTexts.filter(t => t !== rating && t !== phone && !t.startsWith('('));
+                                
+                                if (dataTexts.length > 0) {
+                                    category = dataTexts[0];
+                                }
+                                if (dataTexts.length > 1) {
+                                    address = dataTexts[1];
+                                }
+                                
+                                return { name, category, address, phone, rating, reviews, website, mapsUrl };
+                            });
+                        }
+                    """, {"maxResults": max_results})
+                    
+                    # Clean string values from PUA (Private Use Area) icons to prevent cp1252 print errors on Windows
+                    for lead in raw_leads:
+                        for key in ["name", "category", "address", "phone", "rating", "reviews", "website"]:
+                            val = lead.get(key)
+                            if isinstance(val, str):
+                                val_clean = "".join(c for c in val if not (0xe000 <= ord(c) <= 0xf8ff))
+                                lead[key] = val_clean.strip()
+                            else:
+                                lead[key] = ""
+                        leads.append(lead)
+                        phone_lbl = lead["phone"] or "no phone"
+                        safe_name = lead["name"].encode('ascii', errors='ignore').decode('ascii')
+                        print(f"      -> {safe_name} | {phone_lbl}")
+                        
+                    browser.close()
+            except Exception as ex:
+                print(f"[GoogleMapsAdapter] Playwright scraping failed: {ex}")
+                
+            return leads
+ 
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_in_thread)
+            return future.result()
 
     def crawl_website_for_emails(self, url: str) -> list:
         print(f"[GoogleMapsAdapter] Crawling website: {url}")
