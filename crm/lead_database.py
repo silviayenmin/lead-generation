@@ -1045,3 +1045,31 @@ def get_places_api_key(user_email: str) -> str:
         return ""
 
 
+def save_twitter_api_key(user_email: str, api_key: str) -> bool:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        result = users_col.update_one(
+            {"email": user_email.strip().lower()},
+            {"$set": {"twitter_api_key": api_key.strip()}}
+        )
+        return result.modified_count > 0 or result.matched_count > 0
+    except Exception as e:
+        print(f"Error saving twitter api key in MongoDB: {e}")
+        return False
+
+
+def get_twitter_api_key(user_email: str) -> str:
+    try:
+        db = get_mongo_db()
+        users_col = db["users"]
+        user = users_col.find_one({"email": user_email.strip().lower()})
+        if user:
+            return user.get("twitter_api_key") or ""
+        return ""
+    except Exception as e:
+        print(f"Error loading twitter api key from MongoDB: {e}")
+        return ""
+
+
+

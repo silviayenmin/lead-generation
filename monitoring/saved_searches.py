@@ -117,7 +117,7 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
         else:
             intent_queries = IntentQueryGenerator.generate(keyword)
         if platform == "all":
-            platforms = ["linkedin", "facebook", "twitter", "reddit"]
+            platforms = ["linkedin", "facebook", "twitter"]
         else:
             platforms = [platform]
             
