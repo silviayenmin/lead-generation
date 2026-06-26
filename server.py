@@ -56,7 +56,9 @@ from crm import (
     verify_and_delete_otp,
     send_otp_email,
     save_places_api_key,
-    get_places_api_key
+    get_places_api_key,
+    save_twitter_api_key,
+    get_twitter_api_key
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
@@ -193,6 +195,9 @@ class WebhookConfigPayload(BaseModel):
 class PlacesConfigPayload(BaseModel):
     places_api_key: str
 
+class TwitterConfigPayload(BaseModel):
+    twitter_api_key: str
+
 class ModelConfigPayload(BaseModel):
     active_provider: str
     providers: dict
@@ -257,7 +262,7 @@ async def run_search(payload: SearchRequest, request: Request):
     # 2. Collect and search across adapters (Requirement 6)
     raw_results = []
     if platform == "all":
-        platforms = ["linkedin", "facebook", "twitter", "reddit"]
+        platforms = ["linkedin", "facebook", "twitter"]
     else:
         platforms = [platform]
         
@@ -278,6 +283,17 @@ async def run_search(payload: SearchRequest, request: Request):
                         industry=payload.industry,
                         api_key=places_key,
                         limit=payload.limit or 10
+                    )
+                elif plat in ["linkedin", "facebook", "twitter"]:
+                    twitter_key = get_twitter_api_key(user_email)
+                    res = await asyncio.to_thread(
+                        adapter.search,
+                        q,
+                        timeframe=timeframe,
+                        match_type=payload.match_type or "partial",
+                        location=payload.location,
+                        industry=payload.industry,
+                        api_key=twitter_key
                     )
                 else:
                     res = await asyncio.to_thread(
@@ -1153,6 +1169,36 @@ async def save_places_endpoint(payload: PlacesConfigPayload, request: Request):
         return {"status": "success", "message": "Places API Key saved successfully"}
     else:
         raise HTTPException(status_code=500, detail="Failed to save Places API Key")
+
+@app.get("/api/outreach/twitter")
+async def get_twitter_endpoint(request: Request):
+    user_email = request.state.user
+    api_key = get_twitter_api_key(user_email)
+    
+    masked_key = ""
+    if api_key:
+        if len(api_key) <= 8:
+            masked_key = "********"
+        else:
+            masked_key = f"{api_key[:4]}********{api_key[-4:]}"
+            
+    return {"status": "success", "twitter_api_key": masked_key, "is_configured": bool(api_key)}
+
+@app.post("/api/outreach/twitter")
+async def save_twitter_endpoint(payload: TwitterConfigPayload, request: Request):
+    user_email = request.state.user
+    key_to_save = payload.twitter_api_key.strip()
+    
+    if "********" in key_to_save:
+        existing_key = get_twitter_api_key(user_email)
+        if existing_key:
+            key_to_save = existing_key
+            
+    success = save_twitter_api_key(user_email, key_to_save)
+    if success:
+        return {"status": "success", "message": "Twitter API Key saved successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to save Twitter API Key")
 
 @app.post("/api/outreach/sync-replies")
 async def sync_replies_endpoint(request: Request):

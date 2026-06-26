@@ -4,7 +4,7 @@ class FacebookAdapter:
     def __init__(self):
         self.platform_name = "facebook"
         
-    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial", location: str = None, industry: str = None) -> list:
+    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial", location: str = None, industry: str = None, api_key: str = None) -> list:
         q_parts = []
         if match_type == "exact":
             q_parts.append(f'"{keyword}"')
@@ -21,7 +21,7 @@ class FacebookAdapter:
             
         print(f"[FacebookAdapter] Searching query: {query}")
         try:
-            return search_leads(query, tbs=timeframe)
+            return search_leads(query, tbs=timeframe, api_key=api_key)
         except Exception as e:
             print(f"[FacebookAdapter] Error: {e}")
             return []

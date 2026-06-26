@@ -635,6 +635,33 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Twitter API Key save & eye toggles
+    const btnSaveTwitter = document.getElementById("btn-save-twitter-key");
+    if (btnSaveTwitter) btnSaveTwitter.addEventListener("click", saveTwitterConfig);
+
+    const btnToggleTwitterKey = document.getElementById("btn-toggle-twitter-key");
+    if (btnToggleTwitterKey) {
+        btnToggleTwitterKey.addEventListener("click", () => {
+            const input = document.getElementById("settings-twitter-key");
+            if (input) {
+                const icon = btnToggleTwitterKey.querySelector("i");
+                if (input.type === "password") {
+                    input.type = "text";
+                    if (icon) {
+                        icon.setAttribute("data-lucide", "eye-off");
+                        lucide.createIcons();
+                    }
+                } else {
+                    input.type = "password";
+                    if (icon) {
+                        icon.setAttribute("data-lucide", "eye");
+                        lucide.createIcons();
+                    }
+                }
+            }
+        });
+    }
+
     // Drag-and-Drop Columns Listener
     initDragAndDrop();
 
@@ -709,6 +736,7 @@ function switchTab(tabName) {
         loadImapConfig();
         loadModelConfig();
         loadPlacesConfig();
+        loadTwitterConfig();
     } else if (tabName === "profile") {
         loadUserProfile();
         loadWebhookUrl();
@@ -4244,6 +4272,69 @@ async function savePlacesConfig() {
         }
     } catch (err) {
         await showCustomAlert("Network error saving Google Places configuration: " + err.message, "Connection Error", "danger");
+    } finally {
+        if (btnSave) btnSave.disabled = false;
+    }
+}
+
+async function loadTwitterConfig() {
+    const twitterKeyInput = document.getElementById("settings-twitter-key");
+    const twitterPill = document.getElementById("profile-health-twitter");
+
+    if (!twitterKeyInput) return;
+
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/twitter", {
+            headers: { "X-API-Key": secretKey }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            twitterKeyInput.value = data.twitter_api_key || "";
+            
+            if (twitterPill) {
+                if (data.is_configured) {
+                    twitterPill.className = "status-pulse-pill status-active";
+                    twitterPill.querySelector(".status-text").innerText = "Active";
+                } else {
+                    twitterPill.className = "status-pulse-pill status-inactive";
+                    twitterPill.querySelector(".status-text").innerText = "Fallback: Serper";
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load Twitter settings:", err);
+    }
+}
+
+async function saveTwitterConfig() {
+    const twitterKeyInput = document.getElementById("settings-twitter-key");
+    if (!twitterKeyInput) return;
+
+    const twitterKey = twitterKeyInput.value.trim();
+
+    const btnSave = document.getElementById("btn-save-twitter-key");
+    if (btnSave) btnSave.disabled = true;
+
+    try {
+        const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
+        const response = await fetch("/api/outreach/twitter", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": secretKey
+            },
+            body: JSON.stringify({ twitter_api_key: twitterKey })
+        });
+        if (response.ok) {
+            await showCustomAlert("Twitter configuration saved successfully!", "Settings Saved", "success");
+            await loadTwitterConfig();
+        } else {
+            const errData = await response.json();
+            await showCustomAlert(errData.detail || "Failed to save Twitter configuration.", "Error Saving", "danger");
+        }
+    } catch (err) {
+        await showCustomAlert("Network error saving Twitter configuration: " + err.message, "Connection Error", "danger");
     } finally {
         if (btnSave) btnSave.disabled = false;
     }
