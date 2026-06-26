@@ -1140,11 +1140,11 @@ body {
 
 .stepper-progress-fill {
     position: absolute;
-    top: 18px;
-    left: 40px;
+    top: 0;
+    left: 0;
     width: 0%;
     /* updated via JS */
-    height: 3px;
+    height: 100%;
     background: var(--primary-gradient);
     z-index: 2;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1187,7 +1187,7 @@ body {
 
 .stepper-node.active .stepper-circle {
     border-color: var(--primary);
-    background: var(--primary-light);
+    background: linear-gradient(var(--primary-light), var(--primary-light)), var(--bg-surface);
     color: var(--primary);
     box-shadow: 0 0 12px var(--primary-glow);
     transform: scale(1.05);
@@ -1265,7 +1265,7 @@ body {
 /* Platform Select Option Cards */
 .platform-options-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
 }
 
@@ -1312,65 +1312,17 @@ body {
     transition: var(--transition-smooth);
 }
 
-/* Brand specific active states */
-.platform-option-card[data-platform="linkedin"].active {
-    border-color: #0A66C2;
-    background: rgba(10, 102, 194, 0.08);
-    box-shadow: 0 0 16px rgba(10, 102, 194, 0.25);
-    color: #0A66C2;
+/* Unified active platform options styled in app theme color */
+.platform-option-card.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 16px var(--primary-glow);
+    color: var(--primary);
 }
-.platform-option-card[data-platform="linkedin"].active i,
-.platform-option-card[data-platform="linkedin"].active svg,
-.platform-option-card[data-platform="linkedin"].active span {
-    color: #0A66C2;
-}
-
-.platform-option-card[data-platform="facebook"].active {
-    border-color: #1877F2;
-    background: rgba(24, 119, 242, 0.08);
-    box-shadow: 0 0 16px rgba(24, 119, 242, 0.25);
-    color: #1877F2;
-}
-.platform-option-card[data-platform="facebook"].active i,
-.platform-option-card[data-platform="facebook"].active svg,
-.platform-option-card[data-platform="facebook"].active span {
-    color: #1877F2;
-}
-
-.platform-option-card[data-platform="twitter"].active {
-    border-color: var(--text-primary);
-    background: var(--bg-hover);
-    box-shadow: 0 0 16px var(--border-color);
-    color: var(--text-primary);
-}
-.platform-option-card[data-platform="twitter"].active i,
-.platform-option-card[data-platform="twitter"].active svg,
-.platform-option-card[data-platform="twitter"].active span {
-    color: var(--text-primary);
-}
-
-.platform-option-card[data-platform="reddit"].active {
-    border-color: #FF4500;
-    background: rgba(255, 69, 0, 0.08);
-    box-shadow: 0 0 16px rgba(255, 69, 0, 0.25);
-    color: #FF4500;
-}
-.platform-option-card[data-platform="reddit"].active i,
-.platform-option-card[data-platform="reddit"].active svg,
-.platform-option-card[data-platform="reddit"].active span {
-    color: #FF4500;
-}
-
-.platform-option-card[data-platform="google_maps"].active {
-    border-color: #037172;
-    background: rgba(3, 113, 114, 0.08);
-    box-shadow: 0 0 16px rgba(3, 113, 114, 0.25);
-    color: #037172;
-}
-.platform-option-card[data-platform="google_maps"].active i,
-.platform-option-card[data-platform="google_maps"].active svg,
-.platform-option-card[data-platform="google_maps"].active span {
-    color: #037172;
+.platform-option-card.active i,
+.platform-option-card.active svg,
+.platform-option-card.active span {
+    color: var(--primary);
 }
 
 /* Custom styled range sliders */
@@ -3636,11 +3588,7 @@ textarea.form-control {
 }
 
 .btn-wizard-submit {
-    flex: 2 !important;
-}
-
-.btn-wizard-save {
-    flex: 1 !important;
+    width: 100% !important;
 }
 
 .btn-wizard-back,
@@ -3650,12 +3598,40 @@ textarea.form-control {
 }
 
 .loading-state-panel {
-    display: none;
-    margin-top: 1.5rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(17, 24, 39, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: none; /* flex when active */
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-state-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    max-width: 480px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    text-align: center;
 }
 
 .loading-ai-indicator {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .loading-status-text {

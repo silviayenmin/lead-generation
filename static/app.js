@@ -726,6 +726,7 @@ function switchTab(tabName) {
         loadPerformanceAnalytics();
         renderLeads();
     } else if (tabName === "discovery") {
+        resetDiscoveryWizard();
         loadSavedSearches();
     } else if (tabName === "archive") {
         archiveCurrentPage = 1;
@@ -825,11 +826,7 @@ async function handleSearchSubmit(e) {
 
         setTimeout(() => {
             setSearchLoading(false);
-            wizardCurrentStep = 1;
-            if (typeof window.updateWizardUI === "function") {
-                window.updateWizardUI();
-            }
-
+            resetDiscoveryWizard();
             switchTab("dashboard");
         }, 500);
 
@@ -2839,6 +2836,52 @@ function initWizard() {
     updateWizardUI();
 }
 
+function resetDiscoveryWizard() {
+    wizardCurrentStep = 1;
+    const searchForm = document.getElementById("search-form");
+    if (searchForm) {
+        searchForm.reset();
+    }
+    
+    // Reset platform option cards to default
+    const platformCards = document.querySelectorAll(".platform-option-card");
+    const platformHiddenInput = document.getElementById("platform");
+    platformCards.forEach(card => {
+        const plat = card.getAttribute("data-platform");
+        if (plat === "linkedin") {
+            card.classList.add("active");
+        } else {
+            card.classList.remove("active");
+        }
+    });
+    if (platformHiddenInput) {
+        platformHiddenInput.value = "linkedin";
+    }
+
+    // Reset range slider text display
+    const sliderVal = document.getElementById("wizard-intent-score-val");
+    if (sliderVal) {
+        sliderVal.innerText = "40% Match";
+    }
+
+    // Reset range slider element
+    const sliderInput = document.getElementById("wizard-intent-score-min");
+    if (sliderInput) {
+        sliderInput.value = 40;
+    }
+
+    // Reset estimate text
+    const estimateText = document.getElementById("wizard-estimate-count");
+    if (estimateText) {
+        estimateText.innerText = "10 - 25";
+    }
+
+    // Update the wizard stepper nodes & progress fill bar
+    if (typeof window.updateWizardUI === "function") {
+        window.updateWizardUI();
+    }
+}
+
 function syncPillsToDropdowns() {
     const viewAllBtn = document.getElementById("archive-view-all");
     const viewHighBtn = document.getElementById("archive-view-high");
@@ -3558,6 +3601,7 @@ async function checkAuthentication() {
         if (response.status === 200) {
             hideLoginOverlay();
             loadExistingLeads();
+            switchTab("dashboard");
         } else {
             localStorage.removeItem("APP_SECRET_KEY");
             showLoginOverlay();
@@ -3676,6 +3720,7 @@ async function submitLogin(e) {
                 if (typeof renderMetricsWidgets === "function") {
                     renderMetricsWidgets();
                 }
+                switchTab("dashboard");
             } else {
                 throw new Error("Invalid session token payload");
             }
@@ -3822,6 +3867,7 @@ async function submitRegisterOtp(e) {
                 if (typeof renderMetricsWidgets === "function") {
                     renderMetricsWidgets();
                 }
+                switchTab("dashboard");
             } else {
                 throw new Error("Invalid session token response");
             }
