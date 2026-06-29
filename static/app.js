@@ -57,6 +57,8 @@ initTheme();
 
 // State variables
 let leadsData = [];
+let notificationsInterval = null;
+let notificationsData = [];
 let searchesData = [];
 let activeSearchId = "all";
 let activeLead = null;
@@ -700,6 +702,49 @@ document.addEventListener("DOMContentLoaded", () => {
         btnSaveModelConfig.addEventListener("click", saveModelConfig);
     }
 
+    // Notification Dropdown listeners
+    const btnNotifications = document.getElementById("btn-notifications");
+    const notificationsDropdown = document.getElementById("notifications-dropdown");
+    const btnNotificationsViewAll = document.getElementById("btn-notifications-view-all");
+    const btnNotificationsModalClose = document.getElementById("notifications-modal-close");
+    const notificationsModal = document.getElementById("notifications-modal");
+
+    if (btnNotifications && notificationsDropdown) {
+        btnNotifications.addEventListener("click", (e) => {
+            e.stopPropagation();
+            notificationsDropdown.classList.toggle("active");
+            if (notificationsDropdown.classList.contains("active")) {
+                loadNotifications();
+            }
+        });
+    }
+
+    if (btnNotificationsViewAll) {
+        btnNotificationsViewAll.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (notificationsDropdown) notificationsDropdown.classList.remove("active");
+            openNotificationsModal();
+        });
+    }
+
+    if (btnNotificationsModalClose && notificationsModal) {
+        btnNotificationsModalClose.addEventListener("click", closeNotificationsModal);
+        notificationsModal.addEventListener("click", (e) => {
+            if (e.target === notificationsModal) {
+                closeNotificationsModal();
+            }
+        });
+    }
+
+    // Close notifications dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+        if (notificationsDropdown && notificationsDropdown.classList.contains("active")) {
+            if (!notificationsDropdown.contains(e.target) && e.target !== btnNotifications && !btnNotifications.contains(e.target)) {
+                notificationsDropdown.classList.remove("active");
+            }
+        }
+    });
+
     // Initial load of model config to populate UI status pills on startup
     loadModelConfig();
 });
@@ -752,7 +797,7 @@ function switchTab(tabName) {
 }
 
 // REST Lead Load
-async function loadExistingLeads() {
+async function loadExistingLeads(isInitialNotifications = true) {
     try {
         const response = await fetch("/api/leads");
         const data = await response.json();
@@ -763,6 +808,7 @@ async function loadExistingLeads() {
         loadPerformanceAnalytics();
         renderRecommendedLeads();
         renderRecentActivity();
+        loadNotifications(isInitialNotifications);
 
         // Initial render matches currently open view
         if (viewDashboard && viewDashboard.classList.contains("active")) {
@@ -829,7 +875,7 @@ async function handleSearchSubmit(e) {
         loadingProgress.style.width = "100%";
 
         // Fetch new state and jump to dashboard view
-        await loadExistingLeads();
+        await loadExistingLeads(false);
 
         setTimeout(() => {
             setSearchLoading(false);
@@ -3658,6 +3704,9 @@ async function checkAuthentication() {
             hideLoginOverlay();
             loadExistingLeads();
             switchTab("dashboard");
+            if (!notificationsInterval) {
+                notificationsInterval = setInterval(() => loadNotifications(false), 20000);
+            }
         } else {
             localStorage.removeItem("APP_SECRET_KEY");
             showLoginOverlay();
@@ -4191,6 +4240,10 @@ async function logout() {
             console.error("Logout request failed:", e);
         }
     }
+    if (notificationsInterval) {
+        clearInterval(notificationsInterval);
+        notificationsInterval = null;
+    }
     localStorage.removeItem("APP_SECRET_KEY");
     showLoginOverlay();
 }
@@ -4286,7 +4339,7 @@ async function syncReplies() {
             const count = data.newRepliesCount || 0;
 
             // Always reload the leads database to pull cleaned/updated messages
-            await loadExistingLeads();
+            await loadExistingLeads(false);
 
             // If the lead drawer is currently open, refresh its content with updated data
             if (activeLead) {
@@ -4875,4 +4928,317 @@ async function saveModelConfig() {
         }
     }
 }
+
+
+// ==========================================================================
+// NOTIFICATION SYSTEM CONTROLLERS
+// ==========================================================================
+
+function escapeHTML(str) {
+    if (!str) return "";
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+async function loadNotifications(isInitial = false) {
+    try {
+        const response = await fetch("/api/notifications");
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!data || data.status !== "success") return;
+
+        const oldNotifications = [...notificationsData];
+        notificationsData = data.notifications || [];
+
+        // Check for new notifications to trigger Toast popups
+        if (!isInitial && oldNotifications.length > 0) {
+            notificationsData.forEach(notif => {
+                const wasPresent = oldNotifications.some(old => old._id === notif._id);
+                if (!wasPresent && !notif.is_read) {
+                    showToastNotification(notif);
+                }
+            });
+        }
+
+        renderNotifications();
+    } catch (err) {
+        console.error("Error loading notifications:", err);
+    }
+}
+
+function renderNotifications() {
+    const listEl = document.getElementById("notifications-list");
+    const dotEl = document.getElementById("unread-notification-dot");
+    if (!listEl) return;
+
+    const unreadNotifications = notificationsData.filter(n => !n.is_read);
+    const unreadCount = unreadNotifications.length;
+    
+    if (dotEl) {
+        dotEl.style.display = unreadCount > 0 ? "block" : "none";
+    }
+
+    if (unreadCount === 0) {
+        listEl.innerHTML = `
+            <div class="notifications-empty-state">
+                <i data-lucide="bell-off" style="width: 24px; height: 24px;"></i>
+                <p>No new notifications</p>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+    }
+
+    listEl.innerHTML = unreadNotifications.map(notif => {
+        const typeClass = notif.type === "hot_lead" ? "hot_lead" : "reply";
+        const iconName = notif.type === "hot_lead" ? "flame" : "message-square";
+        
+        let displayTime = "";
+        try {
+            const date = new Date(notif.timestamp);
+            displayTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " | " + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        } catch(e) {
+            displayTime = notif.timestamp;
+        }
+
+        return `
+            <div class="notification-item unread" onclick="handleNotificationClick('${notif._id}', '${notif.lead_url}')">
+                <div class="notification-item-icon ${typeClass}">
+                    <i data-lucide="${iconName}" style="width: 14px; height: 14px;"></i>
+                </div>
+                <div class="notification-content-box">
+                    <div class="notification-title">${escapeHTML(notif.title)}</div>
+                    <div class="notification-message">${escapeHTML(notif.message)}</div>
+                    <div class="notification-time">${displayTime}</div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function handleNotificationClick(notifId, leadUrl) {
+    try {
+        await fetch("/api/notifications/read", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ notification_id: notifId })
+        });
+        
+        // Hide dropdown
+        const dropdown = document.getElementById("notifications-dropdown");
+        if (dropdown) dropdown.classList.remove("active");
+
+        // Hide modal
+        closeNotificationsModal();
+
+        // Reload notifications
+        await loadNotifications();
+
+        // If there's a lead associated, navigate to it and open drawer
+        if (leadUrl) {
+            // Find lead in global leadsData
+            const lead = leadsData.find(l => l.sourceUrl === leadUrl);
+            if (lead) {
+                // If on another tab, switch to Pipeline tab
+                const pipelineTab = document.querySelector('[data-view="pipeline"]');
+                if (pipelineTab) pipelineTab.click();
+                
+                // Open lead details panel
+                openDetailModal(lead);
+            }
+        }
+    } catch (err) {
+        console.error("Error handling notification click:", err);
+    }
+}
+
+function closeNotificationsModal() {
+    const modal = document.getElementById("notifications-modal");
+    if (!modal) return;
+    modal.classList.remove("active");
+    setTimeout(() => {
+        modal.style.display = "none";
+    }, 200);
+}
+
+async function openNotificationsModal() {
+    const modal = document.getElementById("notifications-modal");
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    setTimeout(() => {
+        modal.classList.add("active");
+    }, 10);
+
+    try {
+        const response = await fetch("/api/notifications");
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!data || data.status !== "success") return;
+
+        const allNotifications = data.notifications || [];
+        
+        // Filter notifications to last 2 days (48 hours)
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setHours(twoDaysAgo.getHours() - 48);
+
+        let filtered = allNotifications.filter(n => {
+            const ts = new Date(n.timestamp);
+            return ts >= twoDaysAgo;
+        });
+
+        // Fallback to top 10 if there are very few items in the last 2 days
+        if (filtered.length < 5) {
+            filtered = allNotifications.slice(0, 10);
+        }
+
+        // Group by Date Category
+        const todayStr = new Date().toDateString();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toDateString();
+
+        const groups = { today: [], yesterday: [], older: [] };
+        filtered.forEach(notif => {
+            const d = new Date(notif.timestamp);
+            const dStr = d.toDateString();
+            if (dStr === todayStr) {
+                groups.today.push(notif);
+            } else if (dStr === yesterdayStr) {
+                groups.yesterday.push(notif);
+            } else {
+                groups.older.push(notif);
+            }
+        });
+
+        renderNotificationsHistory(groups);
+
+    } catch (err) {
+        console.error("Error opening notifications modal:", err);
+    }
+}
+
+function renderNotificationsHistory(groups) {
+    const listEl = document.getElementById("notifications-history-list");
+    if (!listEl) return;
+
+    const hasItems = groups.today.length > 0 || groups.yesterday.length > 0 || groups.older.length > 0;
+
+    if (!hasItems) {
+        listEl.innerHTML = `
+            <div class="notifications-empty-state" style="padding: 3rem 0;">
+                <i data-lucide="bell-off" style="width: 32px; height: 32px;"></i>
+                <p>No notifications found in history</p>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+    }
+
+    let html = "";
+
+    const renderGroup = (title, items) => {
+        if (items.length === 0) return;
+        html += `<div class="notification-group-header">${title}</div>`;
+        items.forEach(notif => {
+            const isUnread = !notif.is_read;
+            const typeClass = notif.type === "hot_lead" ? "hot_lead" : "reply";
+            const iconName = notif.type === "hot_lead" ? "flame" : "message-square";
+
+            let displayTime = "";
+            try {
+                const date = new Date(notif.timestamp);
+                displayTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " | " + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            } catch(e) {
+                displayTime = notif.timestamp;
+            }
+
+            html += `
+                <div class="notification-item ${isUnread ? 'unread' : ''}" onclick="handleNotificationClick('${notif._id}', '${notif.lead_url}')">
+                    <div class="notification-item-icon ${typeClass}">
+                        <i data-lucide="${iconName}" style="width: 14px; height: 14px;"></i>
+                    </div>
+                    <div class="notification-content-box">
+                        <div class="notification-title">${escapeHTML(notif.title)}</div>
+                        <div class="notification-message">${escapeHTML(notif.message)}</div>
+                        <div class="notification-time">${displayTime}</div>
+                    </div>
+                </div>
+            `;
+        });
+    };
+
+    renderGroup("Today", groups.today);
+    renderGroup("Yesterday", groups.yesterday);
+    renderGroup("Older Notifications", groups.older);
+
+    listEl.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function showToastNotification(notif) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const card = document.createElement("div");
+    const typeClass = notif.type === "hot_lead" ? "hot_lead" : "reply";
+    const iconName = notif.type === "hot_lead" ? "flame" : "message-square";
+
+    card.className = `toast-card ${typeClass}`;
+    card.innerHTML = `
+        <div class="toast-icon ${typeClass}">
+            <i data-lucide="${iconName}" style="width: 16px; height: 16px;"></i>
+        </div>
+        <div class="toast-body">
+            <div class="toast-title">${escapeHTML(notif.title)}</div>
+            <div class="toast-message">${escapeHTML(notif.message)}</div>
+        </div>
+        <button class="toast-close" onclick="event.stopPropagation(); this.parentElement.remove();">
+            <i data-lucide="x"></i>
+        </button>
+    `;
+
+    // Click handler to open the lead details directly
+    card.addEventListener("click", () => {
+        handleNotificationClick(notif._id, notif.lead_url);
+        card.remove();
+    });
+
+    container.appendChild(card);
+    if (window.lucide) window.lucide.createIcons();
+
+    // Play a subtle high-quality notification sound
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+    } catch(e) {}
+
+    // Auto-remove after 6 seconds
+    setTimeout(() => {
+        if (card.parentElement) {
+            card.classList.add("hide");
+            setTimeout(() => card.remove(), 300);
+        }
+    }, 6000);
+}
+
 

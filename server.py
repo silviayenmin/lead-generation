@@ -58,7 +58,10 @@ from crm import (
     save_places_api_key,
     get_places_api_key,
     save_twitter_api_key,
-    get_twitter_api_key
+    get_twitter_api_key,
+    create_notification,
+    load_notifications,
+    mark_notifications_read
 )
 from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
@@ -197,6 +200,9 @@ class PlacesConfigPayload(BaseModel):
 
 class TwitterConfigPayload(BaseModel):
     twitter_api_key: str
+
+class MarkNotificationsReadRequest(BaseModel):
+    notification_id: Optional[str] = None
 
 class ModelConfigPayload(BaseModel):
     active_provider: str
@@ -471,7 +477,19 @@ async def run_search(payload: SearchRequest, request: Request):
         lead["draftEmail"] = db[source_url].get("draftEmail", "") if source_url in db else ""
         
         # 7. Duplicate Checking and fingerprint update (Requirement 4)
+        is_new_lead = source_url not in db
         saved_key = check_and_save_lead(lead, db)
+        
+        if is_new_lead and lead.get("leadCategory") == "High Intent":
+            author = lead.get("authorName") or "Unknown Poster"
+            company = lead.get("companyName") or "Not Specified"
+            create_notification(
+                user_email,
+                "Hot Lead Discovered!",
+                f"{author} ({company}) matches your search with {lead.get('leadScore') or 85}% intent score.",
+                "hot_lead",
+                source_url
+            )
         
         if lead.get("leadCategory") in ["High Intent", "Medium Intent"]:
             qualified_count += 1
@@ -1209,8 +1227,22 @@ async def sync_replies_endpoint(request: Request):
         
     db = load_db(user_email)
     
-    # Run sync
+    # Run sync on a deepcopy of the database to compare old vs new state
+    import copy
+    old_db = copy.deepcopy(db)
     new_replies, updated_db = sync_user_replies(user_email, config, db)
+    
+    # Generate notifications for any new replies
+    if new_replies > 0:
+        for url, lead in updated_db.items():
+            old_lead = old_db.get(url)
+            old_replies_count = len(old_lead.get("replies", [])) if old_lead else 0
+            new_replies_count = len(lead.get("replies", []))
+            if new_replies_count > old_replies_count:
+                latest_reply = lead["replies"][-1]
+                title = f"Reply from {lead.get('authorName') or 'Lead'}"
+                msg_body = latest_reply.get("snippet") or "Received a new reply email."
+                create_notification(user_email, title, msg_body, "reply", url)
     
     # Save the updated database to persist any filtered replies or status reversions
     save_db(updated_db, user_email)
@@ -1238,10 +1270,23 @@ async def auto_sync_emails_loop():
                 print(f"[Auto-Sync] Syncing replies for user: {user_email}")
                 try:
                     user_db = load_db(user_email)
+                    import copy
+                    old_user_db = copy.deepcopy(user_db)
                     new_replies, updated_db = await asyncio.to_thread(
                         sync_user_replies, user_email, config, user_db
                     )
                     if new_replies > 0:
+                        # Generate notifications for any new replies
+                        for url, lead in updated_db.items():
+                            old_lead = old_user_db.get(url)
+                            old_replies_count = len(old_lead.get("replies", [])) if old_lead else 0
+                            new_replies_count = len(lead.get("replies", []))
+                            if new_replies_count > old_replies_count:
+                                latest_reply = lead["replies"][-1]
+                                title = f"Reply from {lead.get('authorName') or 'Lead'}"
+                                msg_body = latest_reply.get("snippet") or "Received a new reply email."
+                                create_notification(user_email, title, msg_body, "reply", url)
+                                
                         print(f"[Auto-Sync] Found {new_replies} new replies for {user_email}")
                         save_db(updated_db, user_email)
                 except Exception as sync_err:
@@ -1252,6 +1297,27 @@ async def auto_sync_emails_loop():
             
         # Sleep for 10 minutes before next run
         await asyncio.sleep(600)
+
+@app.get("/api/notifications")
+async def get_notifications_endpoint(request: Request):
+    user_email = request.state.user
+    try:
+        notifications = load_notifications(user_email)
+        os.makedirs("scratch", exist_ok=True)
+        with open("scratch/api_debug.log", "a", encoding="utf-8") as f:
+            f.write(f"[GET /api/notifications] user={user_email} count={len(notifications)}\n")
+        return {"status": "success", "notifications": notifications}
+    except Exception as e:
+        os.makedirs("scratch", exist_ok=True)
+        with open("scratch/api_debug.log", "a", encoding="utf-8") as f:
+            f.write(f"[GET /api/notifications] ERROR user={user_email}: {e}\n")
+        raise
+
+@app.post("/api/notifications/read")
+async def mark_notifications_read_endpoint(payload: MarkNotificationsReadRequest, request: Request):
+    user_email = request.state.user
+    success = mark_notifications_read(user_email, payload.notification_id)
+    return {"status": "success", "success": success}
 
 @app.on_event("startup")
 async def startup_event():
