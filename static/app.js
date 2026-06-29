@@ -493,8 +493,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filterPlatform) filterPlatform.addEventListener("change", renderLeads);
     if (filterStatus) filterStatus.addEventListener("change", renderLeads);
     if (filterCrm) filterCrm.addEventListener("change", renderLeads);
-    if (globalSearch) globalSearch.addEventListener("input", renderLeads);
     if (dashboardSearchInput) dashboardSearchInput.addEventListener("input", renderLeads);
+
+    const pipelineSearchInput = document.getElementById("pipeline-search-input");
+    const pipelineFilterPlatform = document.getElementById("pipeline-filter-platform");
+    const pipelineFilterIntent = document.getElementById("pipeline-filter-intent");
+
+    if (pipelineSearchInput) pipelineSearchInput.addEventListener("input", renderKanban);
+    if (pipelineFilterPlatform) pipelineFilterPlatform.addEventListener("change", renderKanban);
+    if (pipelineFilterIntent) pipelineFilterIntent.addEventListener("change", renderKanban);
 
     if (archiveFilterPlatform) archiveFilterPlatform.addEventListener("change", () => {
         archiveCurrentPage = 1;
@@ -1256,7 +1263,40 @@ function renderKanban() {
         if (columns[stage].cards) columns[stage].cards.innerHTML = "";
     });
 
+    const pipelineSearchInput = document.getElementById("pipeline-search-input");
+    const pipelineFilterPlatform = document.getElementById("pipeline-filter-platform");
+    const pipelineFilterIntent = document.getElementById("pipeline-filter-intent");
+
+    const searchVal = pipelineSearchInput ? pipelineSearchInput.value.trim().toLowerCase() : "";
+    const platformVal = pipelineFilterPlatform ? pipelineFilterPlatform.value.toLowerCase() : "all";
+    const intentVal = pipelineFilterIntent ? pipelineFilterIntent.value.toLowerCase() : "all";
+
     leadsData.forEach(lead => {
+        // Apply search filter (name or company name)
+        if (searchVal) {
+            const author = String(lead.authorName || "").toLowerCase();
+            const company = String(lead.companyName || "").toLowerCase();
+            if (!author.includes(searchVal) && !company.includes(searchVal)) {
+                return;
+            }
+        }
+
+        // Apply platform filter
+        if (platformVal !== "all") {
+            const leadPlatform = getLeadPlatform(lead);
+            if (leadPlatform !== platformVal) {
+                return;
+            }
+        }
+
+        // Apply intent category filter
+        if (intentVal !== "all") {
+            const category = String(lead.leadCategory || "Low Intent").toLowerCase();
+            if (category !== intentVal) {
+                return;
+            }
+        }
+
         const stage = lead.crmStatus || "New";
         const matchedColumn = columns[stage] || columns["New"];
         matchedColumn.items.push(lead);
@@ -1265,6 +1305,22 @@ function renderKanban() {
     Object.keys(columns).forEach(stage => {
         const col = columns[stage];
         if (!col.cards || !col.count) return;
+
+        // Auto-sort items in each column by leadScore descending (so high intents are always at the top)
+        col.items.sort((a, b) => {
+            let scoreA = a.leadScore;
+            if (scoreA === undefined || scoreA === null) {
+                scoreA = parseFloat(a.confidenceScore) || 0;
+                if (scoreA <= 1.0 && scoreA > 0) scoreA = Math.round(scoreA * 100);
+            }
+            let scoreB = b.leadScore;
+            if (scoreB === undefined || scoreB === null) {
+                scoreB = parseFloat(b.confidenceScore) || 0;
+                if (scoreB <= 1.0 && scoreB > 0) scoreB = Math.round(scoreB * 100);
+            }
+            return scoreB - scoreA;
+        });
+
         col.count.innerText = col.items.length;
 
         if (col.items.length === 0) {
@@ -1338,7 +1394,7 @@ function renderKanban() {
                         <span class="card-name">${lead.authorName || "Unknown Poster"}</span>
                     </div>
                     <span class="platform-mini-badge" style="background: rgba(255,255,255,0.03); color: ${platformColor};">
-                        <i data-lucide="${platformIcon}" style="width: 10px; height: 10px;"></i>
+                        ${getPlatformIconSvg(platform, 10, "display: block;")}
                     </span>
                 </div>
 

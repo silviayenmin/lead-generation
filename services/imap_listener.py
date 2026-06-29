@@ -25,8 +25,8 @@ def strip_reply_history(body: str) -> str:
         return ""
         
     # Check for inline reply quote header "On ... wrote:"
-    # This matches "On <date/time/sender> wrote:" or common translations
-    match = re.search(r'\bOn\s+[^\n]+?(?:\d{4}|\d{2})[^\n]+?(?:wrote|schrieb|a\s+écrit|escribió|writes):', body, re.IGNORECASE)
+    # This matches "On <date/time/sender> wrote:" or common translations, supporting line wraps/newlines
+    match = re.search(r'\bOn\s+[\s\S]{1,250}?(?:\d{4}|\d{2})[\s\S]{1,250}?(?:wrote|schrieb|a\s+écrit|escribió|writes):', body, re.IGNORECASE)
     if match:
         body = body[:match.start()]
         

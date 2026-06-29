@@ -310,7 +310,7 @@
                 </div>
                 <div class="top-bar-actions">
                     <button type="button" id="btn-new-scan-trigger" class="btn btn-primary btn-new-scan-topbar">
-                        <i data-lucide="plus"></i> New Scan
+                        <i data-lucide="plus"></i> New Leads
                     </button>
                     <button type="button" class="top-bar-btn" id="btn-theme-toggle" title="Toggle Theme">
                         <i data-lucide="sun" id="theme-toggle-icon"></i>
@@ -793,6 +793,34 @@
                     <div class="view-header">
                         <h2>Outreach Pipeline</h2>
                         <p>Drag and drop leads between CRM stages. Double-click cards to open details panel.</p>
+                    </div>
+
+                    <!-- Pipeline Filters -->
+                    <div class="pipeline-toolbar margin-bottom-md" style="display: flex; gap: 0.75rem; align-items: center; background: var(--bg-surface); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap; margin-bottom: 1.5rem;">
+                        <div style="flex: 1; min-width: 200px; position: relative;">
+                            <input type="text" id="pipeline-search-input" class="form-control" placeholder="Search name or company..." style="padding-left: 2rem; font-size: 0.82rem; height: 32px; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-surface); color: var(--text-primary);">
+                            <i data-lucide="search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted);"></i>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Platform:</span>
+                            <select id="pipeline-filter-platform" class="filter-select" style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                                <option value="all">All Platforms</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="twitter">Twitter / X</option>
+                                <option value="reddit">Reddit</option>
+                                <option value="google_maps">Google Maps</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Intent:</span>
+                            <select id="pipeline-filter-intent" class="filter-select" style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                                <option value="all">All Intents</option>
+                                <option value="High Intent">High Intent</option>
+                                <option value="Medium Intent">Medium Intent</option>
+                                <option value="Low Intent">Low Intent</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="kanban-board">
