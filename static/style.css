@@ -5128,4 +5128,11 @@ textarea.form-control {
 .notifications-history-list .notification-item {
     border-radius: 6px;
     margin: 2px 14px;
+}
+
+/* Loading Fade animation transition for content refreshing */
+.loading-fade {
+    opacity: 0.15;
+    pointer-events: none;
+    transition: opacity 0.25s ease-in-out;
 }

@@ -736,6 +736,60 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Refresh buttons
+    const btnRefreshArchive = document.getElementById("btn-refresh-archive");
+    if (btnRefreshArchive) {
+        btnRefreshArchive.addEventListener("click", async () => {
+            btnRefreshArchive.disabled = true;
+            const originalHTML = btnRefreshArchive.innerHTML;
+            btnRefreshArchive.innerHTML = `<span class="spinner spinner-tiny"></span> Refreshing...`;
+            
+            const container = document.querySelector(".archive-stacked-layout");
+            if (container) container.classList.add("loading-fade");
+
+            try {
+                // Minor delay to let user see transition
+                await new Promise(resolve => setTimeout(resolve, 300));
+                archiveCurrentPage = 1;
+                await loadSearchHistory();
+                renderArchiveLeads();
+            } catch (err) {
+                await showCustomAlert("Error refreshing search archive: " + err.message, "Refresh Error", "danger");
+            } finally {
+                if (container) container.classList.remove("loading-fade");
+                btnRefreshArchive.disabled = false;
+                btnRefreshArchive.innerHTML = originalHTML;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        });
+    }
+
+    const btnRefreshPipeline = document.getElementById("btn-refresh-pipeline");
+    if (btnRefreshPipeline) {
+        btnRefreshPipeline.addEventListener("click", async () => {
+            btnRefreshPipeline.disabled = true;
+            const originalHTML = btnRefreshPipeline.innerHTML;
+            btnRefreshPipeline.innerHTML = `<span class="spinner spinner-tiny"></span> Refreshing...`;
+
+            const container = document.querySelector(".kanban-board");
+            if (container) container.classList.add("loading-fade");
+
+            try {
+                // Minor delay to let user see transition
+                await new Promise(resolve => setTimeout(resolve, 300));
+                await loadExistingLeads(true);
+                renderKanban();
+            } catch (err) {
+                await showCustomAlert("Error refreshing outreach pipeline: " + err.message, "Refresh Error", "danger");
+            } finally {
+                if (container) container.classList.remove("loading-fade");
+                btnRefreshPipeline.disabled = false;
+                btnRefreshPipeline.innerHTML = originalHTML;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        });
+    }
+
     // Close notifications dropdown when clicking outside
     document.addEventListener("click", (e) => {
         if (notificationsDropdown && notificationsDropdown.classList.contains("active")) {
@@ -750,7 +804,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // View Tabs Switcher
-function switchTab(tabName) {
+async function switchTab(tabName) {
     const tabs = {
         "dashboard": { btn: tabBtnDashboard, view: viewDashboard },
         "discovery": { btn: tabBtnDiscovery, view: viewDiscovery },
@@ -766,33 +820,46 @@ function switchTab(tabName) {
         if (name === tabName) {
             item.btn.classList.add("active");
             item.view.classList.add("active");
+            item.view.classList.add("loading-fade");
         } else {
             item.btn.classList.remove("active");
             item.view.classList.remove("active");
+            item.view.classList.remove("loading-fade");
         }
     });
 
-    if (tabName === "pipeline") {
-        renderKanban();
-    } else if (tabName === "dashboard") {
-        loadPerformanceAnalytics();
-        renderLeads();
-    } else if (tabName === "discovery") {
-        resetDiscoveryWizard();
-        loadSavedSearches();
-    } else if (tabName === "archive") {
-        archiveCurrentPage = 1;
-        loadSearchHistory();
-        renderArchiveLeads();
-    } else if (tabName === "settings") {
-        updateConfigPreview();
-        loadImapConfig();
-        loadModelConfig();
-        loadPlacesConfig();
-        loadTwitterConfig();
-    } else if (tabName === "profile") {
-        loadUserProfile();
-        loadWebhookUrl();
+    try {
+        if (tabName === "pipeline") {
+            await loadExistingLeads(true);
+            renderKanban();
+        } else if (tabName === "dashboard") {
+            await loadExistingLeads(true);
+            loadPerformanceAnalytics();
+            renderLeads();
+        } else if (tabName === "discovery") {
+            resetDiscoveryWizard();
+            await loadSavedSearches();
+        } else if (tabName === "archive") {
+            archiveCurrentPage = 1;
+            await loadSearchHistory();
+            renderArchiveLeads();
+        } else if (tabName === "settings") {
+            updateConfigPreview();
+            await loadImapConfig();
+            await loadModelConfig();
+            await loadPlacesConfig();
+            await loadTwitterConfig();
+        } else if (tabName === "profile") {
+            await loadUserProfile();
+            await loadWebhookUrl();
+        }
+    } finally {
+        const activeItem = tabs[tabName];
+        if (activeItem && activeItem.view) {
+            setTimeout(() => {
+                activeItem.view.classList.remove("loading-fade");
+            }, 150);
+        }
     }
 }
 
