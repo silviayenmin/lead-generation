@@ -1072,4 +1072,56 @@ def get_twitter_api_key(user_email: str) -> str:
         return ""
 
 
+def create_notification(user_email: str, title: str, message: str, notif_type: str, lead_url: str = "") -> str:
+    try:
+        db = get_mongo_db()
+        notif_col = db["notifications"]
+        notif_data = {
+            "user_email": user_email.strip().lower(),
+            "title": title.strip(),
+            "message": message.strip(),
+            "type": notif_type.strip(),  # "reply", "hot_lead", "enrichment"
+            "lead_url": lead_url.strip(),
+            "is_read": False,
+            "timestamp": datetime.datetime.utcnow().isoformat()
+        }
+        res = notif_col.insert_one(notif_data)
+        return str(res.inserted_id)
+    except Exception as e:
+        print(f"Error creating notification: {e}")
+        return ""
+
+
+def load_notifications(user_email: str) -> list:
+    try:
+        db = get_mongo_db()
+        notif_col = db["notifications"]
+        notifications = []
+        # Return recent 30 notifications sorted by timestamp desc
+        for doc in notif_col.find({"user_email": user_email.strip().lower()}).sort("timestamp", pymongo.DESCENDING).limit(30):
+            if "_id" in doc:
+                doc["_id"] = str(doc["_id"])
+            notifications.append(doc)
+        return notifications
+    except Exception as e:
+        print(f"Error loading notifications: {e}")
+        return []
+
+
+def mark_notifications_read(user_email: str, notif_id: str = None) -> bool:
+    try:
+        db = get_mongo_db()
+        notif_col = db["notifications"]
+        query = {"user_email": user_email.strip().lower()}
+        if notif_id:
+            from bson import ObjectId
+            query["_id"] = ObjectId(notif_id)
+        res = notif_col.update_many(query, {"$set": {"is_read": True}})
+        return res.modified_count > 0 or res.matched_count > 0
+    except Exception as e:
+        print(f"Error marking notifications as read: {e}")
+        return False
+
+
+
 

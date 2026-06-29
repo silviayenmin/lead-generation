@@ -315,10 +315,25 @@
                     <button type="button" class="top-bar-btn" id="btn-theme-toggle" title="Toggle Theme">
                         <i data-lucide="sun" id="theme-toggle-icon"></i>
                     </button>
-                    <button type="button" class="top-bar-btn" title="Notifications">
-                        <i data-lucide="bell"></i>
-                        <span class="notification-dot"></span>
-                    </button>
+                    <div class="notifications-wrapper" style="position: relative; display: inline-block;">
+                        <button type="button" class="top-bar-btn" id="btn-notifications" title="Notifications">
+                            <i data-lucide="bell"></i>
+                            <span class="notification-dot" id="unread-notification-dot" style="display: none;"></span>
+                        </button>
+                        <!-- Notifications Dropdown -->
+                        <div id="notifications-dropdown" class="notifications-dropdown">
+                            <div class="notifications-dropdown-header">
+                                <h3>Notifications</h3>
+                                <button type="button" id="btn-notifications-view-all" class="btn-clear-all">View all</button>
+                            </div>
+                            <div id="notifications-list" class="notifications-list">
+                                <div class="notifications-empty-state">
+                                    <i data-lucide="bell-off"></i>
+                                    <p>No new notifications</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="profile-pic-placeholder" id="topbar-profile-pic"><i data-lucide="user"
                             class="profile-pic-placeholder-icon"></i></div>
                 </div>
@@ -1908,8 +1923,29 @@
         </div>
     </div>
 
+    <!-- Notification History Modal Overlay -->
+    <div id="notifications-modal" class="custom-confirm-overlay" style="z-index: 1200; display: none;">
+        <div class="custom-confirm-box queries-modal-box" onclick="event.stopPropagation()">
+            <div class="queries-modal-header">
+                <div class="queries-modal-title">
+                    <i data-lucide="bell"></i>
+                    <span>Notification History</span>
+                </div>
+                <button type="button" id="notifications-modal-close" class="queries-modal-close" title="Close Modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="notifications-history-list" id="notifications-history-list" style="max-height: 400px; overflow-y: auto; padding: 1rem 0;">
+                <!-- Populated via Javascript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
     <!-- Script Reference -->
-    <script src="/static/app.js?v=20260626_v14"></script>
+    <script src="/static/app.js?v=20260629_v21"></script>
 </body>
 
 </html>
