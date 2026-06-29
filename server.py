@@ -1217,6 +1217,46 @@ async def sync_replies_endpoint(request: Request):
         
     return {"status": "success", "newRepliesCount": new_replies}
 
+async def auto_sync_emails_loop():
+    # Wait a few seconds for the app to fully initialize
+    await asyncio.sleep(5)
+    while True:
+        try:
+            print("[Auto-Sync] Running background email reply check for all users...")
+            db_ref = get_mongo_db()
+            users_col = db_ref["users"]
+            
+            for user in users_col.find():
+                user_email = user.get("email")
+                if not user_email:
+                    continue
+                    
+                config = user.get("email_config") or {}
+                if not config.get("imap_email") or not config.get("imap_password"):
+                    continue
+                    
+                print(f"[Auto-Sync] Syncing replies for user: {user_email}")
+                try:
+                    user_db = load_db(user_email)
+                    new_replies, updated_db = await asyncio.to_thread(
+                        sync_user_replies, user_email, config, user_db
+                    )
+                    if new_replies > 0:
+                        print(f"[Auto-Sync] Found {new_replies} new replies for {user_email}")
+                        save_db(updated_db, user_email)
+                except Exception as sync_err:
+                    print(f"[Auto-Sync] Error syncing for user {user_email}: {sync_err}")
+            
+        except Exception as e:
+            print(f"[Auto-Sync] Error in main background loop: {e}")
+            
+        # Sleep for 10 minutes before next run
+        await asyncio.sleep(600)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(auto_sync_emails_loop())
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
     index_path = os.path.join("static", "index.html")
