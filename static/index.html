@@ -805,9 +805,14 @@
 
                 <!-- View 3: Outreach Pipeline (Kanban Board) -->
                 <div id="view-pipeline" class="tab-view">
-                    <div class="view-header">
-                        <h2>Outreach Pipeline</h2>
-                        <p>Drag and drop leads between CRM stages. Double-click cards to open details panel.</p>
+                    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2>Outreach Pipeline</h2>
+                            <p>Drag and drop leads between CRM stages. Double-click cards to open details panel.</p>
+                        </div>
+                        <button type="button" id="btn-refresh-pipeline" class="btn btn-secondary btn-new-scan-topbar" style="margin-left: 1rem;">
+                            <i data-lucide="refresh-cw"></i> Refresh
+                        </button>
                     </div>
 
                     <!-- Pipeline Filters -->
@@ -894,9 +899,14 @@
 
                 <!-- View 4: Search Archive Redesign -->
                 <div id="view-archive" class="tab-view">
-                    <div class="view-header">
-                        <h2>Search Archive</h2>
-                        <p>Examine historical search record index, modify layouts, or execute bulk stage changes.</p>
+                    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2>Search Archive</h2>
+                            <p>Examine historical search record index, modify layouts, or execute bulk stage changes.</p>
+                        </div>
+                        <button type="button" id="btn-refresh-archive" class="btn btn-secondary btn-new-scan-topbar" style="margin-left: 1rem;">
+                            <i data-lucide="refresh-cw"></i> Refresh
+                        </button>
                     </div>
 
                     <!-- Archive mini-dashboard metrics -->
@@ -1945,7 +1955,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Reference -->
-    <script src="/static/app.js?v=20260629_v21"></script>
+    <script src="/static/app.js?v=20260629_v25"></script>
 </body>
 
 </html>
