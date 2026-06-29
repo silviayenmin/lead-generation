@@ -2275,7 +2275,7 @@ body {
 .pulsing-ai-indicator {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.6rem;
     color: var(--primary);
     font-weight: 600;
 }
@@ -4911,6 +4911,7 @@ textarea.form-control {
 
 .notification-item.unread {
     background: rgba(3, 113, 114, 0.05);
+    padding-left: 20px;
 }
 
 .notification-item.unread::before {
