@@ -491,7 +491,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Form and Filtering Event Listeners
-    if (searchForm) searchForm.addEventListener("submit", handleSearchSubmit);
+    if (searchForm) {
+        searchForm.addEventListener("submit", handleSearchSubmit);
+        searchForm.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+                if (activeTag === "input" || activeTag === "select") {
+                    e.preventDefault();
+                    if (wizardCurrentStep < 4) {
+                        const btnContinue = document.getElementById("btn-wizard-continue");
+                        if (btnContinue) {
+                            btnContinue.click();
+                        }
+                    } else {
+                        const btnSearchSubmit = document.getElementById("btn-search");
+                        if (btnSearchSubmit) {
+                            btnSearchSubmit.click();
+                        }
+                    }
+                }
+            }
+        });
+    }
     if (filterPlatform) filterPlatform.addEventListener("change", renderLeads);
     if (filterStatus) filterStatus.addEventListener("change", renderLeads);
     if (filterCrm) filterCrm.addEventListener("change", renderLeads);
@@ -892,6 +913,14 @@ async function loadExistingLeads(isInitialNotifications = true) {
 
 // Scrape Submit
 async function handleSearchSubmit(e) {
+    if (typeof wizardCurrentStep !== "undefined" && wizardCurrentStep < 4) {
+        e.preventDefault();
+        const btnContinue = document.getElementById("btn-wizard-continue");
+        if (btnContinue) {
+            btnContinue.click();
+        }
+        return;
+    }
     e.preventDefault();
 
     const keyword = keywordInput.value.trim();
@@ -2967,6 +2996,31 @@ function initWizard() {
             }
         });
     }
+
+    // Prevent Enter key in wizard inputs from submitting the form and instead trigger next step
+    const wizardInputs = ["keyword", "wizard-location", "wizard-industry"];
+    wizardInputs.forEach(id => {
+        const inputEl = document.getElementById(id);
+        if (inputEl) {
+            inputEl.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (wizardCurrentStep < 4) {
+                        const btnContinue = document.getElementById("btn-wizard-continue");
+                        if (btnContinue) {
+                            btnContinue.click();
+                        }
+                    } else {
+                        const btnSearchSubmit = document.getElementById("btn-search");
+                        if (btnSearchSubmit) {
+                            btnSearchSubmit.click();
+                        }
+                    }
+                }
+            });
+        }
+    });
 
     if (btnBack) {
         btnBack.addEventListener("click", () => {
