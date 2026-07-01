@@ -4,7 +4,7 @@ class RedditAdapter:
     def __init__(self):
         self.platform_name = "reddit"
         
-    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial", location: str = None, industry: str = None, api_key: str = None) -> list:
+    def search(self, keyword: str, timeframe: str = "qdr:m3", match_type: str = "partial", location: str = None, industry: str = None, api_key: str = None, limit: int = 10) -> list:
         q_parts = []
         if match_type == "exact":
             q_parts.append(f'"{keyword}"')
@@ -21,7 +21,7 @@ class RedditAdapter:
             
         print(f"[RedditAdapter] Searching query: {query}")
         try:
-            return search_leads(query, tbs=timeframe, api_key=api_key)
+            return search_leads(query, tbs=timeframe, api_key=api_key, num=limit)
         except Exception as e:
             print(f"[RedditAdapter] Error: {e}")
             return []

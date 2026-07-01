@@ -75,5 +75,29 @@ class TestLeadQualificationAndScoring(unittest.TestCase):
         self.assertEqual(scored["leadCategory"], "Low Intent")
         self.assertTrue(scored["leadScore"] <= 35)
 
+    def test_calculate_lead_score_recruiter(self):
+        candidate_lead = {
+            "search_type": "recruiter",
+            "buyingIntent": "High",
+            "intentType": "Candidate/Job Seeker",
+            "skills": "React, TypeScript, Python",
+            "experienceLevel": "Senior",
+            "workPreference": "Remote",
+            "companyName": "Freelancer",
+            "location": "Berlin",
+            "authorName": "Jane Dev"
+        }
+        scored = calculate_lead_score(candidate_lead)
+        # Expected Recruiter score:
+        # Intent = 40 (Candidate/Job Seeker)
+        # Skills = 20 (React, TypeScript, Python present)
+        # Work Preference = 15 (Remote present and not Unknown)
+        # Company/School = 10 (Freelancer present)
+        # Location = 5 (Berlin present)
+        # Author = 10 (Jane Dev present)
+        # Total = 100 -> High Intent
+        self.assertEqual(scored["leadScore"], 100)
+        self.assertEqual(scored["leadCategory"], "High Intent")
+
 if __name__ == "__main__":
     unittest.main()

@@ -517,14 +517,25 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filterStatus) filterStatus.addEventListener("change", renderLeads);
     if (filterCrm) filterCrm.addEventListener("change", renderLeads);
     if (dashboardSearchInput) dashboardSearchInput.addEventListener("input", renderLeads);
+    
+    const filterSearchType = document.getElementById("filter-search-type");
+    if (filterSearchType) filterSearchType.addEventListener("change", renderLeads);
 
     const pipelineSearchInput = document.getElementById("pipeline-search-input");
     const pipelineFilterPlatform = document.getElementById("pipeline-filter-platform");
     const pipelineFilterIntent = document.getElementById("pipeline-filter-intent");
+    const pipelineFilterSearchType = document.getElementById("pipeline-filter-search-type");
 
     if (pipelineSearchInput) pipelineSearchInput.addEventListener("input", renderKanban);
     if (pipelineFilterPlatform) pipelineFilterPlatform.addEventListener("change", renderKanban);
     if (pipelineFilterIntent) pipelineFilterIntent.addEventListener("change", renderKanban);
+    if (pipelineFilterSearchType) pipelineFilterSearchType.addEventListener("change", renderKanban);
+
+    const archiveFilterSearchType = document.getElementById("archive-filter-search-type");
+    if (archiveFilterSearchType) archiveFilterSearchType.addEventListener("change", () => {
+        archiveCurrentPage = 1;
+        renderArchiveLeads();
+    });
 
     if (archiveFilterPlatform) archiveFilterPlatform.addEventListener("change", () => {
         archiveCurrentPage = 1;
@@ -622,6 +633,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (modalLocation) modalLocation.addEventListener("change", saveLeadDetailsFromModal);
     if (modalNeedDescription) modalNeedDescription.addEventListener("change", saveLeadDetailsFromModal);
     if (modalContactInfo) modalContactInfo.addEventListener("change", saveLeadDetailsFromModal);
+    
+    // Candidate details listeners
+    const modalSkills = document.getElementById("modal-skills");
+    const modalExperienceLevel = document.getElementById("modal-experience-level");
+    const modalWorkPreference = document.getElementById("modal-work-preference");
+    if (modalSkills) modalSkills.addEventListener("change", saveLeadDetailsFromModal);
+    if (modalExperienceLevel) modalExperienceLevel.addEventListener("change", saveLeadDetailsFromModal);
+    if (modalWorkPreference) modalWorkPreference.addEventListener("change", saveLeadDetailsFromModal);
 
     // Verification & Export links
     if (btnExportCsvSidebar) btnExportCsvSidebar.addEventListener("click", exportCampaignCSV);
@@ -824,6 +843,49 @@ document.addEventListener("DOMContentLoaded", () => {
     loadModelConfig();
 });
 
+// Loader Helpers for Page/Tab Views
+function showTabLoader(viewElement, tabName = "") {
+    if (!viewElement) return;
+    let loader = viewElement.querySelector(".tab-loader");
+    const labels = {
+        "dashboard": "Loading Dashboard...",
+        "discovery": "Loading Lead Discovery...",
+        "pipeline": "Loading Lead Pipeline...",
+        "archive": "Loading Search Archive...",
+        "settings": "Loading Settings...",
+        "profile": "Loading User Profile..."
+    };
+    const labelText = labels[tabName] || "Loading page content...";
+    
+    if (!loader) {
+        loader = document.createElement("div");
+        loader.className = "tab-loader";
+        loader.innerHTML = `
+            <div class="spinner spinner-large"></div>
+            <div class="tab-loader-text">${labelText}</div>
+        `;
+        // Ensure absolute positioning works inside the view
+        viewElement.style.position = "relative";
+        viewElement.appendChild(loader);
+    } else {
+        const textEl = loader.querySelector(".tab-loader-text");
+        if (textEl) {
+            textEl.textContent = labelText;
+        }
+    }
+    // Force layout reflow to trigger CSS transition smoothly
+    loader.offsetWidth;
+    loader.classList.add("active");
+}
+
+function hideTabLoader(viewElement) {
+    if (!viewElement) return;
+    const loader = viewElement.querySelector(".tab-loader");
+    if (loader) {
+        loader.classList.remove("active");
+    }
+}
+
 // View Tabs Switcher
 async function switchTab(tabName) {
     const tabs = {
@@ -842,10 +904,12 @@ async function switchTab(tabName) {
             item.btn.classList.add("active");
             item.view.classList.add("active");
             item.view.classList.add("loading-fade");
+            showTabLoader(item.view, tabName);
         } else {
             item.btn.classList.remove("active");
             item.view.classList.remove("active");
             item.view.classList.remove("loading-fade");
+            hideTabLoader(item.view);
         }
     });
 
@@ -879,6 +943,7 @@ async function switchTab(tabName) {
         if (activeItem && activeItem.view) {
             setTimeout(() => {
                 activeItem.view.classList.remove("loading-fade");
+                hideTabLoader(activeItem.view);
             }, 150);
         }
     }
@@ -933,6 +998,8 @@ async function handleSearchSubmit(e) {
     const industryEl = document.getElementById("wizard-industry");
     const location = locationEl ? locationEl.value.trim() : "";
     const industry = industryEl ? industryEl.value.trim() : "";
+    const searchTypeEl = document.getElementById("search-type");
+    const search_type = searchTypeEl ? searchTypeEl.value : "sales";
 
     if (!keyword) return;
 
@@ -960,7 +1027,7 @@ async function handleSearchSubmit(e) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ keyword, timeframe, limit, platform, match_type, location, industry })
+            body: JSON.stringify({ keyword, timeframe, limit, platform, match_type, location, industry, search_type })
         });
 
         if (!response.ok) {
@@ -1175,6 +1242,8 @@ function renderLeads() {
     const crmVal = filterCrm ? filterCrm.value.toLowerCase() : "all";
     const platformVal = filterPlatform ? filterPlatform.value.toLowerCase() : "all";
     const searchVal = dashboardSearchInput ? dashboardSearchInput.value.trim().toLowerCase() : "";
+    const filterSearchType = document.getElementById("filter-search-type");
+    const searchTypeVal = filterSearchType ? filterSearchType.value.toLowerCase() : "all";
 
     const filtered = leadsData.filter(lead => {
         const leadStatus = String(lead.leadStatus || "").toLowerCase().trim();
@@ -1220,7 +1289,10 @@ function renderLeads() {
             });
         }
 
-        return statusMatch && crmMatch && platformMatch && searchMatch;
+        const leadSearchType = String(lead.search_type || "sales").toLowerCase();
+        const searchTypeMatch = searchTypeVal === "all" || leadSearchType === searchTypeVal;
+
+        return statusMatch && crmMatch && platformMatch && searchMatch && searchTypeMatch;
     });
 
     // Keep stats updated based on table matching rows
@@ -1319,9 +1391,12 @@ function renderLeads() {
         let contactHtml = "";
         if (isEmailValid) {
             contactHtml = `
-                <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <i data-lucide="${isEmailVerified ? 'check-circle-2' : 'help-circle'}" style="width: 14px; height: 14px; color: ${isEmailVerified ? 'var(--success)' : 'var(--text-muted)'}; flex-shrink: 0;"></i>
-                    <span style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${emailVal}">${emailVal}</span>
+                <div style="display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-start;">
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <i data-lucide="${isEmailVerified ? 'check-circle-2' : 'help-circle'}" style="width: 14px; height: 14px; color: ${isEmailVerified ? 'var(--success)' : 'var(--warning)'}; flex-shrink: 0;"></i>
+                        <span style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${emailVal}">${emailVal}</span>
+                    </div>
+                    <span class="badge ${emailBadgeClass}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1;">${emailBadgeLabel}</span>
                 </div>
             `;
         } else if (emailVal && emailVal.toLowerCase().includes('linkedin') && emailVal !== 'hello@company.com') {
@@ -1336,6 +1411,23 @@ function renderLeads() {
         }
 
         const recPlatformSvg = getPlatformIconSvg(platform, 13, `color: ${platformColor}; flex-shrink: 0;`);
+        
+        let candidateBadges = "";
+        if (lead.search_type === "recruiter") {
+            if (lead.experienceLevel && lead.experienceLevel !== "Unknown") {
+                candidateBadges += `<span class="badge badge-success" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1; border-radius: 4px; margin-right: 0.25rem;">${lead.experienceLevel}</span>`;
+            }
+            if (lead.workPreference && lead.workPreference !== "Unknown") {
+                candidateBadges += `<span class="badge badge-primary" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1; border-radius: 4px; margin-right: 0.25rem; background: rgba(14, 165, 164, 0.1); color: var(--accent);">${lead.workPreference}</span>`;
+            }
+            if (lead.skills) {
+                const skillsList = lead.skills.split(",").slice(0, 3).map(s => s.trim());
+                skillsList.forEach(sk => {
+                    candidateBadges += `<span class="badge badge-neutral" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1; border-radius: 4px; margin-right: 0.25rem;">${sk}</span>`;
+                });
+            }
+        }
+
         row.innerHTML = `
             <td>
                 <div class="contact-cell">
@@ -1346,6 +1438,7 @@ function renderLeads() {
                             ${recPlatformSvg}
                         </div>
                         <span class="contact-role">${displayRole}</span>
+                        ${candidateBadges ? `<div style="display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.25rem;">${candidateBadges}</div>` : ""}
                     </div>
                 </div>
             </td>
@@ -1408,10 +1501,26 @@ function renderKanban() {
     const pipelineSearchInput = document.getElementById("pipeline-search-input");
     const pipelineFilterPlatform = document.getElementById("pipeline-filter-platform");
     const pipelineFilterIntent = document.getElementById("pipeline-filter-intent");
+    const pipelineFilterSearchType = document.getElementById("pipeline-filter-search-type");
 
     const searchVal = pipelineSearchInput ? pipelineSearchInput.value.trim().toLowerCase() : "";
     const platformVal = pipelineFilterPlatform ? pipelineFilterPlatform.value.toLowerCase() : "all";
     const intentVal = pipelineFilterIntent ? pipelineFilterIntent.value.toLowerCase() : "all";
+    const pipelineSearchTypeVal = pipelineFilterSearchType ? pipelineFilterSearchType.value.toLowerCase() : "all";
+
+    // Dynamic renaming of headers
+    const isRecruiting = pipelineSearchTypeVal === "recruiter";
+    const colNew = document.querySelector('.kanban-column[data-stage="New"] .header-left span:last-child');
+    const colDrafted = document.querySelector('.kanban-column[data-stage="Drafted"] .header-left span:last-child');
+    const colEmailed = document.querySelector('.kanban-column[data-stage="Emailed"] .header-left span:last-child');
+    const colReplied = document.querySelector('.kanban-column[data-stage="Replied"] .header-left span:last-child');
+    const colDisqualified = document.querySelector('.kanban-column[data-stage="Disqualified"] .header-left span:last-child');
+    
+    if (colNew) colNew.innerText = isRecruiting ? "Discovered" : "New Leads";
+    if (colDrafted) colDrafted.innerText = isRecruiting ? "Contacted" : "Drafted Pitch";
+    if (colEmailed) colEmailed.innerText = isRecruiting ? "Screening" : "Emailed Out";
+    if (colReplied) colReplied.innerText = isRecruiting ? "Interviewing" : "Replied";
+    if (colDisqualified) colDisqualified.innerText = isRecruiting ? "Rejected" : "Disqualified";
 
     leadsData.forEach(lead => {
         // Apply search filter (name or company name)
@@ -1439,8 +1548,27 @@ function renderKanban() {
             }
         }
 
-        const stage = lead.crmStatus || "New";
-        const matchedColumn = columns[stage] || columns["New"];
+        // Apply search type filter
+        if (pipelineSearchTypeVal !== "all") {
+            const leadSearchType = String(lead.search_type || "sales").toLowerCase();
+            if (leadSearchType !== pipelineSearchTypeVal) {
+                return;
+            }
+        }
+
+        const stage = lead.crmStatus || (isRecruiting ? "Discovered" : "New");
+        
+        // Map recruiter-specific stage names to Sales kanban columns
+        let mappedStage = stage;
+        if (isRecruiting) {
+            if (stage === "Discovered") mappedStage = "New";
+            else if (stage === "Contacted") mappedStage = "Drafted";
+            else if (stage === "Screening") mappedStage = "Emailed";
+            else if (stage === "Interviewing") mappedStage = "Replied";
+            else if (stage === "Offered" || stage === "Rejected") mappedStage = "Disqualified";
+        }
+
+        const matchedColumn = columns[mappedStage] || columns["New"];
         matchedColumn.items.push(lead);
     });
 
@@ -1523,6 +1651,22 @@ function renderKanban() {
             const avatarUrl = getLeadAvatarUrl(lead.authorName || "Unknown");
             const logoUrl = getCompanyLogoUrl(displayCompany);
 
+            let candidateBadges = "";
+            if (lead.search_type === "recruiter") {
+                if (lead.experienceLevel && lead.experienceLevel !== "Unknown") {
+                    candidateBadges += `<span class="badge badge-success" style="font-size: 0.62rem; padding: 0.05rem 0.25rem; line-height: 1; border-radius: 3px; margin-right: 0.2rem;">${lead.experienceLevel}</span>`;
+                }
+                if (lead.workPreference && lead.workPreference !== "Unknown") {
+                    candidateBadges += `<span class="badge badge-primary" style="font-size: 0.62rem; padding: 0.05rem 0.25rem; line-height: 1; border-radius: 3px; margin-right: 0.2rem; background: rgba(14, 165, 164, 0.1); color: var(--accent);">${lead.workPreference}</span>`;
+                }
+                if (lead.skills) {
+                    const skillsList = lead.skills.split(",").slice(0, 2).map(s => s.trim());
+                    skillsList.forEach(sk => {
+                        candidateBadges += `<span class="badge badge-neutral" style="font-size: 0.62rem; padding: 0.05rem 0.25rem; line-height: 1; border-radius: 3px; margin-right: 0.2rem;">${sk}</span>`;
+                    });
+                }
+            }
+
             card.innerHTML = `
                 <!-- Hover Quick Actions -->
                 <div class="card-hover-actions">
@@ -1546,6 +1690,7 @@ function renderKanban() {
                 </div>
 
                 <div class="card-service-desc">${displayRequirement}</div>
+                ${candidateBadges ? `<div style="display: flex; flex-wrap: wrap; gap: 0.15rem; margin-top: 0.35rem; margin-bottom: 0.25rem;">${candidateBadges}</div>` : ""}
 
                 <div class="card-metrics-row">
                     <!-- Circular Score Match -->
@@ -1604,32 +1749,48 @@ function initDragAndDrop() {
             if (!transferUrl) return;
 
             const lead = leadsData.find(l => l.sourceUrl === transferUrl);
-            if (lead && lead.crmStatus !== targetStage) {
-                lead.crmStatus = targetStage;
-
-                if (activeLead && activeLead.sourceUrl === lead.sourceUrl) {
-                    modalCrmStatus.value = targetStage;
+            if (lead) {
+                const isRecruiting = lead.search_type === "recruiter";
+                let actualStage = targetStage;
+                if (isRecruiting) {
+                    if (targetStage === "New") actualStage = "Discovered";
+                    else if (targetStage === "Drafted") actualStage = "Contacted";
+                    else if (targetStage === "Emailed") actualStage = "Screening";
+                    else if (targetStage === "Replied") actualStage = "Interviewing";
+                    else if (targetStage === "Disqualified") actualStage = "Rejected";
                 }
+                
+                if (lead.crmStatus !== actualStage) {
+                    lead.crmStatus = actualStage;
 
-                // Redraw instantly
-                renderKanban();
+                    if (activeLead && activeLead.sourceUrl === lead.sourceUrl) {
+                        modalCrmStatus.value = actualStage;
+                    }
 
-                try {
-                    await fetch("/api/leads/update", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            sourceUrl: lead.sourceUrl,
-                            crmStatus: targetStage,
-                            draftEmail: lead.draftEmail || ""
-                        })
-                    });
-                    // Refresh dashboard data too
-                    updateGlobalStats(leadsData);
-                } catch (err) {
-                    console.error("Drag stage update error:", err);
+                    // Redraw instantly
+                    renderKanban();
+
+                    try {
+                        await fetch("/api/leads/update", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                sourceUrl: lead.sourceUrl,
+                                crmStatus: actualStage,
+                                draftEmail: lead.draftEmail || "",
+                                workPreference: lead.workPreference || "",
+                                skills: lead.skills || "",
+                                experienceLevel: lead.experienceLevel || "",
+                                search_type: lead.search_type || "sales"
+                            })
+                        });
+                        // Refresh dashboard data too
+                        updateGlobalStats(leadsData);
+                    } catch (err) {
+                        console.error("Drag stage update error:", err);
+                    }
                 }
             }
         });
@@ -1639,6 +1800,36 @@ function initDragAndDrop() {
 // Slide Drawer Opening controls
 function openDetailModal(lead) {
     activeLead = lead;
+
+    const modalSkills = document.getElementById("modal-skills");
+    const modalExperienceLevel = document.getElementById("modal-experience-level");
+    const modalWorkPreference = document.getElementById("modal-work-preference");
+    const candidateSection = document.getElementById("modal-candidate-section");
+
+    if (lead.search_type === "recruiter") {
+        if (candidateSection) candidateSection.style.display = "block";
+        if (modalSkills) modalSkills.value = lead.skills || "";
+        if (modalExperienceLevel) modalExperienceLevel.value = lead.experienceLevel || "Unknown";
+        if (modalWorkPreference) modalWorkPreference.value = lead.workPreference || "Unknown";
+    } else {
+        if (candidateSection) candidateSection.style.display = "none";
+    }
+
+    // Dynamically rebuild CRM status dropdown options based on search type
+    if (modalCrmStatus) {
+        modalCrmStatus.innerHTML = "";
+        const isRecruiter = lead.search_type === "recruiter";
+        const stages = isRecruiter 
+            ? ["Discovered", "Contacted", "Screening", "Interviewing", "Offered", "Rejected"]
+            : ["New", "New Discovery", "Drafted", "Emailed", "Replied", "Disqualified"];
+        
+        stages.forEach(stg => {
+            const opt = document.createElement("option");
+            opt.value = stg;
+            opt.innerText = stg;
+            modalCrmStatus.appendChild(opt);
+        });
+    }
 
     modalAuthorName.value = lead.authorName || "";
     modalCompanyName.value = lead.companyName || "";
@@ -1718,7 +1909,7 @@ function openDetailModal(lead) {
         modalBtnLinkedin.innerHTML = `${getPlatformIconSvg("linkedin", 14)} View LinkedIn`;
     }
 
-    modalCrmStatus.value = lead.crmStatus || "New";
+    modalCrmStatus.value = lead.crmStatus || (lead.search_type === "recruiter" ? "Discovered" : "New");
 
     // Load existing drafts
     if (lead.draftEmail) {
@@ -1804,7 +1995,11 @@ async function syncLeadToBackend() {
                 industry: activeLead.industry || "",
                 location: activeLead.location || "",
                 needDescription: activeLead.needDescription || "",
-                contactInfo: activeLead.contactInfo || ""
+                contactInfo: activeLead.contactInfo || "",
+                workPreference: activeLead.workPreference || "",
+                skills: activeLead.skills || "",
+                experienceLevel: activeLead.experienceLevel || "",
+                search_type: activeLead.search_type || "sales"
             })
         });
 
@@ -2108,6 +2303,14 @@ async function saveLeadDetailsFromModal() {
     activeLead.needDescription = modalNeedDescription.value;
     activeLead.contactInfo = modalContactInfo.value;
 
+    const modalSkills = document.getElementById("modal-skills");
+    const modalExperienceLevel = document.getElementById("modal-experience-level");
+    const modalWorkPreference = document.getElementById("modal-work-preference");
+    
+    if (modalSkills) activeLead.skills = modalSkills.value;
+    if (modalExperienceLevel) activeLead.experienceLevel = modalExperienceLevel.value;
+    if (modalWorkPreference) activeLead.workPreference = modalWorkPreference.value;
+
     const idx = leadsData.findIndex(l => l.sourceUrl === activeLead.sourceUrl);
     if (idx !== -1) {
         leadsData[idx] = { ...activeLead };
@@ -2220,6 +2423,8 @@ function renderArchiveHistory() {
 
         const platform = search.platform || "linkedin";
         const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
+        const searchType = search.search_type || "sales";
+        const typeBadgeHtml = searchType === "recruiter" ? `<span class="badge-recruiter" style="background: rgba(14, 165, 164, 0.1); color: var(--accent); padding: 0.1rem 0.35rem; font-size: 0.65rem; border-radius: 4px; font-weight: 600; line-height: 1; margin-left: 4px;">HR Mode</span>` : "";
 
         item.innerHTML = `
             <div class="history-item-accent"></div>
@@ -2235,6 +2440,7 @@ function renderArchiveHistory() {
             <div class="history-item-meta">
                 <span><i data-lucide="clock"></i>${formattedDate}</span>
                 <span class="badge-platform badge-platform-${platform}">${getPlatformIconSvg(platform, 10)}${capPlatform}</span>
+                ${typeBadgeHtml}
             </div>
         `;
 
@@ -2358,6 +2564,8 @@ function renderModalQueries() {
 
         const platform = search.platform || "linkedin";
         const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
+        const searchType = search.search_type || "sales";
+        const typeBadgeHtml = searchType === "recruiter" ? `<span class="badge-recruiter" style="background: rgba(14, 165, 164, 0.1); color: var(--accent); padding: 0.1rem 0.35rem; font-size: 0.65rem; border-radius: 4px; font-weight: 600; line-height: 1; margin-left: 4px;">HR Mode</span>` : "";
 
         card.innerHTML = `
             <div class="history-item-accent"></div>
@@ -2373,6 +2581,7 @@ function renderModalQueries() {
             <div class="history-item-meta">
                 <span><i data-lucide="clock"></i>${formattedDate}</span>
                 <span class="badge-platform badge-platform-${platform}">${getPlatformIconSvg(platform, 10)}${capPlatform}</span>
+                ${typeBadgeHtml}
             </div>
         `;
 
@@ -2596,6 +2805,8 @@ function renderArchiveLeads() {
     const crmVal = archiveFilterCrm ? archiveFilterCrm.value.toLowerCase() : "all";
     const platformVal = archiveFilterPlatform ? archiveFilterPlatform.value.toLowerCase() : "all";
     const searchVal = archiveSearchInput ? archiveSearchInput.value.trim().toLowerCase() : "";
+    const filterArchiveSearchType = document.getElementById("archive-filter-search-type");
+    const searchTypeVal = filterArchiveSearchType ? filterArchiveSearchType.value.toLowerCase() : "all";
 
     let leadsToRender = [];
     if (activeSearchId === "all") {
@@ -2661,7 +2872,10 @@ function renderArchiveLeads() {
             });
         }
 
-        return statusMatch && crmMatch && platformMatch && searchMatch;
+        const leadSearchType = String(lead.search_type || "sales").toLowerCase();
+        const searchTypeMatch = searchTypeVal === "all" || leadSearchType === searchTypeVal;
+
+        return statusMatch && crmMatch && platformMatch && searchMatch && searchTypeMatch;
     });
 
     // Update dynamic dashboard metrics
@@ -2767,6 +2981,9 @@ function renderArchiveLeads() {
         const isEmailValid = emailVal && emailVal.includes('@') && emailVal !== 'hello@company.com';
         const isEmailVerified = isEmailValid && lead.contactSource !== 'guessed';
 
+        const emailBadgeLabel = isEmailVerified ? 'Verified' : (lead.contactSource === 'guessed' ? 'Guessed' : 'Unverified');
+        const emailBadgeClass = isEmailVerified ? 'badge-success' : (lead.contactSource === 'guessed' ? 'badge-warning' : 'badge-neutral');
+
         const platform = getLeadPlatform(lead);
         let platformColor = "var(--primary)";
         let platformIconName = "linkedin";
@@ -2797,9 +3014,12 @@ function renderArchiveLeads() {
         let contactHtml = "";
         if (isEmailValid) {
             contactHtml = `
-                <div class="badge ${isEmailVerified ? 'badge-success' : 'badge-warning'}" style="gap: 4px; padding: 0.2rem 0.5rem; font-size: 0.72rem; font-weight: 500;">
-                    <i data-lucide="${isEmailVerified ? 'check-circle-2' : 'help-circle'}" style="width: 12px; height: 12px; flex-shrink: 0;"></i>
-                    <span style="max-width: 115px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emailVal}">${emailVal}</span>
+                <div style="display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-start;">
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <i data-lucide="${isEmailVerified ? 'check-circle-2' : 'help-circle'}" style="width: 12px; height: 12px; color: ${isEmailVerified ? 'var(--success)' : 'var(--warning)'}; flex-shrink: 0;"></i>
+                        <span style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${emailVal}">${emailVal}</span>
+                    </div>
+                    <span class="badge ${emailBadgeClass}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1;">${emailBadgeLabel}</span>
                 </div>
             `;
         } else if (emailVal && emailVal.toLowerCase().includes('linkedin') && emailVal !== 'hello@company.com') {
@@ -2814,6 +3034,23 @@ function renderArchiveLeads() {
         }
 
         const leadPlatSvg = getPlatformIconSvg(platform, 13, `color: ${platformColor}; flex-shrink: 0;`);
+        
+        let candidateBadges = "";
+        if (lead.search_type === "recruiter") {
+            if (lead.experienceLevel && lead.experienceLevel !== "Unknown") {
+                candidateBadges += `<span class="badge badge-success" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1; border-radius: 4px; margin-right: 0.25rem;">${lead.experienceLevel}</span>`;
+            }
+            if (lead.workPreference && lead.workPreference !== "Unknown") {
+                candidateBadges += `<span class="badge badge-primary" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1; border-radius: 4px; margin-right: 0.25rem; background: rgba(14, 165, 164, 0.1); color: var(--accent);">${lead.workPreference}</span>`;
+            }
+            if (lead.skills) {
+                const skillsList = lead.skills.split(",").slice(0, 3).map(s => s.trim());
+                skillsList.forEach(sk => {
+                    candidateBadges += `<span class="badge badge-neutral" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; line-height: 1; border-radius: 4px; margin-right: 0.25rem;">${sk}</span>`;
+                });
+            }
+        }
+
         row.innerHTML = `
             <td style="padding: 0.5rem 0.75rem;">
                 <input type="checkbox" class="custom-checkbox archive-lead-checkbox" value="${lead.sourceUrl}" ${isChecked ? "checked" : ""}>
@@ -2827,6 +3064,7 @@ function renderArchiveLeads() {
                             ${leadPlatSvg}
                         </div>
                         <span class="contact-role">${displayRole}</span>
+                        ${candidateBadges ? `<div style="display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.25rem;">${candidateBadges}</div>` : ""}
                     </div>
                 </div>
             </td>
@@ -3676,6 +3914,8 @@ async function saveCurrentSearch() {
     const industryEl = document.getElementById("wizard-industry");
     const location = locationEl ? locationEl.value.trim() : "";
     const industry = industryEl ? industryEl.value.trim() : "";
+    const searchTypeEl = document.getElementById("search-type");
+    const search_type = searchTypeEl ? searchTypeEl.value : "sales";
 
     if (!keyword) {
         await showCustomAlert("Please enter a keyword first!", "Keyword Required", "danger");
@@ -3693,7 +3933,7 @@ async function saveCurrentSearch() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ keyword, platform, timeframe, match_type, location, industry })
+            body: JSON.stringify({ keyword, platform, timeframe, match_type, location, industry, search_type })
         });
 
         if (response.ok) {

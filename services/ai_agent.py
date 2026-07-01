@@ -159,6 +159,7 @@ class DynamicLLMClient:
             return MockResponse(message.content[0].text)
             
         else: # Default: groq
+            import time
             from groq import Groq
             groq_key = os.getenv("GROQ_API_KEY")
             if not model:
@@ -171,7 +172,17 @@ class DynamicLLMClient:
             }
             if response_format:
                 kwargs["response_format"] = response_format
-            return api_client.chat.completions.create(**kwargs)
+                
+            for attempt in range(4):
+                try:
+                    return api_client.chat.completions.create(**kwargs)
+                except Exception as e:
+                    if attempt < 3:
+                        wait_time = (attempt + 1) * 2
+                        print(f"[LLM Client] Groq API call failed: {e}. Retrying in {wait_time}s (Attempt {attempt + 1}/3)...")
+                        time.sleep(wait_time)
+                    else:
+                        raise e
 
 client = DynamicLLMClient()
 
@@ -193,8 +204,46 @@ def generate_pitch(lead, agency_name="Silvia Team", agency_info="premier design 
         platform_name = "Reddit"
     else:
         platform_name = "LinkedIn"
-    
-    prompt = f"""
+        
+    search_type = lead.get("search_type", "sales")
+    if str(search_type).lower().strip() == "recruiter":
+        prompt = f"""
+You are an expert HR Recruiter and Talent Acquisition Specialist.
+
+Draft a highly personalized, warm, and compelling cold recruiting outreach email to a candidate based on their {platform_name} profile and post details.
+
+Sender Details:
+- Recruiter/Company Name: {agency_name}
+- Job Description / Pitch Info: {agency_info}
+- Target Email Tone: {tone}
+
+Recipient Details:
+- Candidate Name: {author}
+- Current/Previous Company or School: {company}
+- Candidate Skills: {lead.get("skills", "")}
+- Candidate Experience Level: {lead.get("experienceLevel", "")}
+- Candidate Work Preference: {lead.get("workPreference", "")}
+- Candidate location: {lead.get("location", "")}
+- Post snippet describing their job hunt: {need}
+
+Instructions:
+1. Keep the email style matching the target tone: '{tone}'.
+   - If 'Short & Conversational': Keep it extremely warm, brief (under 120 words), conversational, direct, and welcoming.
+   - If 'Professional & Formal': Use corporate formatting, polite vocabulary, and structured paragraphs.
+   - If 'Value Pitch (Free Audit)': Focus on the career growth, culture, and projects offered by {agency_name}, proposing a quick alignment call.
+2. The subject line should be catchy, natural, and candidate-centric (e.g., "Exciting Role at [Company] / Saw your post", "Software Engineer opportunity at [Company]").
+3. Reference their {platform_name} post or job hunt context directly to show genuine interest.
+4. Pitch why {agency_name} is a great fit for them, matching their skills to the job info ({agency_info}).
+5. Conclude with a low-friction Call to Action (CTA) like proposing a 10-minute introductory call.
+6. Return the subject line at the top, followed by the email body. Do not include bracketed placeholders in the body—fully fill them using {agency_name}. Use {agency_name} in the signature.
+
+Format:
+Subject: [Subject Line]
+
+[Email Body]
+"""
+    else:
+        prompt = f"""
 You are an expert B2B Copywriter and Sales Outreach Specialist.
 
 Draft a highly personalized, compelling outreach email to a potential client based on their {platform_name} post details.

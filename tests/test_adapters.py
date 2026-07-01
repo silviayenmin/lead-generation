@@ -29,8 +29,8 @@ class TestPlatformAdapters(unittest.TestCase):
         res = adapter.search("web development", timeframe="qdr:m3", match_type="partial", api_key="test_serper_key")
         self.assertEqual(res, mock_results)
         
-        # Verify search_leads was called with custom api_key
-        mock_search_leads.assert_called_once_with('site:linkedin.com/posts web development', tbs='qdr:m3', api_key='test_serper_key')
+        # Verify search_leads was called with custom api_key and default limit (10)
+        mock_search_leads.assert_called_once_with('site:linkedin.com/posts web development', tbs='qdr:m3', api_key='test_serper_key', num=10)
 
     @patch('search.facebook_adapter.search_leads')
     def test_facebook_adapter(self, mock_search_leads):
@@ -42,7 +42,7 @@ class TestPlatformAdapters(unittest.TestCase):
         
         res = adapter.search("graphic design", timeframe="qdr:w", location="New York", api_key="fb_key")
         self.assertEqual(res, mock_results)
-        mock_search_leads.assert_called_once_with('site:facebook.com graphic design "New York"', tbs='qdr:w', api_key='fb_key')
+        mock_search_leads.assert_called_once_with('site:facebook.com graphic design New York', tbs='qdr:w', api_key='fb_key', num=10)
 
     @patch('search.twitter_adapter.search_leads')
     def test_twitter_adapter(self, mock_search_leads):
@@ -54,7 +54,7 @@ class TestPlatformAdapters(unittest.TestCase):
         
         res = adapter.search("copywriter", match_type="exact", industry="Tech", api_key="tw_key")
         self.assertEqual(res, mock_results)
-        mock_search_leads.assert_called_once_with('(site:x.com OR site:twitter.com) "copywriter" "Tech"', tbs='qdr:m3', api_key='tw_key')
+        mock_search_leads.assert_called_once_with('(site:x.com OR site:twitter.com) "copywriter" "Tech"', tbs='qdr:m3', api_key='tw_key', num=10)
 
     @patch('requests.post')
     @patch('requests.get')

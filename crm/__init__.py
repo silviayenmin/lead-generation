@@ -23,6 +23,7 @@ from .lead_database import (
     get_email_config,
     is_facebook_fallback_name,
     extract_author_from_email_or_url,
+    is_location_match,
     get_mongo_db,
     save_webhook_config,
     get_webhook_config,
