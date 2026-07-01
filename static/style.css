@@ -5458,3 +5458,92 @@ textarea.form-control {
 .custom-select-wrapper.select-dense .custom-select-trigger {
     width: 100%;
 }
+
+/* Redesigned high contrast style for variables/placeholders in email previews */
+mark {
+    background-color: rgba(14, 165, 164, 0.15) !important;
+    color: #0EA5A4 !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.light-theme mark {
+    background-color: rgba(3, 113, 114, 0.1) !important;
+    color: #037172 !important;
+}
+
+/* --- Premium Collapsed Sidebar Tooltips --- */
+.sidebar.collapsed {
+    overflow: visible !important;
+}
+
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .sidebar-footer .btn {
+    position: relative;
+    overflow: visible !important;
+}
+
+/* Tooltip Body */
+.sidebar.collapsed .nav-item::after,
+.sidebar.collapsed .sidebar-footer .btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) scale(0.95);
+    background: #111827; /* sleek dark background */
+    color: #f8fafc;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    z-index: 1000;
+}
+
+/* Tooltip Arrow */
+.sidebar.collapsed .nav-item::before,
+.sidebar.collapsed .sidebar-footer .btn::before {
+    content: "";
+    position: absolute;
+    left: calc(100% + 6px);
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 5px 6px 5px 0;
+    border-style: solid;
+    border-color: transparent #111827 transparent transparent;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    z-index: 1000;
+}
+
+/* Hover States to show Tooltip */
+.sidebar.collapsed .nav-item:hover::after,
+.sidebar.collapsed .sidebar-footer .btn:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+}
+
+.sidebar.collapsed .nav-item:hover::before,
+.sidebar.collapsed .sidebar-footer .btn:hover::before {
+    opacity: 1;
+}
+
+/* Light Theme Adjustments */
+.light-theme .sidebar.collapsed .nav-item::after,
+.light-theme .sidebar.collapsed .sidebar-footer .btn::after {
+    background: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .sidebar.collapsed .nav-item::before,
+.light-theme .sidebar.collapsed .sidebar-footer .btn::before {
+    border-color: transparent #ffffff transparent transparent;
+}

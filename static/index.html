@@ -247,23 +247,23 @@
 
 
             <nav class="sidebar-nav">
-                <button type="button" class="nav-item active" id="tab-btn-dashboard" data-tab="dashboard">
+                <button type="button" class="nav-item active" id="tab-btn-dashboard" data-tab="dashboard" data-tooltip="Dashboard">
                     <i data-lucide="layout-dashboard"></i>
                     <span>Dashboard</span>
                 </button>
-                <button type="button" class="nav-item" id="tab-btn-discovery" data-tab="discovery">
+                <button type="button" class="nav-item" id="tab-btn-discovery" data-tab="discovery" data-tooltip="Lead Discovery">
                     <i data-lucide="search"></i>
                     <span>Lead Discovery</span>
                 </button>
-                <button type="button" class="nav-item" id="tab-btn-pipeline" data-tab="pipeline">
-                    <i data-lucide="kanban"></i>
-                    <span>Outreach Pipeline</span>
-                </button>
-                <button type="button" class="nav-item" id="tab-btn-archive" data-tab="archive">
+                <button type="button" class="nav-item" id="tab-btn-archive" data-tab="archive" data-tooltip="Search Archive">
                     <i data-lucide="archive"></i>
                     <span>Search Archive</span>
                 </button>
-                <button type="button" class="nav-item" id="tab-btn-settings" data-tab="settings">
+                <button type="button" class="nav-item" id="tab-btn-pipeline" data-tab="pipeline" data-tooltip="Outreach Pipeline">
+                    <i data-lucide="kanban"></i>
+                    <span>Outreach Pipeline</span>
+                </button>
+                <button type="button" class="nav-item" id="tab-btn-settings" data-tab="settings" data-tooltip="Outreach Config">
                     <i data-lucide="settings"></i>
                     <span>Outreach Config</span>
                 </button>
@@ -283,12 +283,12 @@
             </div>
 
             <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <button type="button" id="btn-export-csv-sidebar" class="btn btn-secondary sidebar-export-btn">
+                <button type="button" id="btn-export-csv-sidebar" class="btn btn-secondary sidebar-export-btn" data-tooltip="Download CSV">
                     <i data-lucide="download"></i> <span>Download CSV</span>
                 </button>
                 <button type="button" id="btn-logout" class="btn btn-glow-outline sidebar-logout-btn"
                     style="border-color: rgba(239, 68, 68, 0.2); color: var(--error); background: rgba(239, 68, 68, 0.02);"
-                    title="Logout Session">
+                    title="Logout Session" data-tooltip="Logout">
                     <i data-lucide="log-out"></i> <span>Logout</span>
                 </button>
             </div>
@@ -326,7 +326,8 @@
                         <div id="notifications-dropdown" class="notifications-dropdown">
                             <div class="notifications-dropdown-header">
                                 <h3>Notifications</h3>
-                                <button type="button" id="btn-notifications-view-all" class="btn-clear-all">View all</button>
+                                <button type="button" id="btn-notifications-view-all" class="btn-clear-all">View
+                                    all</button>
                             </div>
                             <div id="notifications-list" class="notifications-list">
                                 <div class="notifications-empty-state">
@@ -478,7 +479,8 @@
                             <div class="table-filters">
                                 <div class="table-search-wrapper">
                                     <i data-lucide="search" class="input-icon"></i>
-                                    <input type="text" id="dashboard-search-input" class="form-control-compact" placeholder="Search name or company...">
+                                    <input type="text" id="dashboard-search-input" class="form-control-compact"
+                                        placeholder="Search name or company...">
                                 </div>
                                 <select id="filter-platform" class="filter-select">
                                     <option value="all">All Sources</option>
@@ -544,7 +546,9 @@
 
                         <!-- Pagination Controls -->
                         <div class="pagination" style="justify-content: center; border-top: none; padding-top: 8px;">
-                            <button id="dashboard-view-more" class="btn btn-view-more" style="height: 32px; padding: 0 16px; font-size: 0.82rem; border-radius: 6px;" onclick="switchTab('archive')">
+                            <button id="dashboard-view-more" class="btn btn-view-more"
+                                style="height: 32px; padding: 0 16px; font-size: 0.82rem; border-radius: 6px;"
+                                onclick="switchTab('archive')">
                                 View More
                             </button>
                         </div>
@@ -585,218 +589,226 @@
                                 </div>
                             </div>
 
-                        <form id="search-form">
+                            <form id="search-form">
 
-                            <!-- Step 1: Select Platform Sources -->
-                            <div class="wizard-step-panel active" data-step="1">
-                                <div class="step-heading">
-                                    <h3><i data-lucide="database"></i> Select Platform Sources</h3>
-                                    <p>Choose target networks to crawl and parse for matching B2B intent signals.</p>
+                                <!-- Step 1: Select Platform Sources -->
+                                <div class="wizard-step-panel active" data-step="1">
+                                    <div class="step-heading">
+                                        <h3><i data-lucide="database"></i> Select Platform Sources</h3>
+                                        <p>Choose target networks to crawl and parse for matching B2B intent signals.
+                                        </p>
+                                    </div>
+                                    <div class="platform-options-grid">
+                                        <div class="platform-option-card active" data-platform="linkedin">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
+                                                <path
+                                                    d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z">
+                                                </path>
+                                                <rect x="2" y="9" width="4" height="12"></rect>
+                                                <circle cx="4" cy="4" r="2"></circle>
+                                            </svg>
+                                            <span class="platform-option-label">LinkedIn</span>
+                                        </div>
+                                        <div class="platform-option-card" data-platform="facebook">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
+                                                <path
+                                                    d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z">
+                                                </path>
+                                            </svg>
+                                            <span class="platform-option-label">Facebook</span>
+                                        </div>
+                                        <div class="platform-option-card" data-platform="google_maps">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                <circle cx="12" cy="10" r="3"></circle>
+                                            </svg>
+                                            <span class="platform-option-label">Google Maps</span>
+                                        </div>
+                                        <div class="platform-option-card" data-platform="twitter">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
+                                                <path d="M4 4l11.733 16h4.267l-11.733 -16z"></path>
+                                                <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"></path>
+                                            </svg>
+                                            <span class="platform-option-label">Twitter / X</span>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="platform" value="linkedin">
                                 </div>
-                                <div class="platform-options-grid">
-                                    <div class="platform-option-card active" data-platform="linkedin">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
-                                            <path
-                                                d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z">
-                                            </path>
-                                            <rect x="2" y="9" width="4" height="12"></rect>
-                                            <circle cx="4" cy="4" r="2"></circle>
-                                        </svg>
-                                        <span class="platform-option-label">LinkedIn</span>
+
+                                <!-- Step 2: Define Audience -->
+                                <div class="wizard-step-panel" data-step="2">
+                                    <div class="step-heading">
+                                        <h3><i data-lucide="users"></i> Define Target Audience</h3>
+                                        <p>Specify the search keywords and industry context for our Llama-3.3 AI
+                                            scanner.</p>
                                     </div>
-                                    <div class="platform-option-card" data-platform="facebook">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
-                                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z">
-                                            </path>
-                                        </svg>
-                                        <span class="platform-option-label">Facebook</span>
+                                    <div class="form-group">
+                                        <label for="keyword">Search Intent Query / Keyword</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="search" class="input-icon"></i>
+                                            <input type="text" id="keyword" class="form-control"
+                                                placeholder="e.g. looking for ui/ux designer, contract react developer"
+                                                required>
+                                        </div>
+                                        <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match
+                                            varied social phrasing.</span>
                                     </div>
-                                    <div class="platform-option-card" data-platform="google_maps">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
-                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                            <circle cx="12" cy="10" r="3"></circle>
-                                        </svg>
-                                        <span class="platform-option-label">Google Maps</span>
+                                    <div class="form-group">
+                                        <label for="search-type">Search Mode / Purpose</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="user-check" class="input-icon"></i>
+                                            <select id="search-type" class="form-control">
+                                                <option value="sales" selected>Sales Mode (Find hiring
+                                                    companies/clients)</option>
+                                                <option value="recruiter">Recruiter Mode (Find job candidates/talent)
+                                                </option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div class="platform-option-card" data-platform="twitter">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="brand-svg">
-                                            <path d="M4 4l11.733 16h4.267l-11.733 -16z"></path>
-                                            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"></path>
-                                        </svg>
-                                        <span class="platform-option-label">Twitter / X</span>
+                                    <div class="wizard-grid-2">
+                                        <div class="form-group">
+                                            <label for="wizard-industry">Target Industry (Optional)</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="building" class="input-icon"></i>
+                                                <input type="text" id="wizard-industry" class="form-control"
+                                                    placeholder="e.g. E-commerce, FinTech">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="wizard-location">Target Location (Optional)</label>
+                                            <div class="input-wrapper">
+                                                <i data-lucide="map-pin" class="input-icon"></i>
+                                                <input type="text" id="wizard-location" class="form-control"
+                                                    placeholder="e.g. United States, London">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <input type="hidden" id="platform" value="linkedin">
+
+                        </div>
+
+                        <!-- Step 3: Configure Intent Filters -->
+                        <div class="wizard-step-panel" data-step="3">
+                            <div class="step-heading">
+                                <h3><i data-lucide="sliders"></i> Configure Filters & Thresholds</h3>
+                                <p>Tune recency limits, search strictness, and the minimum AI qualification match score.
+                                </p>
                             </div>
-
-                            <!-- Step 2: Define Audience -->
-                            <div class="wizard-step-panel" data-step="2">
-                                <div class="step-heading">
-                                    <h3><i data-lucide="users"></i> Define Target Audience</h3>
-                                    <p>Specify the search keywords and industry context for our Llama-3.3 AI scanner.</p>
-                                </div>
+                            <div class="wizard-grid-3">
                                 <div class="form-group">
-                                    <label for="keyword">Search Intent Query / Keyword</label>
+                                    <label for="timeframe">Post Recency</label>
                                     <div class="input-wrapper">
-                                        <i data-lucide="search" class="input-icon"></i>
-                                        <input type="text" id="keyword" class="form-control"
-                                            placeholder="e.g. looking for ui/ux designer, contract react developer"
-                                            required>
-                                    </div>
-                                    <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
-                                </div>
-                                <div class="form-group">
-                                    <label for="search-type">Search Mode / Purpose</label>
-                                    <div class="input-wrapper">
-                                        <i data-lucide="user-check" class="input-icon"></i>
-                                        <select id="search-type" class="form-control">
-                                            <option value="sales" selected>Sales Mode (Find hiring companies/clients)</option>
-                                            <option value="recruiter">Recruiter Mode (Find job candidates/talent)</option>
+                                        <i data-lucide="calendar" class="input-icon"></i>
+                                        <select id="timeframe" class="form-control">
+                                            <option value="qdr:d">Past 24 Hours</option>
+                                            <option value="qdr:w">Past Week</option>
+                                            <option value="qdr:m">Past Month</option>
+                                            <option value="qdr:m2">Past 2 Months</option>
+                                            <option value="qdr:m3" selected>Past 3 Months</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div class="wizard-grid-2">
-                                    <div class="form-group">
-                                        <label for="wizard-industry">Target Industry (Optional)</label>
-                                        <div class="input-wrapper">
-                                            <i data-lucide="building" class="input-icon"></i>
-                                            <input type="text" id="wizard-industry" class="form-control"
-                                                placeholder="e.g. E-commerce, FinTech">
-                                        </div>
+
+                                <div class="form-group">
+                                    <label for="limit">Maximum Records Scanned</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="hash" class="input-icon"></i>
+                                        <select id="limit" class="form-control">
+                                            <option value="5">5 Results</option>
+                                            <option value="10" selected>10 Results (Quick)</option>
+                                            <option value="20">20 Results (Standard)</option>
+                                            <option value="50">50 Results (Deep)</option>
+                                            <option value="100">100 Results (Thorough)</option>
+                                        </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="wizard-location">Target Location (Optional)</label>
-                                        <div class="input-wrapper">
-                                            <i data-lucide="map-pin" class="input-icon"></i>
-                                            <input type="text" id="wizard-location" class="form-control"
-                                                placeholder="e.g. United States, London">
-                                        </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="match-type">Search Match Type</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="sliders" class="input-icon"></i>
+                                        <select id="match-type" class="form-control">
+                                            <option value="partial" selected>Partial Match (Broader)</option>
+                                            <option value="exact">Exact Match (Strict)</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
 
+                            <div class="form-group wizard-group-margin-top-sm">
+                                <div class="wizard-flex-header">
+                                    <label for="wizard-intent-score-min">Minimum AI Intent Threshold</label>
+                                    <span id="wizard-intent-score-val" class="wizard-intent-score-val">40% Match</span>
+                                </div>
+                                <input type="range" id="wizard-intent-score-min" class="custom-range-slider" min="10"
+                                    max="90" value="40">
+                                <div class="slider-labels">
+                                    <span>Loose Matches (10%)</span>
+                                    <span>High Buying Signal (90%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: AI Qualification & Estimate -->
+                        <div class="wizard-step-panel" data-step="4">
+                            <div class="step-heading">
+                                <h3><i data-lucide="sparkles"></i> Review & Launch Scraper</h3>
+                                <p>Verify the configuration summary below before deploying the automated search.</p>
                             </div>
 
-                            <!-- Step 3: Configure Intent Filters -->
-                            <div class="wizard-step-panel" data-step="3">
-                                <div class="step-heading">
-                                    <h3><i data-lucide="sliders"></i> Configure Filters & Thresholds</h3>
-                                    <p>Tune recency limits, search strictness, and the minimum AI qualification match score.</p>
+                            <div class="review-summary-card">
+                                <div class="summary-item">
+                                    <span class="summary-label"><i data-lucide="users"></i> Target Audience</span>
+                                    <span class="summary-value" id="review-summary-audience">Any</span>
                                 </div>
-                                <div class="wizard-grid-3">
-                                    <div class="form-group">
-                                        <label for="timeframe">Post Recency</label>
-                                        <div class="input-wrapper">
-                                            <i data-lucide="calendar" class="input-icon"></i>
-                                            <select id="timeframe" class="form-control">
-                                                <option value="qdr:d">Past 24 Hours</option>
-                                                <option value="qdr:w">Past Week</option>
-                                                <option value="qdr:m">Past Month</option>
-                                                <option value="qdr:m2">Past 2 Months</option>
-                                                <option value="qdr:m3" selected>Past 3 Months</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="limit">Maximum Records Scanned</label>
-                                        <div class="input-wrapper">
-                                            <i data-lucide="hash" class="input-icon"></i>
-                                            <select id="limit" class="form-control">
-                                                <option value="5">5 Results</option>
-                                                <option value="10" selected>10 Results (Quick)</option>
-                                                <option value="20">20 Results (Standard)</option>
-                                                <option value="50">50 Results (Deep)</option>
-                                                <option value="100">100 Results (Thorough)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="match-type">Search Match Type</label>
-                                        <div class="input-wrapper">
-                                            <i data-lucide="sliders" class="input-icon"></i>
-                                            <select id="match-type" class="form-control">
-                                                <option value="partial" selected>Partial Match (Broader)</option>
-                                                <option value="exact">Exact Match (Strict)</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                <div class="summary-item">
+                                    <span class="summary-label"><i data-lucide="database"></i> Platform Source</span>
+                                    <span class="summary-value" id="review-summary-source">LinkedIn</span>
                                 </div>
-
-                                <div class="form-group wizard-group-margin-top-sm">
-                                    <div class="wizard-flex-header">
-                                        <label for="wizard-intent-score-min">Minimum AI Intent Threshold</label>
-                                        <span id="wizard-intent-score-val" class="wizard-intent-score-val">40% Match</span>
-                                    </div>
-                                    <input type="range" id="wizard-intent-score-min" class="custom-range-slider"
-                                        min="10" max="90" value="40">
-                                    <div class="slider-labels">
-                                        <span>Loose Matches (10%)</span>
-                                        <span>High Buying Signal (90%)</span>
-                                    </div>
+                                <div class="summary-item">
+                                    <span class="summary-label"><i data-lucide="calendar"></i> Recency / Recs</span>
+                                    <span class="summary-value" id="review-summary-filters">Past 3 Months (10
+                                        leads)</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label"><i data-lucide="activity"></i> Intent Threshold</span>
+                                    <span class="summary-value" id="review-summary-score">40% Min Match</span>
                                 </div>
                             </div>
 
-                            <!-- Step 4: AI Qualification & Estimate -->
-                            <div class="wizard-step-panel" data-step="4">
-                                <div class="step-heading">
-                                    <h3><i data-lucide="sparkles"></i> Review & Launch Scraper</h3>
-                                    <p>Verify the configuration summary below before deploying the automated search.</p>
-                                </div>
-
-                                <div class="review-summary-card">
-                                    <div class="summary-item">
-                                        <span class="summary-label"><i data-lucide="users"></i> Target Audience</span>
-                                        <span class="summary-value" id="review-summary-audience">Any</span>
-                                    </div>
-                                    <div class="summary-item">
-                                        <span class="summary-label"><i data-lucide="database"></i> Platform Source</span>
-                                        <span class="summary-value" id="review-summary-source">LinkedIn</span>
-                                    </div>
-                                    <div class="summary-item">
-                                        <span class="summary-label"><i data-lucide="calendar"></i> Recency / Recs</span>
-                                        <span class="summary-value" id="review-summary-filters">Past 3 Months (10 leads)</span>
-                                    </div>
-                                    <div class="summary-item">
-                                        <span class="summary-label"><i data-lucide="activity"></i> Intent Threshold</span>
-                                        <span class="summary-value" id="review-summary-score">40% Min Match</span>
-                                    </div>
-                                </div>
-
-                                <div class="estimate-leads-panel estimate-leads-margin">
-                                    <div class="estimate-count" id="wizard-estimate-count">10 - 25</div>
-                                    <div class="estimate-label">Estimated qualified lead targets</div>
-                                    <span class="estimate-help-text">Based on your filter metrics, matching history, and domain indexes.</span>
-                                </div>
-
-                                <div class="form-actions-row wizard-actions-row">
-                                    <button type="submit" id="btn-search" class="btn btn-primary btn-wizard-submit">
-                                        <i data-lucide="sparkles"></i>
-                                        <span>Launch AI scan</span>
-                                    </button>
-                                </div>
+                            <div class="estimate-leads-panel estimate-leads-margin">
+                                <div class="estimate-count" id="wizard-estimate-count">10 - 25</div>
+                                <div class="estimate-label">Estimated qualified lead targets</div>
+                                <span class="estimate-help-text">Based on your filter metrics, matching history, and
+                                    domain indexes.</span>
                             </div>
 
-                            <!-- Stepper Buttons Footer -->
-                            <div class="wizard-actions">
-                                <button type="button" id="btn-wizard-back" class="btn btn-secondary btn-wizard-back"
-                                    disabled>
-                                    <i data-lucide="arrow-left"></i> Back
-                                </button>
-                                <button type="button" id="btn-wizard-continue"
-                                    class="btn btn-primary btn-wizard-continue">
-                                    Continue <i data-lucide="arrow-right"></i>
+                            <div class="form-actions-row wizard-actions-row">
+                                <button type="submit" id="btn-search" class="btn btn-primary btn-wizard-submit">
+                                    <i data-lucide="sparkles"></i>
+                                    <span>Launch AI scan</span>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Stepper Buttons Footer -->
+                        <div class="wizard-actions">
+                            <button type="button" id="btn-wizard-back" class="btn btn-secondary btn-wizard-back"
+                                disabled>
+                                <i data-lucide="arrow-left"></i> Back
+                            </button>
+                            <button type="button" id="btn-wizard-continue" class="btn btn-primary btn-wizard-continue">
+                                Continue <i data-lucide="arrow-right"></i>
+                            </button>
+                        </div>
                         </form>
                     </div>
 
@@ -809,7 +821,8 @@
                                 <div class="pulsing-dot"></div>
                                 <span>LeadFlow scraper engaged...</span>
                             </div>
-                            <div id="loading-status-text" class="loading-text loading-status-text">Querying LinkedIn posts
+                            <div id="loading-status-text" class="loading-text loading-status-text">Querying LinkedIn
+                                posts
                                 via Google Serper API...</div>
                             <div class="loading-bar-container">
                                 <div id="loading-progress" class="loading-bar-progress" style="width: 0%;"></div>
@@ -819,383 +832,394 @@
                 </div>
             </div>
 
-                <!-- View 3: Outreach Pipeline (Kanban Board) -->
-                <div id="view-pipeline" class="tab-view">
-                    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h2>Outreach Pipeline</h2>
-                            <p>Drag and drop leads between CRM stages. Double-click cards to open details panel.</p>
-                        </div>
-                        <button type="button" id="btn-refresh-pipeline" class="btn btn-secondary btn-new-scan-topbar" style="margin-left: 1rem;">
-                            <i data-lucide="refresh-cw"></i> Refresh
-                        </button>
+            <!-- View 3: Outreach Pipeline (Kanban Board) -->
+            <div id="view-pipeline" class="tab-view">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Outreach Pipeline</h2>
+                        <p>Drag and drop leads between CRM stages. Double-click cards to open details panel.</p>
                     </div>
+                    <button type="button" id="btn-refresh-pipeline" class="btn btn-secondary btn-new-scan-topbar"
+                        style="margin-left: 1rem;">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
 
-                    <!-- Pipeline Filters -->
-                    <div class="pipeline-toolbar margin-bottom-md" style="display: flex; gap: 0.75rem; align-items: center; background: var(--bg-surface); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap; margin-bottom: 1.5rem;">
-                        <div style="flex: 1; min-width: 200px; position: relative;">
-                            <input type="text" id="pipeline-search-input" class="form-control" placeholder="Search name or company..." style="padding-left: 2rem; font-size: 0.82rem; height: 32px; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-surface); color: var(--text-primary);">
-                            <i data-lucide="search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted);"></i>
+                <!-- Pipeline Filters -->
+                <div class="pipeline-toolbar margin-bottom-md"
+                    style="display: flex; gap: 0.75rem; align-items: center; background: var(--bg-surface); padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap; margin-bottom: 1.5rem;">
+                    <div style="flex: 1; min-width: 200px; position: relative;">
+                        <input type="text" id="pipeline-search-input" class="form-control"
+                            placeholder="Search name or company..."
+                            style="padding-left: 2rem; font-size: 0.82rem; height: 32px; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-surface); color: var(--text-primary);">
+                        <i data-lucide="search"
+                            style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted);"></i>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Platform:</span>
+                        <select id="pipeline-filter-platform" class="filter-select"
+                            style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                            <option value="all">All Platforms</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="twitter">Twitter / X</option>
+                            <option value="reddit">Reddit</option>
+                            <option value="google_maps">Google Maps</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Intent:</span>
+                        <select id="pipeline-filter-intent" class="filter-select"
+                            style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                            <option value="all">All Intents</option>
+                            <option value="High Intent">High Intent</option>
+                            <option value="Medium Intent">Medium Intent</option>
+                            <option value="Low Intent">Low Intent</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Mode:</span>
+                        <select id="pipeline-filter-search-type" class="filter-select"
+                            style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                            <option value="all">All Modes</option>
+                            <option value="sales">Sales Leads Only</option>
+                            <option value="recruiter">Candidates Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="kanban-board">
+                    <div class="kanban-column" data-stage="New">
+                        <div class="kanban-column-header">
+                            <div class="header-left">
+                                <span class="stage-dot stage-new"></span>
+                                <span>New Leads</span>
+                            </div>
+                            <span class="column-count" id="count-new">0</span>
                         </div>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Platform:</span>
-                            <select id="pipeline-filter-platform" class="filter-select" style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
-                                <option value="all">All Platforms</option>
-                                <option value="linkedin">LinkedIn</option>
-                                <option value="facebook">Facebook</option>
-                                <option value="twitter">Twitter / X</option>
-                                <option value="reddit">Reddit</option>
-                                <option value="google_maps">Google Maps</option>
-                            </select>
+                        <div class="kanban-cards" id="cards-new"></div>
+                    </div>
+                    <div class="kanban-column" data-stage="Drafted">
+                        <div class="kanban-column-header">
+                            <div class="header-left">
+                                <span class="stage-dot stage-drafted"></span>
+                                <span>Drafted Pitch</span>
+                            </div>
+                            <span class="column-count" id="count-drafted">0</span>
                         </div>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Intent:</span>
-                            <select id="pipeline-filter-intent" class="filter-select" style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
-                                <option value="all">All Intents</option>
-                                <option value="High Intent">High Intent</option>
-                                <option value="Medium Intent">Medium Intent</option>
-                                <option value="Low Intent">Low Intent</option>
-                            </select>
+                        <div class="kanban-cards" id="cards-drafted"></div>
+                    </div>
+                    <div class="kanban-column" data-stage="Emailed">
+                        <div class="kanban-column-header">
+                            <div class="header-left">
+                                <span class="stage-dot stage-emailed"></span>
+                                <span>Emailed Out</span>
+                            </div>
+                            <span class="column-count" id="count-emailed">0</span>
                         </div>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Mode:</span>
-                            <select id="pipeline-filter-search-type" class="filter-select" style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
-                                <option value="all">All Modes</option>
-                                <option value="sales">Sales Leads Only</option>
-                                <option value="recruiter">Candidates Only</option>
-                            </select>
+                        <div class="kanban-cards" id="cards-emailed"></div>
+                    </div>
+                    <div class="kanban-column" data-stage="Replied">
+                        <div class="kanban-column-header">
+                            <div class="header-left">
+                                <span class="stage-dot stage-replied"></span>
+                                <span>Replied</span>
+                            </div>
+                            <span class="column-count" id="count-replied">0</span>
+                        </div>
+                        <div class="kanban-cards" id="cards-replied"></div>
+                    </div>
+                    <div class="kanban-column" data-stage="Disqualified">
+                        <div class="kanban-column-header">
+                            <div class="header-left">
+                                <span class="stage-dot stage-disqualified"></span>
+                                <span>Disqualified</span>
+                            </div>
+                            <span class="column-count" id="count-disqualified">0</span>
+                        </div>
+                        <div class="kanban-cards" id="cards-disqualified"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 4: Search Archive Redesign -->
+            <div id="view-archive" class="tab-view">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Search Archive</h2>
+                        <p>Examine historical search record index, modify layouts, or execute bulk stage changes.</p>
+                    </div>
+                    <button type="button" id="btn-refresh-archive" class="btn btn-secondary btn-new-scan-topbar"
+                        style="margin-left: 1rem;">
+                        <i data-lucide="refresh-cw"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Archive mini-dashboard metrics -->
+                <div class="archive-metrics-grid" id="archive-metrics-grid">
+                    <div class="archive-metric-card">
+                        <div class="metric-card-icon"
+                            style="background: rgba(3, 113, 114, 0.1); color: var(--primary);">
+                            <i data-lucide="database"></i>
+                        </div>
+                        <div class="metric-card-info">
+                            <span class="metric-card-label">Total Leads</span>
+                            <span class="metric-card-value" id="archive-stat-total">0</span>
                         </div>
                     </div>
-
-                    <div class="kanban-board">
-                        <div class="kanban-column" data-stage="New">
-                            <div class="kanban-column-header">
-                                <div class="header-left">
-                                    <span class="stage-dot stage-new"></span>
-                                    <span>New Leads</span>
-                                </div>
-                                <span class="column-count" id="count-new">0</span>
-                            </div>
-                            <div class="kanban-cards" id="cards-new"></div>
+                    <div class="archive-metric-card">
+                        <div class="metric-card-icon"
+                            style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
+                            <i data-lucide="trending-up"></i>
                         </div>
-                        <div class="kanban-column" data-stage="Drafted">
-                            <div class="kanban-column-header">
-                                <div class="header-left">
-                                    <span class="stage-dot stage-drafted"></span>
-                                    <span>Drafted Pitch</span>
-                                </div>
-                                <span class="column-count" id="count-drafted">0</span>
-                            </div>
-                            <div class="kanban-cards" id="cards-drafted"></div>
+                        <div class="metric-card-info">
+                            <span class="metric-card-label">High Intent Leads</span>
+                            <span class="metric-card-value" id="archive-stat-high">0 (0%)</span>
                         </div>
-                        <div class="kanban-column" data-stage="Emailed">
-                            <div class="kanban-column-header">
-                                <div class="header-left">
-                                    <span class="stage-dot stage-emailed"></span>
-                                    <span>Emailed Out</span>
-                                </div>
-                                <span class="column-count" id="count-emailed">0</span>
-                            </div>
-                            <div class="kanban-cards" id="cards-emailed"></div>
+                    </div>
+                    <div class="archive-metric-card">
+                        <div class="metric-card-icon"
+                            style="background: rgba(77, 163, 255, 0.1); color: var(--highlight);">
+                            <i data-lucide="search"></i>
                         </div>
-                        <div class="kanban-column" data-stage="Replied">
-                            <div class="kanban-column-header">
-                                <div class="header-left">
-                                    <span class="stage-dot stage-replied"></span>
-                                    <span>Replied</span>
-                                </div>
-                                <span class="column-count" id="count-replied">0</span>
-                            </div>
-                            <div class="kanban-cards" id="cards-replied"></div>
+                        <div class="metric-card-info">
+                            <span class="metric-card-label">Search Queries</span>
+                            <span class="metric-card-value" id="archive-stat-queries">0</span>
                         </div>
-                        <div class="kanban-column" data-stage="Disqualified">
-                            <div class="kanban-column-header">
-                                <div class="header-left">
-                                    <span class="stage-dot stage-disqualified"></span>
-                                    <span>Disqualified</span>
-                                </div>
-                                <span class="column-count" id="count-disqualified">0</span>
-                            </div>
-                            <div class="kanban-cards" id="cards-disqualified"></div>
+                    </div>
+                    <div class="archive-metric-card">
+                        <div class="metric-card-icon"
+                            style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                            <i data-lucide="check-circle-2"></i>
+                        </div>
+                        <div class="metric-card-info">
+                            <span class="metric-card-label">Contact Find Rate</span>
+                            <span class="metric-card-value" id="archive-stat-contacts">0%</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- View 4: Search Archive Redesign -->
-                <div id="view-archive" class="tab-view">
-                    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h2>Search Archive</h2>
-                            <p>Examine historical search record index, modify layouts, or execute bulk stage changes.</p>
-                        </div>
-                        <button type="button" id="btn-refresh-archive" class="btn btn-secondary btn-new-scan-topbar" style="margin-left: 1rem;">
-                            <i data-lucide="refresh-cw"></i> Refresh
-                        </button>
-                    </div>
+                <!-- Layout: Stacked (Search history on top, leads table full width below) -->
+                <div class="archive-stacked-layout">
 
-                    <!-- Archive mini-dashboard metrics -->
-                    <div class="archive-metrics-grid" id="archive-metrics-grid">
-                        <div class="archive-metric-card">
-                            <div class="metric-card-icon"
-                                style="background: rgba(3, 113, 114, 0.1); color: var(--primary);">
-                                <i data-lucide="database"></i>
+                    <!-- Top panel: Search History list -->
+                    <div class="card history-top-card">
+                        <div class="history-top-header">
+                            <div class="card-title" style="margin-bottom: 0;">
+                                <i data-lucide="history"></i>
+                                <span>Search query index</span>
                             </div>
-                            <div class="metric-card-info">
-                                <span class="metric-card-label">Total Leads</span>
-                                <span class="metric-card-value" id="archive-stat-total">0</span>
-                            </div>
-                        </div>
-                        <div class="archive-metric-card">
-                            <div class="metric-card-icon"
-                                style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-                                <i data-lucide="trending-up"></i>
-                            </div>
-                            <div class="metric-card-info">
-                                <span class="metric-card-label">High Intent Leads</span>
-                                <span class="metric-card-value" id="archive-stat-high">0 (0%)</span>
-                            </div>
-                        </div>
-                        <div class="archive-metric-card">
-                            <div class="metric-card-icon"
-                                style="background: rgba(77, 163, 255, 0.1); color: var(--highlight);">
-                                <i data-lucide="search"></i>
-                            </div>
-                            <div class="metric-card-info">
-                                <span class="metric-card-label">Search Queries</span>
-                                <span class="metric-card-value" id="archive-stat-queries">0</span>
-                            </div>
-                        </div>
-                        <div class="archive-metric-card">
-                            <div class="metric-card-icon"
-                                style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
-                                <i data-lucide="check-circle-2"></i>
-                            </div>
-                            <div class="metric-card-info">
-                                <span class="metric-card-label">Contact Find Rate</span>
-                                <span class="metric-card-value" id="archive-stat-contacts">0%</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Layout: Stacked (Search history on top, leads table full width below) -->
-                    <div class="archive-stacked-layout">
-
-                        <!-- Top panel: Search History list -->
-                        <div class="card history-top-card">
-                            <div class="history-top-header">
-                                <div class="card-title" style="margin-bottom: 0;">
-                                    <i data-lucide="history"></i>
-                                    <span>Search query index</span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="history-search-box">
+                                    <i data-lucide="search"></i>
+                                    <input type="text" id="archive-history-search" class="history-search-input"
+                                        placeholder="Filter queries...">
                                 </div>
+                                <button type="button" id="btn-open-queries-modal" class="btn btn-glow-outline"
+                                    style="width: auto; padding: 0 0.65rem; font-size: 0.82rem; height: 32px; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; border-color: var(--border-color); background: rgba(255,255,255,0.02);"
+                                    title="View all saved queries in a grid">
+                                    <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i> View All
+                                </button>
+                            </div>
+                        </div>
+                        <div class="history-horizontal-list" id="archive-history-list">
+                            <!-- Populated from searchesData via app.js -->
+                        </div>
+                    </div>
+
+                    <!-- Bottom panel: Leads table for selected search -->
+                    <div class="card table-card archive-table-card">
+
+                        <!-- Header Info & Selectors combined -->
+                        <div class="archive-header-row">
+                            <div class="archive-title-group">
+                                <h3 id="archive-table-title">All leads database</h3>
+                                <span class="archive-badge" id="archive-table-badge">0 leads</span>
+                            </div>
+                            <div class="table-filters">
+                                <div class="table-search-wrapper">
+                                    <i data-lucide="search" class="input-icon"></i>
+                                    <input type="text" id="archive-search-input" class="form-control-compact"
+                                        placeholder="Search name or company...">
+                                </div>
+                                <select id="archive-filter-platform" class="filter-select">
+                                    <option value="all">All Sources</option>
+                                    <option value="linkedin">LinkedIn</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="twitter">Twitter / X</option>
+                                    <!-- <option value="reddit">Reddit</option> -->
+                                    <option value="google_maps">Google Maps</option>
+                                </select>
+                                <select id="archive-filter-search-type" class="filter-select">
+                                    <option value="all">All Modes</option>
+                                    <option value="sales">Sales Leads Only</option>
+                                    <option value="recruiter">Candidates Only</option>
+                                </select>
+
+                                <select id="archive-filter-status" class="filter-select">
+                                    <option value="all">All Intent Scores</option>
+                                    <option value="Qualified">Qualified</option>
+                                    <option value="Warm Lead">Warm Lead</option>
+                                    <option value="Prospect">Prospect</option>
+                                    <option value="Potential Lead">Potential Lead</option>
+                                    <option value="Informational">Informational</option>
+                                    <option value="Unqualified">Unqualified</option>
+                                    <option value="Not a Lead">Not a Lead</option>
+                                </select>
+
+                                <select id="archive-filter-crm" class="filter-select">
+                                    <option value="all">All Stages</option>
+                                    <option value="New">New</option>
+                                    <option value="New Discovery">New Discovery</option>
+                                    <option value="Drafted">Drafted</option>
+                                    <option value="Emailed">Emailed</option>
+                                    <option value="Replied">Replied</option>
+                                    <option value="Disqualified">Disqualified</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Quick Filter Pills Row -->
+                        <div class="archive-quick-filters">
+                            <span class="quick-filter-label">Quick Filters:</span>
+                            <div class="saved-views-buttons">
+                                <button type="button" class="view-pill-btn active" id="archive-view-all">All
+                                    scraped</button>
+                                <button type="button" class="view-pill-btn" id="archive-view-high">High intent
+                                    only</button>
+                                <button type="button" class="view-pill-btn" id="archive-view-li">LinkedIn
+                                    leads</button>
+                                <button type="button" class="view-pill-btn" id="archive-view-fb">Facebook
+                                    leads</button>
+                                <button type="button" class="view-pill-btn" id="archive-view-replied">Replied
+                                    stage</button>
+                            </div>
+                        </div>
+
+                        <!-- Empty Archive Indicator -->
+                        <div id="archive-empty-state" class="empty-container" style="display: none;">
+                            <i data-lucide="folder-open"></i>
+                            <h3>No lead data found</h3>
+                            <p>Select another search query or perform a new scan.</p>
+                        </div>
+
+                        <!-- Spreadsheet Data Grid -->
+                        <div id="archive-table-wrapper" class="table-responsive" style="display: none;">
+                            <table class="table" style="table-layout: fixed; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; padding: 0.5rem 0.75rem;">
+                                            <input type="checkbox" id="archive-select-all-checkbox"
+                                                class="custom-checkbox">
+                                        </th>
+                                        <th style="width: 32%;">Lead / title</th>
+                                        <th style="width: 25%;">Company / org</th>
+                                        <th style="width: 18%;">Match score</th>
+                                        <th style="width: 18%;">Verified contact</th>
+                                        <th style="width: 7%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="archive-leads-tbody">
+                                    <!-- Rendered from app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Archive Pagination Controls -->
+                        <div class="pagination" id="archive-pagination" style="display: flex;">
+                            <button class="pag-btn" id="archive-pag-prev" disabled><i
+                                    data-lucide="chevron-left"></i></button>
+                            <span class="pag-text" id="archive-pag-text">Page 1 of 1</span>
+                            <button class="pag-btn" id="archive-pag-next" disabled><i
+                                    data-lucide="chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 5: Outreach Config (Redesigned into split screen preview layout) -->
+            <div id="view-settings" class="tab-view">
+                <div class="view-header">
+                    <h2>Outreach Config</h2>
+                    <p>Customize parameters to optimize personalized Llama pitches for target leads.</p>
+                </div>
+
+                <div class="config-split-grid">
+
+                    <!-- Row 1: IMAP & Preview -->
+                    <div class="config-split-row">
+                        <!-- IMAP configuration card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
+                            <div class="card-title"
+                                style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <div class="history-search-box">
-                                        <i data-lucide="search"></i>
-                                        <input type="text" id="archive-history-search" class="history-search-input"
-                                            placeholder="Filter queries...">
-                                    </div>
-                                    <button type="button" id="btn-open-queries-modal" class="btn btn-glow-outline"
-                                        style="width: auto; padding: 0 0.65rem; font-size: 0.82rem; height: 32px; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; border-color: var(--border-color); background: rgba(255,255,255,0.02);"
-                                        title="View all saved queries in a grid">
-                                        <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i> View All
-                                    </button>
+                                    <i data-lucide="mail"></i>
+                                    <span>Inbox Sync Configuration (IMAP)</span>
+                                </div>
+                                <div id="profile-health-imap" class="status-pulse-pill status-inactive">
+                                    <span class="pulse-dot"></span>
+                                    <span class="status-text">Not Configured</span>
                                 </div>
                             </div>
-                            <div class="history-horizontal-list" id="archive-history-list">
-                                <!-- Populated from searchesData via app.js -->
+                            <div class="settings-body"
+                                style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
+                                <div
+                                    style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 480px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-server">IMAP Server</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="server" class="input-icon"></i>
+                                            <input type="text" id="settings-imap-server" class="form-control"
+                                                placeholder="e.g. imap.gmail.com" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-port">IMAP Port</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="hash" class="input-icon"></i>
+                                            <input type="text" id="settings-imap-port" class="form-control"
+                                                placeholder="e.g. 993" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-email">Email Address</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="mail" class="input-icon"></i>
+                                            <input type="email" id="settings-imap-email" class="form-control"
+                                                placeholder="e.g. name@gmail.com" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-imap-password">App Password</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="key-round" class="input-icon"></i>
+                                            <input type="password" id="settings-imap-password" class="form-control"
+                                                placeholder="e.g. abcd efgh ijkl mnop" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <button type="button" id="btn-save-imap-config" class="btn btn-primary flex-1">
+                                            <i data-lucide="save"></i> Save Settings
+                                        </button>
+                                        <button type="button" id="btn-sync-replies-trigger"
+                                            class="btn btn-glow-outline flex-1">
+                                            <i data-lucide="refresh-cw"></i> Sync Replies
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Bottom panel: Leads table for selected search -->
-                        <div class="card table-card archive-table-card">
-
-                            <!-- Header Info & Selectors combined -->
-                            <div class="archive-header-row">
-                                <div class="archive-title-group">
-                                    <h3 id="archive-table-title">All leads database</h3>
-                                    <span class="archive-badge" id="archive-table-badge">0 leads</span>
-                                </div>
-                                <div class="table-filters">
-                                    <div class="table-search-wrapper">
-                                        <i data-lucide="search" class="input-icon"></i>
-                                        <input type="text" id="archive-search-input" class="form-control-compact" placeholder="Search name or company...">
-                                    </div>
-                                    <select id="archive-filter-platform" class="filter-select">
-                                        <option value="all">All Sources</option>
-                                        <option value="linkedin">LinkedIn</option>
-                                        <option value="facebook">Facebook</option>
-                                        <option value="twitter">Twitter / X</option>
-                                        <!-- <option value="reddit">Reddit</option> -->
-                                        <option value="google_maps">Google Maps</option>
-                                    </select>
-                                    <select id="archive-filter-search-type" class="filter-select">
-                                        <option value="all">All Modes</option>
-                                        <option value="sales">Sales Leads Only</option>
-                                        <option value="recruiter">Candidates Only</option>
-                                    </select>
-
-                                    <select id="archive-filter-status" class="filter-select">
-                                        <option value="all">All Intent Scores</option>
-                                        <option value="Qualified">Qualified</option>
-                                        <option value="Warm Lead">Warm Lead</option>
-                                        <option value="Prospect">Prospect</option>
-                                        <option value="Potential Lead">Potential Lead</option>
-                                        <option value="Informational">Informational</option>
-                                        <option value="Unqualified">Unqualified</option>
-                                        <option value="Not a Lead">Not a Lead</option>
-                                    </select>
-
-                                    <select id="archive-filter-crm" class="filter-select">
-                                        <option value="all">All Stages</option>
-                                        <option value="New">New</option>
-                                        <option value="New Discovery">New Discovery</option>
-                                        <option value="Drafted">Drafted</option>
-                                        <option value="Emailed">Emailed</option>
-                                        <option value="Replied">Replied</option>
-                                        <option value="Disqualified">Disqualified</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Quick Filter Pills Row -->
-                            <div class="archive-quick-filters">
-                                <span class="quick-filter-label">Quick Filters:</span>
-                                <div class="saved-views-buttons">
-                                    <button type="button" class="view-pill-btn active" id="archive-view-all">All
-                                        scraped</button>
-                                    <button type="button" class="view-pill-btn" id="archive-view-high">High intent
-                                        only</button>
-                                    <button type="button" class="view-pill-btn" id="archive-view-li">LinkedIn
-                                        leads</button>
-                                    <button type="button" class="view-pill-btn" id="archive-view-fb">Facebook
-                                        leads</button>
-                                    <button type="button" class="view-pill-btn" id="archive-view-replied">Replied
-                                        stage</button>
-                                </div>
-                            </div>
-
-                            <!-- Empty Archive Indicator -->
-                            <div id="archive-empty-state" class="empty-container" style="display: none;">
-                                <i data-lucide="folder-open"></i>
-                                <h3>No lead data found</h3>
-                                <p>Select another search query or perform a new scan.</p>
-                            </div>
-
-                            <!-- Spreadsheet Data Grid -->
-                            <div id="archive-table-wrapper" class="table-responsive" style="display: none;">
-                                <table class="table" style="table-layout: fixed; width: 100%;">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 40px; padding: 0.5rem 0.75rem;">
-                                                <input type="checkbox" id="archive-select-all-checkbox"
-                                                    class="custom-checkbox">
-                                            </th>
-                                            <th style="width: 32%;">Lead / title</th>
-                                            <th style="width: 25%;">Company / org</th>
-                                            <th style="width: 18%;">Match score</th>
-                                            <th style="width: 18%;">Verified contact</th>
-                                            <th style="width: 7%;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="archive-leads-tbody">
-                                        <!-- Rendered from app.js -->
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Archive Pagination Controls -->
-                            <div class="pagination" id="archive-pagination" style="display: flex;">
-                                <button class="pag-btn" id="archive-pag-prev" disabled><i
-                                        data-lucide="chevron-left"></i></button>
-                                <span class="pag-text" id="archive-pag-text">Page 1 of 1</span>
-                                <button class="pag-btn" id="archive-pag-next" disabled><i
-                                        data-lucide="chevron-right"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- View 5: Outreach Config (Redesigned into split screen preview layout) -->
-                <div id="view-settings" class="tab-view">
-                    <div class="view-header">
-                        <h2>Outreach Config</h2>
-                        <p>Customize parameters to optimize personalized Llama pitches for target leads.</p>
-                    </div>
-
-                    <div class="config-split-grid">
-
-                        <!-- Row 1: IMAP & Preview -->
-                        <div class="config-split-row">
-                            <!-- IMAP configuration card -->
-                            <div class="card settings-card" style="margin-bottom: 0;">
-                                <div class="card-title"
-                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <i data-lucide="mail"></i>
-                                        <span>Inbox Sync Configuration (IMAP)</span>
-                                    </div>
-                                    <div id="profile-health-imap" class="status-pulse-pill status-inactive">
-                                        <span class="pulse-dot"></span>
-                                        <span class="status-text">Not Configured</span>
-                                    </div>
-                                </div>
-                                <div class="settings-body"
-                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
-                                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 480px;">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-imap-server">IMAP Server</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="server" class="input-icon"></i>
-                                                <input type="text" id="settings-imap-server" class="form-control"
-                                                    placeholder="e.g. imap.gmail.com" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-imap-port">IMAP Port</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="hash" class="input-icon"></i>
-                                                <input type="text" id="settings-imap-port" class="form-control"
-                                                    placeholder="e.g. 993" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-imap-email">Email Address</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="mail" class="input-icon"></i>
-                                                <input type="email" id="settings-imap-email" class="form-control"
-                                                    placeholder="e.g. name@gmail.com" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-imap-password">App Password</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="key-round" class="input-icon"></i>
-                                                <input type="password" id="settings-imap-password" class="form-control"
-                                                    placeholder="e.g. abcd efgh ijkl mnop" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                                            <button type="button" id="btn-save-imap-config" class="btn btn-primary flex-1">
-                                                <i data-lucide="save"></i> Save Settings
-                                            </button>
-                                            <button type="button" id="btn-sync-replies-trigger"
-                                                class="btn btn-glow-outline flex-1">
-                                                <i data-lucide="refresh-cw"></i> Sync Replies
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Unified Preview Column -->
-                            <div class="config-preview-column">
-                                <!-- Unified Preview Browser Mockup -->
-                                <div class="unified-preview-browser">
-                                    <!-- Browser Header / Tabs -->
-                                    <div class="browser-header-bar">
-                                        <div class="browser-header-left">
-                                            <div class="browser-window-dots">
-                                                <span class="dot red"></span>
-                                                <span class="dot yellow"></span>
+                        <!-- Unified Preview Column -->
+                        <div class="config-preview-column">
+                            <!-- Unified Preview Browser Mockup -->
+                            <div class="unified-preview-browser">
+                                <!-- Browser Header / Tabs -->
+                                <div class="browser-header-bar">
+                                    <div class="browser-header-left">
+                                        <div class="browser-window-dots">
+                                            <span class="dot red"></span>
+                                            <span class="dot yellow"></span>
                                             <span class="dot green"></span>
                                         </div>
                                         <div class="browser-tabs-container">
@@ -1242,8 +1266,10 @@
                                                 <option value="Short & Conversational" selected>Short & Conversational
                                                 </option>
                                                 <option value="Professional & Formal">Professional & Formal</option>
-                                                <option value="Value Pitch (Free Audit)">Value Pitch (Free Audit)</option>
-                                                <option value="Aggressive Pitch (Meeting link)">Aggressive Pitch (Meeting
+                                                <option value="Value Pitch (Free Audit)">Value Pitch (Free Audit)
+                                                </option>
+                                                <option value="Aggressive Pitch (Meeting link)">Aggressive Pitch
+                                                    (Meeting
                                                     link)</option>
                                             </select>
                                         </div>
@@ -1352,387 +1378,417 @@
                         </div>
                     </div>
 
-                        <!-- Row 2: AI Model & Google Places -->
-                        <div class="config-split-row">
-                            <!-- AI Model Configuration card -->
-                            <div class="card settings-card" style="margin-bottom: 0;">
+                    <!-- Row 2: AI Model & Google Places -->
+                    <div class="config-split-row">
+                        <!-- AI Model Configuration card -->
+                        <div class="card settings-card" style="margin-bottom: 0;">
+                            <div class="card-title"
+                                style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i data-lucide="cpu"></i>
+                                    <span>AI LLM Model Configuration</span>
+                                </div>
+                                <div id="profile-health-model" class="status-pulse-pill status-active"
+                                    style="background: rgba(14,165,164,0.15); color: var(--secondary);">
+                                    <span class="pulse-dot"></span>
+                                    <span class="status-text" id="status-text-model">Groq (Llama-3.3)</span>
+                                </div>
+                            </div>
+                            <div class="settings-body"
+                                style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
+                                <div
+                                    style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 480px;">
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-model-preset-select">Active Preset</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="cpu" class="input-icon"></i>
+                                            <select id="settings-model-preset-select" class="form-control"
+                                                style="padding-left: 2.25rem;">
+                                                <!-- Filled dynamically from app.js -->
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-model-type-select">Provider Type</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="server" class="input-icon"></i>
+                                            <select id="settings-model-type-select" class="form-control"
+                                                style="padding-left: 2.25rem;">
+                                                <option value="groq">Groq</option>
+                                                <option value="openai">OpenAI</option>
+                                                <option value="ollama">Ollama</option>
+                                                <option value="anthropic">Anthropic (Claude)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-model-name">Model ID / Name (Optional)</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="hash" class="input-icon"></i>
+                                            <input type="text" id="settings-model-name" class="form-control"
+                                                placeholder="e.g. llama-3.3-70b-versatile or gpt-4o-mini"
+                                                style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+
+                                    <div id="settings-model-ollama-host-group" class="form-group"
+                                        style="margin-bottom: 0; display: none;">
+                                        <label for="settings-model-ollama-host">Ollama Server Endpoint</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="link" class="input-icon"></i>
+                                            <input type="text" id="settings-model-ollama-host" class="form-control"
+                                                placeholder="e.g. http://localhost:11434"
+                                                style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-model-temperature">Temperature: <span
+                                                id="settings-model-temperature-val">0.7</span></label>
+                                        <div
+                                            style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
+                                            <input type="range" id="settings-model-temperature" min="0" max="1"
+                                                step="0.1" value="0.7" style="flex: 1; accent-color: var(--primary);">
+                                        </div>
+                                    </div>
+
+                                    <button type="button" id="btn-save-model-config" class="btn btn-primary"
+                                        style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                        <i data-lucide="save"></i> Save Model Configuration
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Google Places & Twitter Stack -->
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem; height: 100%;">
+                            <!-- Google Places API configuration card -->
+                            <div class="card settings-card" style="margin-bottom: 0; height: auto; flex: 1;">
                                 <div class="card-title"
                                     style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <i data-lucide="cpu"></i>
-                                        <span>AI LLM Model Configuration</span>
+                                        <i data-lucide="map-pin"></i>
+                                        <span>Google Places API Configuration</span>
                                     </div>
-                                    <div id="profile-health-model" class="status-pulse-pill status-active"
-                                        style="background: rgba(14,165,164,0.15); color: var(--secondary);">
+                                    <div id="profile-health-places" class="status-pulse-pill status-inactive">
                                         <span class="pulse-dot"></span>
-                                        <span class="status-text" id="status-text-model">Groq (Llama-3.3)</span>
+                                        <span class="status-text">Fallback: Playwright</span>
                                     </div>
                                 </div>
                                 <div class="settings-body"
                                     style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
-                                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 480px;">
-
+                                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
                                         <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-preset-select">Active Preset</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="cpu" class="input-icon"></i>
-                                                <select id="settings-model-preset-select" class="form-control"
-                                                    style="padding-left: 2.25rem;">
-                                                    <!-- Filled dynamically from app.js -->
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-type-select">Provider Type</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="server" class="input-icon"></i>
-                                                <select id="settings-model-type-select" class="form-control"
-                                                    style="padding-left: 2.25rem;">
-                                                    <option value="groq">Groq</option>
-                                                    <option value="openai">OpenAI</option>
-                                                    <option value="ollama">Ollama</option>
-                                                    <option value="anthropic">Anthropic (Claude)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-name">Model ID / Name (Optional)</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="hash" class="input-icon"></i>
-                                                <input type="text" id="settings-model-name" class="form-control"
-                                                    placeholder="e.g. llama-3.3-70b-versatile or gpt-4o-mini"
-                                                    style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-
-                                        <div id="settings-model-ollama-host-group" class="form-group" style="margin-bottom: 0; display: none;">
-                                            <label for="settings-model-ollama-host">Ollama Server Endpoint</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="link" class="input-icon"></i>
-                                                <input type="text" id="settings-model-ollama-host" class="form-control"
-                                                    placeholder="e.g. http://localhost:11434"
-                                                    style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-model-temperature">Temperature: <span id="settings-model-temperature-val">0.7</span></label>
-                                            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
-                                                <input type="range" id="settings-model-temperature" min="0" max="1" step="0.1" value="0.7" style="flex: 1; accent-color: var(--primary-color);">
-                                            </div>
-                                        </div>
-
-                                        <button type="button" id="btn-save-model-config" class="btn btn-primary"
-                                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                            <i data-lucide="save"></i> Save Model Configuration
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Right Column: Google Places & Twitter Stack -->
-                            <div style="display: flex; flex-direction: column; gap: 1.5rem; height: 100%;">
-                                <!-- Google Places API configuration card -->
-                                <div class="card settings-card" style="margin-bottom: 0; height: auto; flex: 1;">
-                                    <div class="card-title"
-                                        style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <i data-lucide="map-pin"></i>
-                                            <span>Google Places API Configuration</span>
-                                        </div>
-                                        <div id="profile-health-places" class="status-pulse-pill status-inactive">
-                                            <span class="pulse-dot"></span>
-                                            <span class="status-text">Fallback: Playwright</span>
-                                        </div>
-                                    </div>
-                                    <div class="settings-body"
-                                        style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
-                                        <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
-                                            <div class="form-group" style="margin-bottom: 0;">
-                                                <label for="settings-places-key">Google Places API Key</label>
-                                                <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
-                                                    <div class="input-wrapper" style="flex-grow: 1; position: relative;">
-                                                        <i data-lucide="key" class="input-icon" style="color: var(--warning); position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
-                                                        <input type="password" id="settings-places-key" class="form-control"
-                                                            placeholder="e.g. AIzaSy..."
-                                                            style="padding-left: 2.25rem; font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em; height: 2.8rem; width: 100%;">
-                                                        <button type="button" id="btn-toggle-places-key"
-                                                            style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; z-index: 10;"
-                                                            title="Show/Hide Key">
-                                                            <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
-                                                    If left empty, the pipeline will fall back to local Google Maps scraping using Playwright automation.
-                                                </p>
-                                            </div>
-                                            <button type="button" id="btn-save-places-key" class="btn btn-primary"
-                                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                                <i data-lucide="save"></i> Save Places Settings
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Twitter API configuration card -->
-                                <div class="card settings-card" style="margin-bottom: 0; height: auto; flex: 1;">
-                                    <div class="card-title"
-                                        style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <i data-lucide="twitter"></i>
-                                            <span>Twitter / X API Configuration</span>
-                                        </div>
-                                        <div id="profile-health-twitter" class="status-pulse-pill status-inactive">
-                                            <span class="pulse-dot"></span>
-                                            <span class="status-text">Fallback: Serper</span>
-                                        </div>
-                                    </div>
-                                    <div class="settings-body"
-                                        style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
-                                        <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
-                                            <div class="form-group" style="margin-bottom: 0;">
-                                                <label for="settings-twitter-key">Twitter API Key</label>
-                                                <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
-                                                    <div class="input-wrapper" style="flex-grow: 1; position: relative;">
-                                                        <i data-lucide="key" class="input-icon" style="color: var(--warning); position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
-                                                        <input type="password" id="settings-twitter-key" class="form-control"
-                                                            placeholder="e.g. twitter_api_key..."
-                                                            style="padding-left: 2.25rem; font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em; height: 2.8rem; width: 100%;">
-                                                        <button type="button" id="btn-toggle-twitter-key"
-                                                            style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; z-index: 10;"
-                                                            title="Show/Hide Key">
-                                                            <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
-                                                    If left empty, the pipeline will fall back to search using the global Serper API key from the environment.
-                                                </p>
-                                            </div>
-                                            <button type="button" id="btn-save-twitter-key" class="btn btn-primary"
-                                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                                <i data-lucide="save"></i> Save Twitter Settings
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- View 6: User Profile Dashboard -->
-                <div id="view-profile" class="tab-view">
-                    <div class="view-header">
-                        <h2>User Profile</h2>
-                        <p>Manage your account settings, developer credentials, and usage analytics.</p>
-                    </div>
-
-                    <!-- Full-Width Profile Container -->
-                    <div class="profile-container">
-                        
-                        <!-- Compact Profile Overview Banner -->
-                        <div class="profile-overview-header">
-                            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                                <div class="profile-avatar-medium" id="profile-avatar-circle">US</div>
-                                <div style="display: flex; flex-direction: column; gap: 0.15rem;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <h3 id="profile-display-name-heading" style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">User</h3>
-                                        <span id="profile-business-subheading" style="font-size: 0.82rem; color: var(--text-muted); background: var(--bg-trans-4); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-color); font-weight: 500;">Company</span>
-                                    </div>
-                                    <span id="profile-email-subheading" style="font-size: 0.85rem; color: var(--text-muted);">user@example.com</span>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="badge badge-info" style="font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 12px; background: var(--bg-trans-5); color: var(--text-secondary); border: 1px solid var(--border-color);">
-                                    <i data-lucide="calendar" style="width: 11px; height: 11px; color: var(--primary);"></i>
-                                    Member since <span id="profile-joined-date-text">June 19, 2026</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2-Column Grid: Account details (left) & Update Password (right) -->
-                        <div class="profile-main-grid">
-                            <!-- Column 1: Account Details -->
-                            <div class="profile-column" style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%;">
-                                <div class="card settings-card" style="margin-bottom: 0;">
-                                    <div class="card-title">
-                                        <i data-lucide="user"></i>
-                                        <span>Account Information</span>
-                                    </div>
-                                    <div class="settings-body" style="display: flex; flex-direction: column; gap: 1.25rem; padding-top: 0;">
-                                        <div class="form-group" style="margin-bottom: 0; width: 100%;">
-                                            <label for="profile-display-name">Display Name</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="user" class="input-icon"></i>
-                                                <input type="text" id="profile-display-name" class="form-control"
-                                                    placeholder="e.g. Workspace Manager" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0; width: 100%;">
-                                            <label for="profile-business-name">Business / Company Name</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="briefcase" class="input-icon"></i>
-                                                <input type="text" id="profile-business-name" class="form-control"
-                                                    placeholder="e.g. Acme Agency" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0; width: 100%;">
-                                            <label for="profile-agency-info">Value Pitch Profile & Core Offers</label>
-                                            <textarea id="profile-agency-info" class="form-control"
-                                                style="height: 52px; resize: vertical; padding: 0.65rem 0.85rem;"
-                                                placeholder="e.g. custom UI/UX design, Next.js web apps, free code auditing...">premier design & development services</textarea>
-                                        </div>
-
-                                        <!-- Hidden joined date input to keep existing JS bindings happy -->
-                                        <input type="hidden" id="profile-joined-date">
-
-                                        <button type="button" id="btn-save-user-profile" class="btn btn-primary"
-                                            style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
-                                            <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Changes
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Column 2: Security & Password Reset -->
-                            <div class="profile-column" style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%;">
-                                <div class="card settings-card" style="margin-bottom: 0;">
-                                    <div class="card-title">
-                                        <i data-lucide="shield-check"></i>
-                                        <span>Security / Update Password</span>
-                                    </div>
-                                    <div class="settings-body" style="display: flex; flex-direction: column; gap: 1.25rem; padding-top: 0; width: 100%;">
-                                        <div class="form-group" style="margin-bottom: 0; width: 100%;">
-                                            <label for="profile-current-password">Current Password</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="lock" class="input-icon"
-                                                    style="color: var(--text-muted);"></i>
-                                                <input type="password" id="profile-current-password" class="form-control"
-                                                    placeholder="Current Password" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0; width: 100%;">
-                                            <label for="profile-new-password">New Password</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="shield-alert" class="input-icon"
-                                                    style="color: var(--text-muted);"></i>
-                                                <input type="password" id="profile-new-password" class="form-control"
-                                                    placeholder="New Password (min 6 chars)" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0; width: 100%;">
-                                            <label for="profile-confirm-password">Confirm New Password</label>
-                                            <div class="input-wrapper">
-                                                <i data-lucide="shield-check" class="input-icon"
-                                                    style="color: var(--text-muted);"></i>
-                                                <input type="password" id="profile-confirm-password" class="form-control"
-                                                    placeholder="Confirm New Password" style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <button type="button" id="btn-profile-change-password" class="btn btn-primary"
-                                            style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
-                                            <i data-lucide="key-round" style="width: 16px; height: 16px;"></i> Change Password
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Dedicated Developer & Integrations Section -->
-                        <div class="profile-integrations-section">
-                            <div class="section-title-wrapper" style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                                <h3 style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i data-lucide="terminal" style="width: 16px; height: 16px; color: var(--text-secondary);"></i>
-                                    Developer & Integrations
-                                </h3>
-                                <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Manage your Developer Secret Keys and external webhook CRM integrations.</p>
-                            </div>
-
-                            <div class="profile-integrations-grid">
-                                <!-- Developer Settings Card -->
-                                <div class="card settings-card" style="margin-bottom: 0;">
-                                    <div class="card-title"
-                                        style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <i data-lucide="key-round"></i>
-                                            <span>API Developer Credentials</span>
-                                        </div>
-                                        <div id="profile-health-api" class="status-pulse-pill status-active">
-                                            <span class="pulse-dot"></span>
-                                            <span class="status-text">Active</span>
-                                        </div>
-                                    </div>
-                                    <div class="settings-body"
-                                         style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%; justify-content: center; height: 100%;">
-                                         <div class="form-group" style="margin-bottom: 0; width: 100%; height: auto !important;">
-                                             <label style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">API Developer Secret Key</label>
-                                             <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem !important;">
-                                                <div class="input-wrapper" style="flex-grow: 1;">
+                                            <label for="settings-places-key">Google Places API Key</label>
+                                            <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                                                <div class="input-wrapper" style="flex-grow: 1; position: relative;">
                                                     <i data-lucide="key" class="input-icon"
-                                                        style="color: var(--warning);"></i>
-                                                    <input type="password" id="profile-api-token" class="form-control"
-                                                        readonly value="****************"
-                                                        style="padding-left: 2.25rem; background: var(--bg-trans-2); font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em; height: 2.8rem;">
-                                                    <button type="button" id="btn-toggle-profile-token"
-                                                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer;"
+                                                        style="color: var(--warning); position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
+                                                    <input type="password" id="settings-places-key" class="form-control"
+                                                        placeholder="e.g. AIzaSy..."
+                                                        style="padding-left: 2.25rem; font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em; height: 2.8rem; width: 100%;">
+                                                    <button type="button" id="btn-toggle-places-key"
+                                                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; z-index: 10;"
                                                         title="Show/Hide Key">
                                                         <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
                                                     </button>
                                                 </div>
-                                                <button type="button" id="btn-copy-profile-token"
-                                                    class="btn btn-glow-outline"
-                                                    style="width: auto; padding: 0 0.85rem; height: 2.8rem; display: inline-flex; align-items: center;"
-                                                    title="Copy to Clipboard">
-                                                    <i data-lucide="copy" style="width: 15px; height: 15px;"></i>
+                                            </div>
+                                            <p
+                                                style="font-size: 12px; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+                                                If left empty, the pipeline will fall back to local Google Maps scraping
+                                                using Playwright automation.
+                                            </p>
+                                        </div>
+                                        <button type="button" id="btn-save-places-key" class="btn btn-primary"
+                                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                            <i data-lucide="save"></i> Save Places Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Twitter API configuration card -->
+                            <div class="card settings-card" style="margin-bottom: 0; height: auto; flex: 1;">
+                                <div class="card-title"
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="twitter"></i>
+                                        <span>Twitter / X API Configuration</span>
+                                    </div>
+                                    <div id="profile-health-twitter" class="status-pulse-pill status-inactive">
+                                        <span class="pulse-dot"></span>
+                                        <span class="status-text">Fallback: Serper</span>
+                                    </div>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
+                                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="settings-twitter-key">Twitter API Key</label>
+                                            <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                                                <div class="input-wrapper" style="flex-grow: 1; position: relative;">
+                                                    <i data-lucide="key" class="input-icon"
+                                                        style="color: var(--warning); position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
+                                                    <input type="password" id="settings-twitter-key"
+                                                        class="form-control" placeholder="e.g. twitter_api_key..."
+                                                        style="padding-left: 2.25rem; font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em; height: 2.8rem; width: 100%;">
+                                                    <button type="button" id="btn-toggle-twitter-key"
+                                                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; z-index: 10;"
+                                                        title="Show/Hide Key">
+                                                        <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <p
+                                                style="font-size: 12px; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+                                                If left empty, the pipeline will fall back to search using the global
+                                                Serper API key from the environment.
+                                            </p>
+                                        </div>
+                                        <button type="button" id="btn-save-twitter-key" class="btn btn-primary"
+                                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                            <i data-lucide="save"></i> Save Twitter Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- View 6: User Profile Dashboard -->
+            <div id="view-profile" class="tab-view">
+                <div class="view-header">
+                    <h2>User Profile</h2>
+                    <p>Manage your account settings, developer credentials, and usage analytics.</p>
+                </div>
+
+                <!-- Full-Width Profile Container -->
+                <div class="profile-container">
+
+                    <!-- Compact Profile Overview Banner -->
+                    <div class="profile-overview-header">
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div class="profile-avatar-medium" id="profile-avatar-circle">US</div>
+                            <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <h3 id="profile-display-name-heading"
+                                        style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">
+                                        User</h3>
+                                    <span id="profile-business-subheading"
+                                        style="font-size: 0.82rem; color: var(--text-muted); background: var(--bg-trans-4); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-color); font-weight: 500;">Company</span>
+                                </div>
+                                <span id="profile-email-subheading"
+                                    style="font-size: 0.85rem; color: var(--text-muted);">user@example.com</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="badge badge-info"
+                                style="font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 12px; background: var(--bg-trans-5); color: var(--text-secondary); border: 1px solid var(--border-color);">
+                                <i data-lucide="calendar" style="width: 11px; height: 11px; color: var(--primary);"></i>
+                                Member since <span id="profile-joined-date-text">June 19, 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2-Column Grid: Account details (left) & Update Password (right) -->
+                    <div class="profile-main-grid">
+                        <!-- Column 1: Account Details -->
+                        <div class="profile-column"
+                            style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%;">
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title">
+                                    <i data-lucide="user"></i>
+                                    <span>Account Information</span>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1.25rem; padding-top: 0;">
+                                    <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                        <label for="profile-display-name">Display Name</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="user" class="input-icon"></i>
+                                            <input type="text" id="profile-display-name" class="form-control"
+                                                placeholder="e.g. Workspace Manager" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                        <label for="profile-business-name">Business / Company Name</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="briefcase" class="input-icon"></i>
+                                            <input type="text" id="profile-business-name" class="form-control"
+                                                placeholder="e.g. Acme Agency" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                        <label for="profile-agency-info">Value Pitch Profile & Core Offers</label>
+                                        <textarea id="profile-agency-info" class="form-control"
+                                            style="height: 52px; resize: vertical; padding: 0.65rem 0.85rem;"
+                                            placeholder="e.g. custom UI/UX design, Next.js web apps, free code auditing...">premier design & development services</textarea>
+                                    </div>
+
+                                    <!-- Hidden joined date input to keep existing JS bindings happy -->
+                                    <input type="hidden" id="profile-joined-date">
+
+                                    <button type="button" id="btn-save-user-profile" class="btn btn-primary"
+                                        style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
+                                        <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Security & Password Reset -->
+                        <div class="profile-column"
+                            style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%;">
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title">
+                                    <i data-lucide="shield-check"></i>
+                                    <span>Security / Update Password</span>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1.25rem; padding-top: 0; width: 100%;">
+                                    <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                        <label for="profile-current-password">Current Password</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="lock" class="input-icon"
+                                                style="color: var(--text-muted);"></i>
+                                            <input type="password" id="profile-current-password" class="form-control"
+                                                placeholder="Current Password" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                        <label for="profile-new-password">New Password</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="shield-alert" class="input-icon"
+                                                style="color: var(--text-muted);"></i>
+                                            <input type="password" id="profile-new-password" class="form-control"
+                                                placeholder="New Password (min 6 chars)" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; width: 100%;">
+                                        <label for="profile-confirm-password">Confirm New Password</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="shield-check" class="input-icon"
+                                                style="color: var(--text-muted);"></i>
+                                            <input type="password" id="profile-confirm-password" class="form-control"
+                                                placeholder="Confirm New Password" style="padding-left: 2.25rem;">
+                                        </div>
+                                    </div>
+                                    <button type="button" id="btn-profile-change-password" class="btn btn-primary"
+                                        style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
+                                        <i data-lucide="key-round" style="width: 16px; height: 16px;"></i> Change
+                                        Password
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dedicated Developer & Integrations Section -->
+                    <div class="profile-integrations-section">
+                        <div class="section-title-wrapper"
+                            style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            <h3
+                                style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                <i data-lucide="terminal"
+                                    style="width: 16px; height: 16px; color: var(--text-secondary);"></i>
+                                Developer & Integrations
+                            </h3>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Manage your
+                                Developer Secret Keys and external webhook CRM integrations.</p>
+                        </div>
+
+                        <div class="profile-integrations-grid">
+                            <!-- Developer Settings Card -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title"
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="key-round"></i>
+                                        <span>API Developer Credentials</span>
+                                    </div>
+                                    <div id="profile-health-api" class="status-pulse-pill status-active">
+                                        <span class="pulse-dot"></span>
+                                        <span class="status-text">Active</span>
+                                    </div>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%; justify-content: center; height: 100%;">
+                                    <div class="form-group"
+                                        style="margin-bottom: 0; width: 100%; height: auto !important;">
+                                        <label
+                                            style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">API
+                                            Developer Secret Key</label>
+                                        <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem !important;">
+                                            <div class="input-wrapper" style="flex-grow: 1;">
+                                                <i data-lucide="key" class="input-icon"
+                                                    style="color: var(--warning);"></i>
+                                                <input type="password" id="profile-api-token" class="form-control"
+                                                    readonly value="****************"
+                                                    style="padding-left: 2.25rem; background: var(--bg-trans-2); font-family: monospace; font-size: 0.82rem; letter-spacing: 0.05em; height: 2.8rem;">
+                                                <button type="button" id="btn-toggle-profile-token"
+                                                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer;"
+                                                    title="Show/Hide Key">
+                                                    <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
                                                 </button>
                                             </div>
+                                            <button type="button" id="btn-copy-profile-token"
+                                                class="btn btn-glow-outline"
+                                                style="width: auto; padding: 0 0.85rem; height: 2.8rem; display: inline-flex; align-items: center;"
+                                                title="Copy to Clipboard">
+                                                <i data-lucide="copy" style="width: 15px; height: 15px;"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Webhook CRM Integration Card -->
-                                <div class="card settings-card" style="margin-bottom: 0;">
-                                    <div class="card-title"
-                                        style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            <i data-lucide="webhook"></i>
-                                            <span>CRM Webhook Integration</span>
-                                        </div>
-                                        <div id="profile-health-webhook" class="status-pulse-pill status-inactive">
-                                            <span class="pulse-dot"></span>
-                                            <span class="status-text">Inactive</span>
+                            <!-- Webhook CRM Integration Card -->
+                            <div class="card settings-card" style="margin-bottom: 0;">
+                                <div class="card-title"
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="webhook"></i>
+                                        <span>CRM Webhook Integration</span>
+                                    </div>
+                                    <div id="profile-health-webhook" class="status-pulse-pill status-inactive">
+                                        <span class="pulse-dot"></span>
+                                        <span class="status-text">Inactive</span>
+                                    </div>
+                                </div>
+                                <div class="settings-body"
+                                    style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="settings-webhook-url"
+                                            style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">Webhook
+                                            Target URL</label>
+                                        <div class="input-wrapper" style="margin-top: 0.35rem;">
+                                            <i data-lucide="link" class="input-icon"></i>
+                                            <input type="text" id="settings-webhook-url" class="form-control"
+                                                placeholder="e.g. https://hooks.zapier.com/hooks/catch/..."
+                                                style="padding-left: 2.25rem;">
                                         </div>
                                     </div>
-                                    <div class="settings-body"
-                                        style="display: flex; flex-direction: column; gap: 1rem; padding-top: 0; width: 100%;">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label for="settings-webhook-url" style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">Webhook Target URL</label>
-                                            <div class="input-wrapper" style="margin-top: 0.35rem;">
-                                                <i data-lucide="link" class="input-icon"></i>
-                                                <input type="text" id="settings-webhook-url" class="form-control"
-                                                    placeholder="e.g. https://hooks.zapier.com/hooks/catch/..."
-                                                    style="padding-left: 2.25rem;">
-                                            </div>
-                                        </div>
-                                        <button type="button" id="btn-save-webhook-url" class="btn btn-primary"
-                                            style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
-                                            <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Webhook URL
-                                        </button>
-                                    </div>
+                                    <button type="button" id="btn-save-webhook-url" class="btn btn-primary"
+                                        style="width: fit-content; align-self: flex-start; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.25rem;">
+                                        <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Webhook URL
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+    </div>
+    </main>
     </div>
 
     <!-- Bulk Actions Floating Footer Drawer -->
@@ -1854,10 +1910,12 @@
                             class="form-control modal-dense-input input-padding-left-sm"
                             placeholder="e.g. React, Node.js, TypeScript">
                     </div>
-                    <div class="detail-section-row" style="margin-top: 1rem; margin-bottom: 1rem; display: flex; gap: 1rem;">
+                    <div class="detail-section-row"
+                        style="margin-top: 1rem; margin-bottom: 1rem; display: flex; gap: 1rem;">
                         <div class="flex-1" style="flex: 1;">
                             <label for="modal-experience-level">Experience Level</label>
-                            <select id="modal-experience-level" class="form-control modal-dense-input input-padding-left-sm" style="width: 100%;">
+                            <select id="modal-experience-level"
+                                class="form-control modal-dense-input input-padding-left-sm" style="width: 100%;">
                                 <option value="Unknown">Unknown</option>
                                 <option value="Junior">Junior</option>
                                 <option value="Mid-level">Mid-level</option>
@@ -1867,7 +1925,8 @@
                         </div>
                         <div class="flex-1" style="flex: 1;">
                             <label for="modal-work-preference">Work Preference</label>
-                            <select id="modal-work-preference" class="form-control modal-dense-input input-padding-left-sm" style="width: 100%;">
+                            <select id="modal-work-preference"
+                                class="form-control modal-dense-input input-padding-left-sm" style="width: 100%;">
                                 <option value="Unknown">Unknown</option>
                                 <option value="Remote">Remote</option>
                                 <option value="Hybrid">Hybrid</option>
@@ -1918,7 +1977,7 @@
                     <div class="pitch-label-wrapper">
                         <label class="label-small-bold">Outreach pitch draft</label>
                         <button id="btn-generate-pitch" class="btn btn-primary btn-generate">
-                            <i data-lucide="sparkles" ></i> Generate AI pitch
+                            <i data-lucide="sparkles"></i> Generate AI pitch
                         </button>
                     </div>
 
@@ -2005,7 +2064,8 @@
                     <i data-lucide="x"></i>
                 </button>
             </div>
-            <div class="notifications-history-list" id="notifications-history-list" style="max-height: 400px; overflow-y: auto; padding: 1rem 0;">
+            <div class="notifications-history-list" id="notifications-history-list"
+                style="max-height: 400px; overflow-y: auto; padding: 1rem 0;">
                 <!-- Populated via Javascript -->
             </div>
         </div>
