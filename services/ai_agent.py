@@ -1,6 +1,8 @@
 import os
 import json
 
+GROQ_BLOCKED_UNTIL = 0
+
 class ChatCompletions:
     def __init__(self, client_instance):
         self.client_instance = client_instance
@@ -73,6 +75,39 @@ class DynamicLLMClient:
             except Exception as e:
                 print(f"[LLM Client] Error loading config.json: {e}")
         return config
+
+    def _call_ollama_fallback(self, messages, response_format, temp):
+        import openai
+        import requests
+        import os
+        ollama_model = "llama3"
+        host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        try:
+            tags_resp = requests.get(f"{host.rstrip('/')}/api/tags", timeout=2)
+            if tags_resp.ok:
+                models_list = tags_resp.json().get("models", [])
+                if models_list:
+                    ollama_model = models_list[0].get("name", "llama3")
+                    print(f"[LLM Client] Detected local Ollama model: {ollama_model}")
+        except Exception as tag_err:
+            print(f"[LLM Client] Could not query local Ollama tags: {tag_err}. Fallback model: {ollama_model}")
+        
+        try:
+            ollama_client = openai.OpenAI(
+                base_url=f"{host.rstrip('/')}/v1",
+                api_key="ollama"
+            )
+            ollama_kwargs = {
+                "model": ollama_model,
+                "messages": messages,
+                "temperature": temp
+            }
+            if response_format:
+                ollama_kwargs["response_format"] = response_format
+            return ollama_client.chat.completions.create(**ollama_kwargs)
+        except Exception as ollama_err:
+            print(f"[LLM Client] Ollama fallback failed: {ollama_err}")
+            raise ollama_err
 
     def create_completion(self, messages, response_format=None, temperature=0.7):
         config = self.get_config()
@@ -161,6 +196,11 @@ class DynamicLLMClient:
         else: # Default: groq
             import time
             from groq import Groq
+            
+            global GROQ_BLOCKED_UNTIL
+            if time.time() < GROQ_BLOCKED_UNTIL:
+                return self._call_ollama_fallback(messages, response_format, temp)
+                
             groq_key = os.getenv("GROQ_API_KEY")
             if not model:
                 model = "llama-3.3-70b-versatile"
@@ -173,16 +213,15 @@ class DynamicLLMClient:
             if response_format:
                 kwargs["response_format"] = response_format
                 
-            for attempt in range(4):
-                try:
-                    return api_client.chat.completions.create(**kwargs)
-                except Exception as e:
-                    if attempt < 3:
-                        wait_time = (attempt + 1) * 2
-                        print(f"[LLM Client] Groq API call failed: {e}. Retrying in {wait_time}s (Attempt {attempt + 1}/3)...")
-                        time.sleep(wait_time)
-                    else:
-                        raise e
+            try:
+                return api_client.chat.completions.create(**kwargs)
+            except Exception as e:
+                if "429" in str(e) or "rate_limit" in str(e).lower():
+                    GROQ_BLOCKED_UNTIL = time.time() + 300
+                    print(f"[LLM Client] Groq rate limit (429) hit. Tripping circuit breaker to local Ollama for 5 mins.")
+                else:
+                    print(f"[LLM Client] Groq API call failed: {e}. Falling back immediately to local Ollama...")
+                return self._call_ollama_fallback(messages, response_format, temp)
 
 client = DynamicLLMClient()
 

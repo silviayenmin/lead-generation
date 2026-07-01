@@ -43,7 +43,7 @@ def generate_fingerprint(author_name: str, company_name: str, need_description: 
         
     auth = clean(author_name)
     comp = clean(company_name)
-    need = clean(need_description[:100])  # Use first 100 characters of the need description
+    need = clean(str(need_description or "")[:100])  # Use first 100 characters of the need description safely
     combined = f"{auth}|{comp}|{need}"
     return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
