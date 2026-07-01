@@ -48,6 +48,7 @@ from crm import (
     get_email_config,
     is_facebook_fallback_name,
     extract_author_from_email_or_url,
+    is_location_match,
     get_mongo_db,
     save_webhook_config,
     get_webhook_config,
@@ -67,7 +68,17 @@ from services.ai_agent import generate_pitch, client
 from services.csv_exporter import export_to_csv
 from services.imap_listener import sync_user_replies
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="LeadFlow Intent Discovery Platform")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 APP_SECRET_KEY = os.getenv("APP_SECRET_KEY", "silvia_dev_key")
 
@@ -151,6 +162,7 @@ class SearchRequest(BaseModel):
     match_type: Optional[str] = "partial"
     location: Optional[str] = None
     industry: Optional[str] = None
+    search_type: Optional[str] = "sales"  # sales or recruiter
 
 class UpdateCRMRequest(BaseModel):
     sourceUrl: str
@@ -166,6 +178,10 @@ class UpdateCRMRequest(BaseModel):
     needDescription: Optional[str] = None
     contactInfo: Optional[str] = None
     platform: Optional[str] = None
+    workPreference: Optional[str] = None
+    skills: Optional[str] = None
+    experienceLevel: Optional[str] = None
+    search_type: Optional[str] = None
 
 class GeneratePitchRequest(BaseModel):
     sourceUrl: str
@@ -183,6 +199,8 @@ class SavedSearchRequest(BaseModel):
     match_type: Optional[str] = "partial"
     location: Optional[str] = None
     industry: Optional[str] = None
+    limit: Optional[int] = 10
+    search_type: Optional[str] = "sales"  # sales or recruiter
 
 class BulkDeleteRequest(BaseModel):
     urls: List[str]
@@ -290,7 +308,7 @@ async def run_search(payload: SearchRequest, request: Request):
                         api_key=places_key,
                         limit=payload.limit or 10
                     )
-                elif plat in ["linkedin", "facebook", "twitter"]:
+                else:
                     twitter_key = get_twitter_api_key(user_email)
                     res = await asyncio.to_thread(
                         adapter.search,
@@ -299,16 +317,8 @@ async def run_search(payload: SearchRequest, request: Request):
                         match_type=payload.match_type or "partial",
                         location=payload.location,
                         industry=payload.industry,
-                        api_key=twitter_key
-                    )
-                else:
-                    res = await asyncio.to_thread(
-                        adapter.search,
-                        q,
-                        timeframe=timeframe,
-                        match_type=payload.match_type or "partial",
-                        location=payload.location,
-                        industry=payload.industry
+                        api_key=twitter_key,
+                        limit=payload.limit or 10
                     )
                 if res:
                     raw_results.extend(res)
@@ -341,9 +351,18 @@ async def run_search(payload: SearchRequest, request: Request):
                 return None
             try:
                 # 4. Intent Signal Classification (Requirement 8)
-                lead = await asyncio.to_thread(classify_lead_intent, title, snippet)
+                lead = await asyncio.to_thread(classify_lead_intent, title, snippet, payload.search_type or "sales")
                 lead["sourceUrl"] = source_url
                 lead["platform"] = determine_lead_platform(source_url)
+                lead["search_type"] = payload.search_type or "sales"
+                
+                # Initialize candidate-specific fields
+                if "workPreference" not in lead:
+                    lead["workPreference"] = "Unknown"
+                if "skills" not in lead:
+                    lead["skills"] = ""
+                if "experienceLevel" not in lead:
+                    lead["experienceLevel"] = "Unknown"
                 
                 # Overrides for Google Maps leads
                 if lead.get("platform") == "google_maps":
@@ -369,18 +388,21 @@ async def run_search(payload: SearchRequest, request: Request):
                 company = validate_company_name(lead.get("companyName"))
                 lead["companyName"] = company
                 
-                # Secondary Enrichment search if company details are missing
-                if lead.get("platform") != "google_maps" and not is_empty_value(author) and is_empty_value(company):
-                    enriched_data = await asyncio.to_thread(enrich_profile_details, author)
-                    ec = enriched_data.get("companyName")
-                    ei = enriched_data.get("industry")
-                    el = enriched_data.get("location")
-                    if not is_empty_value(ec):
-                        lead["companyName"] = validate_company_name(ec)
-                    if not is_empty_value(ei) and is_empty_value(lead.get("industry")):
-                        lead["industry"] = ei
-                    if not is_empty_value(el) and is_empty_value(lead.get("location")):
-                        lead["location"] = el
+                # Secondary Enrichment search if company details or location are missing, or if a location filter is requested
+                if lead.get("platform") != "google_maps" and not is_empty_value(author):
+                    if is_empty_value(lead.get("companyName")) or is_empty_value(lead.get("location")) or (payload.location and payload.location.strip()):
+                        enriched_data = await asyncio.to_thread(enrich_profile_details, author, source_url)
+                        if enriched_data:
+                            ec = enriched_data.get("companyName")
+                            ei = enriched_data.get("industry")
+                            el = enriched_data.get("location")
+                            if not is_empty_value(ec) and is_empty_value(lead.get("companyName")):
+                                lead["companyName"] = validate_company_name(ec)
+                                company = lead["companyName"]
+                            if not is_empty_value(ei) and is_empty_value(lead.get("industry")):
+                                lead["industry"] = ei
+                            if not is_empty_value(el):
+                                lead["location"] = el
  
                 # 6. Contact Enrichment / Email Guessing (Requirement 7)
                 if lead.get("platform") == "google_maps":
@@ -421,6 +443,14 @@ async def run_search(payload: SearchRequest, request: Request):
                 print(f"Confidence Score: {lead.get('confidenceScore') or lead.get('leadScore') or 0}%")
                 print("="*50 + "\n")
                 
+                # Enforce location filtering if specified
+                if payload.location and payload.location.strip():
+                    lead_loc = lead.get("location")
+                    text_ctx = f"{title} {snippet}"
+                    if not is_location_match(payload.location, lead_loc, text_context=text_ctx):
+                        print(f"[Search Filter] Discarding lead {author} because profile location '{lead_loc}' does not match requested location '{payload.location}'")
+                        return None
+                
                 return {"status": "success", "lead": lead, "source_url": source_url}
             except Exception as err:
                 print(f"Error classifying lead {title}: {err}")
@@ -446,7 +476,11 @@ async def run_search(payload: SearchRequest, request: Request):
                     "sourceUrl": source_url,
                     "crmStatus": "New",
                     "draftEmail": "",
-                    "platform": determine_lead_platform(source_url)
+                    "platform": determine_lead_platform(source_url),
+                    "search_type": payload.search_type or "sales",
+                    "workPreference": "Unknown",
+                    "skills": "",
+                    "experienceLevel": "Unknown"
                 }
                 
                 # Print fallback debug info
@@ -457,6 +491,14 @@ async def run_search(payload: SearchRequest, request: Request):
                 print(f"Extracted Company: Not Specified")
                 print(f"Confidence Score: 0%")
                 print("="*50 + "\n")
+                
+                # Enforce location filtering on fallback as well
+                if payload.location and payload.location.strip():
+                    lead_loc = fallback_lead.get("location")
+                    text_ctx = f"{title} {snippet}"
+                    if not is_location_match(payload.location, lead_loc, text_context=text_ctx):
+                        print(f"[Search Filter] Discarding fallback lead {fallback_author} because profile location '{lead_loc}' does not match requested location '{payload.location}'")
+                        return None
                 
                 return {"status": "fallback", "lead": fallback_lead, "source_url": source_url}
 
@@ -532,7 +574,8 @@ async def run_search(payload: SearchRequest, request: Request):
             "resultsFound": total_results_found,
             "qualifiedLeadsCount": qualified_count,
             "qualificationRate": rate,
-            "leadUrls": [l.get("sourceUrl") for l in current_search_leads if l.get("sourceUrl")]
+            "leadUrls": [l.get("sourceUrl") for l in current_search_leads if l.get("sourceUrl")],
+            "search_type": payload.search_type or "sales"
         }
         searches.insert(0, new_search)
     save_searches(searches, user_email)
@@ -632,6 +675,14 @@ async def update_lead_crm(payload: UpdateCRMRequest, request: Request, backgroun
         db[payload.sourceUrl]["authorName"] = payload.authorName
     if payload.platform is not None:
         db[payload.sourceUrl]["platform"] = payload.platform
+    if payload.workPreference is not None:
+        db[payload.sourceUrl]["workPreference"] = payload.workPreference
+    if payload.skills is not None:
+        db[payload.sourceUrl]["skills"] = payload.skills
+    if payload.experienceLevel is not None:
+        db[payload.sourceUrl]["experienceLevel"] = payload.experienceLevel
+    if payload.search_type is not None:
+        db[payload.sourceUrl]["search_type"] = payload.search_type
         
     # Recalculate score after user modifications
     db[payload.sourceUrl] = calculate_lead_score(db[payload.sourceUrl])
@@ -694,7 +745,7 @@ async def enrich_lead_contact(payload: EnrichContactRequest, request: Request):
     company = lead.get("companyName")
     
     if not is_empty_value(author) and is_empty_value(company):
-        enriched = enrich_profile_details(author)
+        enriched = enrich_profile_details(author, payload.sourceUrl)
         if enriched:
             ec = enriched.get("companyName")
             ei = enriched.get("industry")
@@ -764,7 +815,8 @@ async def add_saved_search_endpoint(payload: SavedSearchRequest, request: Reques
         payload.timeframe, 
         match_type=(payload.match_type or "partial"), 
         location=payload.location, 
-        industry=payload.industry
+        industry=payload.industry,
+        limit=payload.limit or 10
     )
     return {"status": "success", "search": ns}
 

@@ -41,44 +41,61 @@ class IntentQueryGenerator:
         # Check if the keyword represents a service that needs a suffix (like "company")
         # to avoid queries like "looking for software development" when we want "looking for software development company"
         needs_suffix = True
-        for suffix in ["company", "agency", "partner", "consultant", "developer", "designer", "firm", "service", "provider", "expert"]:
+        for suffix in ["company", "agency", "partner", "consultant", "developer", "designer", "firm", "service", "provider", "expert", "lawyer", "attorney", "accountant", "freelancer", "intern", "paralegal", "copywriter", "specialist", "engineer", "advisor", "adviser"]:
             if suffix in keyword_lower:
                 needs_suffix = False
                 break
                 
-        queries = []
+        # Ensure we cover both singular and plural forms of the keyword
+        keyword_variants = [keyword_lower]
+        if keyword_lower.endswith("s"):
+            if len(keyword_lower) > 3 and not keyword_lower.endswith("ss") and not keyword_lower.endswith("us"):
+                if keyword_lower.endswith("ies"):
+                    keyword_variants.append(keyword_lower[:-3] + "y")
+                else:
+                    keyword_variants.append(keyword_lower[:-1])
+        else:
+            if len(keyword_lower) > 3:
+                if keyword_lower.endswith("y"):
+                    keyword_variants.append(keyword_lower[:-1] + "ies")
+                else:
+                    keyword_variants.append(keyword_lower + "s")
+                    
+        intent_terms = [
+            '"looking for"', '"hiring"', '"seeking"', '"need"', '"wanted"',
+            '"vacancy"', '"open position"', '"job opening"', '"hiring for"',
+            '"looking to hire"', '"recommendation"', '"opportunities"', '"freelance"', '"contract"'
+        ]
+        intent_clause = " OR ".join(intent_terms)
         
-        # 1. "looking for" templates
-        if needs_suffix:
-            queries.append(f"looking for {keyword_lower} company")
-            queries.append(f"need {keyword_lower} company")
-            queries.append(f"recommend {keyword_lower} company")
-        else:
-            queries.append(f"looking for {keyword_lower}")
-            queries.append(f"need {keyword_lower}")
-            queries.append(f"recommend {keyword_lower}")
+        queries = []
+        for variant in keyword_variants:
+            # 1. Broad combined intent search
+            queries.append(f'({intent_clause}) {variant}')
             
-        # 2. "seeking" and "recommendation" templates
-        if "partner" not in keyword_lower:
-            queries.append(f"seeking {keyword_lower} partner")
-        else:
-            queries.append(f"seeking {keyword_lower}")
-            
-        if "recommendation" not in keyword_lower:
-            queries.append(f"{keyword_lower} recommendation")
-            
-        # 3. Special rule for development keywords
-        if "development" in keyword_lower:
-            base = keyword_lower.replace("software", "").strip()
-            # If it was just "software development" or "development"
-            if base == "development" or not base:
-                base = "web development"
-            else:
-                if "development" not in base:
-                    base = f"{base} development"
-            queries.append(f"{base} agency recommendation")
-            
-        # Ensure unique and cleaned results
-        result = [q.strip() for q in queries if q.strip()]
-        return list(set(result))
+            # 2. Service-level templates (only if needs_suffix is True)
+            if needs_suffix:
+                queries.append(f'({intent_clause}) {variant} company')
+                queries.append(f'({intent_clause}) {variant} partner')
+                
+            # 3. Special rule for development keywords
+            if "development" in variant:
+                base = variant.replace("software", "").strip()
+                if base == "development" or not base:
+                    base = "web development"
+                else:
+                    if "development" not in base:
+                        base = f"{base} development"
+                queries.append(f'{base} agency')
+
+        # De-duplicate queries list
+        result = []
+        for q in queries:
+            if q.strip() and q.strip() not in result:
+                result.append(q.strip())
+                
+        if result:
+            combined_query = " OR ".join(f"({q})" for q in result)
+            return [combined_query]
+        return []
 

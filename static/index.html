@@ -42,7 +42,7 @@
                 </div>
                 <div style="text-align: right; margin-top: -0.25rem; margin-bottom: 0.75rem;">
                     <a href="#" id="link-show-forgot"
-                        style="font-size: 0.82rem; color: var(--text-muted); text-decoration: none; transition: var(--transition-smooth);"
+                        style="font-size: 0.9rem; color: var(--text-muted); text-decoration: none; transition: var(--transition-smooth);"
                         onmouseover="this.style.color='var(--primary)'"
                         onmouseout="this.style.color='var(--text-muted)'">Forgot Password?</a>
                 </div>
@@ -55,7 +55,7 @@
                     <i data-lucide="arrow-right"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
                 Don't have an account? <a href="#" id="link-show-register"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -96,7 +96,7 @@
                     <i data-lucide="arrow-right"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
                 Already have an account? <a href="#" id="link-show-login"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -131,7 +131,7 @@
                     <i data-lucide="check"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
                 Back to <a href="#" id="link-register-otp-back"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -163,7 +163,7 @@
                     <i data-lucide="arrow-right"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
                 Back to <a href="#" id="link-forgot-request-back"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -211,7 +211,7 @@
                     <i data-lucide="check"></i>
                 </button>
             </form>
-            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-secondary);">
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
                 Back to <a href="#" id="link-forgot-verify-back"
                     style="color: var(--primary); font-weight: 600; text-decoration: none; transition: var(--transition-smooth);"
                     onmouseover="this.style.color='var(--primary-hover)'"
@@ -488,6 +488,11 @@
                                     <!-- <option value="reddit">Reddit</option> -->
                                     <option value="google_maps">Google Maps</option>
                                 </select>
+                                <select id="filter-search-type" class="filter-select">
+                                    <option value="all">All Modes</option>
+                                    <option value="sales">Sales Leads Only</option>
+                                    <option value="recruiter">Candidates Only</option>
+                                </select>
 
                                 <select id="filter-status" class="filter-select">
                                     <option value="all">All Intent Scores</option>
@@ -598,6 +603,16 @@
                                     </div>
                                     <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
                                 </div>
+                                <div class="form-group">
+                                    <label for="search-type">Search Mode / Purpose</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="user-check" class="input-icon"></i>
+                                        <select id="search-type" class="form-control">
+                                            <option value="sales" selected>Sales Mode (Find hiring companies/clients)</option>
+                                            <option value="recruiter">Recruiter Mode (Find job candidates/talent)</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="wizard-grid-2">
                                     <div class="form-group">
                                         <label for="wizard-industry">Target Industry (Optional)</label>
@@ -699,9 +714,10 @@
                                             <i data-lucide="hash" class="input-icon"></i>
                                             <select id="limit" class="form-control">
                                                 <option value="5">5 Results</option>
-                                                <option value="10" selected>10 Results</option>
-                                                <option value="15">15 Results</option>
-                                                <option value="20">20 Results</option>
+                                                <option value="10" selected>10 Results (Quick)</option>
+                                                <option value="20">20 Results (Standard)</option>
+                                                <option value="50">50 Results (Deep)</option>
+                                                <option value="100">100 Results (Thorough)</option>
                                             </select>
                                         </div>
                                     </div>
@@ -841,6 +857,14 @@
                                 <option value="High Intent">High Intent</option>
                                 <option value="Medium Intent">Medium Intent</option>
                                 <option value="Low Intent">Low Intent</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Mode:</span>
+                            <select id="pipeline-filter-search-type" class="filter-select" style="height: 32px; font-size: 0.82rem; padding: 0 1.5rem 0 0.75rem; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                                <option value="all">All Modes</option>
+                                <option value="sales">Sales Leads Only</option>
+                                <option value="recruiter">Candidates Only</option>
                             </select>
                         </div>
                     </div>
@@ -1004,6 +1028,11 @@
                                         <option value="twitter">Twitter / X</option>
                                         <!-- <option value="reddit">Reddit</option> -->
                                         <option value="google_maps">Google Maps</option>
+                                    </select>
+                                    <select id="archive-filter-search-type" class="filter-select">
+                                        <option value="all">All Modes</option>
+                                        <option value="sales">Sales Leads Only</option>
+                                        <option value="recruiter">Candidates Only</option>
                                     </select>
 
                                     <select id="archive-filter-status" class="filter-select">
@@ -1819,6 +1848,37 @@
                     </div>
                 </div>
 
+                <!-- Candidate Info (Recruiter Mode Only) -->
+                <div id="modal-candidate-section" style="display: none;">
+                    <div class="detail-section">
+                        <label for="modal-skills">Candidate Skills</label>
+                        <input type="text" id="modal-skills"
+                            class="form-control modal-dense-input input-padding-left-sm"
+                            placeholder="e.g. React, Node.js, TypeScript">
+                    </div>
+                    <div class="detail-section-row" style="margin-top: 1rem; margin-bottom: 1rem; display: flex; gap: 1rem;">
+                        <div class="flex-1" style="flex: 1;">
+                            <label for="modal-experience-level">Experience Level</label>
+                            <select id="modal-experience-level" class="form-control modal-dense-input input-padding-left-sm" style="width: 100%;">
+                                <option value="Unknown">Unknown</option>
+                                <option value="Junior">Junior</option>
+                                <option value="Mid-level">Mid-level</option>
+                                <option value="Senior">Senior</option>
+                                <option value="Lead">Lead</option>
+                            </select>
+                        </div>
+                        <div class="flex-1" style="flex: 1;">
+                            <label for="modal-work-preference">Work Preference</label>
+                            <select id="modal-work-preference" class="form-control modal-dense-input input-padding-left-sm" style="width: 100%;">
+                                <option value="Unknown">Unknown</option>
+                                <option value="Remote">Remote</option>
+                                <option value="Hybrid">Hybrid</option>
+                                <option value="Onsite">Onsite</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="detail-section">
                     <label for="modal-need-description">What they need</label>
                     <textarea id="modal-need-description" class="form-control textarea-dense input-padding-x-sm"
@@ -1957,7 +2017,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Reference -->
-    <script src="/static/app.js?v=20260629_v29"></script>
+    <script src="/static/app.js?v=20260629_v32"></script>
 </body>
 
 </html>

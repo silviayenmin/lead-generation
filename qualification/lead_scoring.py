@@ -1,20 +1,65 @@
 from crm.lead_database import is_empty_value
 
 def calculate_lead_score(lead: dict) -> dict:
-    """
-    Scoring factors:
-    Intent Score = 40 points
-    Service Required Mentioned = 20 points
-    Need Description Present = 15 points
-    Company Mentioned = 10 points
-    Location Mentioned = 5 points
-    Author Identified = 10 points
+    search_type = lead.get("search_type", "sales")
+    if str(search_type).lower().strip() == "recruiter":
+        intent_score = 0
+        intent_type = lead.get("intentType", "General Discussion")
+        buying_intent = lead.get("buyingIntent", "Low")
+        
+        if intent_type in ["Candidate/Job Seeker", "Portfolio Share"]:
+            intent_score = 40
+        elif intent_type == "Career Discussion":
+            intent_score = 30
+        else:
+            bi = str(buying_intent).lower()
+            if bi in ["high", "hiring"]:
+                intent_score = 40
+            elif bi in ["medium", "warm", "research", "potential"]:
+                intent_score = 25
+            else:
+                intent_score = 10
+                
+        # Skills Mentioned - 20 points
+        skills = str(lead.get("skills", "")).strip()
+        skills_score = 20 if skills and not is_empty_value(skills) else 0
+        
+        # Work Preference Present - 15 points
+        pref = str(lead.get("workPreference", "")).strip()
+        pref_score = 15 if pref and pref.lower() not in ["", "none", "unknown"] else 0
+        
+        # Company/School Mentioned - 10 points
+        company = str(lead.get("companyName", "")).strip()
+        company_score = 10 if company and not is_empty_value(company) and company.lower() != "not specified" else 0
+        
+        # Location Mentioned - 5 points
+        loc = str(lead.get("location", "")).strip()
+        location_score = 5 if loc and not is_empty_value(loc) else 0
+        
+        # Author Identified - 10 points
+        author = str(lead.get("authorName", "")).strip()
+        author_score = 10 if author and not is_empty_value(author) else 0
+        
+        total_score = intent_score + skills_score + pref_score + company_score + location_score + author_score
+        
+        bi_clean = str(buying_intent).strip().lower()
+        it_clean = str(intent_type).strip().lower()
+        if bi_clean in ["none", "low"] or it_clean in ["general discussion", "none"]:
+            category = "Low Intent"
+            total_score = min(total_score, 35)
+        else:
+            if total_score >= 70:
+                category = "High Intent"
+            elif total_score >= 40:
+                category = "Medium Intent"
+            else:
+                category = "Low Intent"
+                
+        lead["leadScore"] = total_score
+        lead["leadCategory"] = category
+        return lead
 
-    Final Score:
-    0–39 = Low Intent
-    40–69 = Medium Intent
-    70–100 = High Intent
-    """
+    # Standard Sales Scoring (search_type == "sales")
     intent_score = 0
     intent_type = lead.get("intentType", "General Discussion")
     buying_intent = lead.get("buyingIntent", "Low")

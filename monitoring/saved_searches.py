@@ -56,12 +56,12 @@ def save_saved_searches(searches: list, user_email: str):
     except Exception as e:
         print(f"Error saving saved searches: {e}")
 
-def add_saved_search(user_email: str, keyword: str, platform: str, timeframe: str, match_type: str = "partial", location: str = None, industry: str = None) -> dict:
+def add_saved_search(user_email: str, keyword: str, platform: str, timeframe: str, match_type: str = "partial", location: str = None, industry: str = None, limit: int = 10) -> dict:
     searches = load_saved_searches(user_email)
     
     # Check if already exists
     for s in searches:
-        if s.get("keyword") == keyword and s.get("platform") == platform and s.get("timeframe") == timeframe and s.get("matchType", "partial") == match_type and s.get("location") == location and s.get("industry") == industry:
+        if s.get("keyword") == keyword and s.get("platform") == platform and s.get("timeframe") == timeframe and s.get("matchType", "partial") == match_type and s.get("location") == location and s.get("industry") == industry and s.get("limit", 10) == limit:
             return s
             
     new_search = {
@@ -72,6 +72,7 @@ def add_saved_search(user_email: str, keyword: str, platform: str, timeframe: st
         "matchType": match_type,
         "location": location,
         "industry": industry,
+        "limit": limit,
         "createdAt": datetime.datetime.now().isoformat(),
         "lastRun": None,
         "leadsFoundCount": 0,
@@ -93,7 +94,7 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
     from crm.lead_database import (
         check_and_save_lead, extract_fallback_author, enrich_profile_details, 
         determine_lead_platform, is_empty_value, validate_author_name, validate_company_name,
-        get_places_api_key
+        get_places_api_key, is_location_match
     )
     
     summary = {
@@ -140,7 +141,14 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
                             limit=s.get("limit", 10)
                         )
                     else:
-                        res = adapter.search(query, timeframe=timeframe, match_type=match_type, location=location, industry=industry)
+                        res = adapter.search(
+                            query,
+                            timeframe=timeframe,
+                            match_type=match_type,
+                            location=location,
+                            industry=industry,
+                            limit=s.get("limit", 10)
+                        )
                     if res:
                         raw_results.extend(res)
                 except Exception as ex:
@@ -169,8 +177,10 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
             
             try:
                 # Qualify lead
-                lead_data = classify_lead_intent(title, snippet)
+                search_type = s.get("search_type", "sales")
+                lead_data = classify_lead_intent(title, snippet, search_type)
                 lead_data["sourceUrl"] = url
+                lead_data["search_type"] = search_type
                 lead_data["platform"] = determine_lead_platform(url)
                 
                 # Run lead scoring
@@ -181,8 +191,6 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
                 is_qualified = lead_data.get("leadCategory") in ["High Intent", "Medium Intent"]
                 
                 if is_qualified:
-                    qualified_leads_in_this_run += 1
-                    
                     # Fill missing author details
                     author = lead_data.get("authorName")
                     if is_empty_value(author):
@@ -196,15 +204,17 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
                     company = validate_company_name(lead_data.get("companyName"))
                     lead_data["companyName"] = company
                         
-                    # Basic enrichment if company missing
-                    if not is_empty_value(author) and is_empty_value(company):
-                        enriched = enrich_profile_details(author)
-                        if enriched:
-                            ec = enriched.get("companyName")
-                            if ec and not is_empty_value(ec):
-                                lead_data["companyName"] = validate_company_name(ec)
-                            lead_data["industry"] = enriched.get("industry", "Unknown")
-                            lead_data["location"] = enriched.get("location", "Unknown")
+                    # Enrichment search if company details or location are missing, or if a location filter is requested
+                    if lead_data.get("platform") != "google_maps" and not is_empty_value(author):
+                        if is_empty_value(lead_data.get("companyName")) or is_empty_value(lead_data.get("location")) or (location and location.strip()):
+                            enriched = enrich_profile_details(author, url)
+                            if enriched:
+                                ec = enriched.get("companyName")
+                                if ec and not is_empty_value(ec) and is_empty_value(lead_data.get("companyName")):
+                                    lead_data["companyName"] = validate_company_name(ec)
+                                    company = lead_data["companyName"]
+                                lead_data["industry"] = enriched.get("industry") or lead_data.get("industry") or "Unknown"
+                                lead_data["location"] = enriched.get("location") or "Unknown"
                             
                     # Print debug information (Requirement 5)
                     print("\n" + "="*50)
@@ -214,6 +224,16 @@ def run_monitoring_for_user(user_email: str, db: dict, save_db_callback) -> dict
                     print(f"Extracted Company: {lead_data.get('companyName')}")
                     print(f"Confidence Score: {lead_data.get('confidenceScore') or lead_data.get('leadScore') or 0}%")
                     print("="*50 + "\n")
+                    
+                    # Enforce location filtering if specified
+                    if location and location.strip():
+                        lead_loc = lead_data.get("location")
+                        text_ctx = f"{title} {snippet}"
+                        if not is_location_match(location, lead_loc, text_context=text_ctx):
+                            print(f"[Monitoring Filter] Discarding lead {author} because profile location '{lead_loc}' does not match requested location '{location}'")
+                            continue
+                            
+                    qualified_leads_in_this_run += 1
                             
                     # Enrich contact info using default guessing
                     enrich_mgr = ContactEnrichmentManager()

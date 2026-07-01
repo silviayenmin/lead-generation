@@ -160,7 +160,22 @@ def sync_user_replies(user_email: str, config: dict, leads: dict) -> tuple:
                     lead["crmStatus"] = "Emailed"
 
             # Search specifically for emails sent by this lead's email address
-            status, data = mail.search(None, f'FROM "{lead_email}"')
+            try:
+                # If lead_email is plain ASCII, use standard search as it is most compatible.
+                lead_email.encode('ascii')
+                status, data = mail.search(None, f'FROM "{lead_email}"')
+            except UnicodeEncodeError:
+                # Otherwise, use UTF-8 search with literal to handle non-ASCII characters.
+                try:
+                    mail.literal = lead_email.encode('utf-8')
+                    status, data = mail.search('UTF-8', 'FROM')
+                except Exception as search_err:
+                    print(f"Failed UTF-8 IMAP search for {lead_email}: {search_err}")
+                    continue
+            except Exception as search_err:
+                print(f"Failed IMAP search for {lead_email}: {search_err}")
+                continue
+                
             if status != "OK" or not data or not data[0]:
                 continue
                 
@@ -229,5 +244,7 @@ def sync_user_replies(user_email: str, config: dict, leads: dict) -> tuple:
         
     except Exception as e:
         print(f"Error checking email replies via IMAP: {e}")
+        
+    return new_replies_count, updated_leads
         
     return new_replies_count, updated_leads

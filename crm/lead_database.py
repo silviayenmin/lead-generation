@@ -342,7 +342,12 @@ def save_searches(searches, user_email: str):
                 del s_copy["_id"]
             s_copy["user_email"] = user_email
             searches_col.replace_one(
-                {"keyword": s_copy.get("keyword"), "platform": s_copy.get("platform"), "user_email": user_email},
+                {
+                    "keyword": s_copy.get("keyword"),
+                    "platform": s_copy.get("platform"),
+                    "search_type": s_copy.get("search_type", "sales"),
+                    "user_email": user_email
+                },
                 s_copy,
                 upsert=True
             )
@@ -673,11 +678,44 @@ def fetch_title_from_url(url: str) -> str:
         print(f"Error fetching title from url {url}: {e}")
     return ""
 
-def enrich_profile_details(author: str) -> dict:
-    if is_empty_value(author):
+def enrich_profile_details(author: str, url: str = None) -> dict:
+    if is_empty_value(author) and not url:
         return {}
     try:
-        profile_query = f'site:linkedin.com/in/ "{author}"'
+        profile_query = None
+        if url and "linkedin.com" in url.lower():
+            # Try to extract the unique username/slug from the LinkedIn URL
+            username = ""
+            if "linkedin.com/posts/" in url:
+                try:
+                    part = url.split("linkedin.com/posts/")[1]
+                    part = part.split("?")[0].strip("/")
+                    if "_" in part:
+                        username = part.split("_")[0]
+                    elif "-activity-" in part:
+                        username = part.split("-activity-")[0]
+                    elif "_activity-" in part:
+                        username = part.split("_activity-")[0]
+                    else:
+                        username = part
+                except Exception:
+                    pass
+            elif "linkedin.com/in/" in url:
+                try:
+                    part = url.split("linkedin.com/in/")[1]
+                    username = part.split("/")[0].split("?")[0]
+                except Exception:
+                    pass
+            
+            if username:
+                profile_query = f'site:linkedin.com/in/ "{username}"'
+                
+        if not profile_query:
+            if not is_empty_value(author):
+                profile_query = f'site:linkedin.com/in/ "{author}"'
+            else:
+                return {}
+                
         profile_results = search_leads(profile_query, tbs="")
         if profile_results:
             top_profile = profile_results[0]
@@ -1121,6 +1159,55 @@ def mark_notifications_read(user_email: str, notif_id: str = None) -> bool:
     except Exception as e:
         print(f"Error marking notifications as read: {e}")
         return False
+
+
+def is_location_match(search_loc: str, lead_loc: str, text_context: str = None) -> bool:
+    """
+    Checks if a lead's profile location matches the user's requested search location.
+    Supports case-insensitive substring comparisons, common geographical abbreviations,
+    and falls back to post text context if the profile location is broad (like a country).
+    """
+    if not search_loc or is_empty_value(search_loc):
+        return True
+    
+    s_clean = str(search_loc).lower().strip()
+    
+    if not lead_loc or is_empty_value(lead_loc):
+        if text_context and s_clean in str(text_context).lower():
+            return True
+        return False
+        
+    l_clean = str(lead_loc).lower().strip()
+    
+    if s_clean in l_clean or l_clean in s_clean:
+        return True
+        
+    # Mapping common geographical abbreviations to alternate names
+    abbreviations = {
+        "uk": ["united kingdom", "u.k.", "england", "scotland", "wales", "ireland"],
+        "us": ["united states", "usa", "u.s.a.", "u.s."],
+        "usa": ["united states", "us", "u.s.a.", "u.s."],
+        "uae": ["united arab emirates", "u.a.e.", "dubai", "abu dhabi"],
+        "in": ["india"],
+        "ca": ["canada"]
+    }
+    
+    if s_clean in abbreviations:
+        for alt in abbreviations[s_clean]:
+            if alt in l_clean:
+                return True
+                
+    # If the profile location is a broad country name, but the post text context
+    # explicitly mentions the target search location, we consider it a match.
+    countries = {
+        "india", "united states", "united kingdom", "canada", "australia",
+        "germany", "france", "uk", "us", "usa", "uae", "in", "ca"
+    }
+    if l_clean in countries:
+        if text_context and s_clean in str(text_context).lower():
+            return True
+            
+    return False
 
 
 

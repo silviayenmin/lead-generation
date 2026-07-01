@@ -4235,7 +4235,7 @@ textarea.form-control {
 }
 
 .login-header p {
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.4;
     margin: 0;
@@ -4266,7 +4266,7 @@ textarea.form-control {
     width: 100%;
     height: 46px;
     padding: 0 46px 0 42px;
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     font-family: var(--font-sans);
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -4317,7 +4317,7 @@ textarea.form-control {
     align-items: center;
     gap: 0.5rem;
     color: var(--error);
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     background: var(--error-bg);
     border: 1px solid var(--error-border);
     padding: 8px 12px;
@@ -4354,7 +4354,7 @@ textarea.form-control {
     border: none;
     background: var(--primary);
     color: #ffffff;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -5136,4 +5136,85 @@ textarea.form-control {
     opacity: 0.15;
     pointer-events: none;
     transition: opacity 0.25s ease-in-out;
+}
+
+/* Spinner Loader Component */
+.spinner {
+    position: relative;
+    display: inline-block;
+    border-radius: 50%;
+    animation: spin 1s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+}
+
+.spinner-large {
+    width: 54px;
+    height: 54px;
+    background: conic-gradient(from 0deg, transparent 30%, var(--primary));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+}
+
+.spinner-medium {
+    width: 36px;
+    height: 36px;
+    background: conic-gradient(from 0deg, transparent 30%, var(--primary));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+}
+
+.spinner-tiny {
+    width: 16px;
+    height: 16px;
+    background: conic-gradient(from 0deg, transparent 30%, var(--primary));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tab Loader Overlay */
+.tab-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 15, 28, 0.75); /* --bg-main with transparency */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    z-index: 999;
+    border-radius: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-loader.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.light-theme .tab-loader {
+    background: rgba(245, 247, 250, 0.75); /* matches light theme background */
+}
+
+.tab-loader-text {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    animation: pulseText 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseText {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
