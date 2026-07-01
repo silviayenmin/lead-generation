@@ -3184,7 +3184,7 @@ function initWizard() {
 
     if (btnContinue) {
         btnContinue.addEventListener("click", async () => {
-            if (wizardCurrentStep === 1) {
+            if (wizardCurrentStep === 2) {
                 const keyword = document.getElementById("keyword").value.trim();
                 if (!keyword) {
                     await showCustomAlert("Please specify an audience search keyword query!", "Keyword Required", "danger");
