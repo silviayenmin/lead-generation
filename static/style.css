@@ -160,12 +160,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--bg-trans-10);
+    background: rgba(3, 113, 114, 0.4);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--bg-trans-20);
+    background: rgba(3, 113, 114, 0.6);
 }
 
 /* Layout framework */
@@ -495,9 +495,9 @@ body {
 .views-container {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    padding-right: 0.5rem;
-    margin-right: -0.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Compact Top Navigation */
@@ -604,11 +604,26 @@ body {
 /* Views & Containers */
 .tab-view {
     display: none;
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 0.5rem;
     animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-view.active {
     display: block;
+}
+
+/* Pipeline Kanban Board: Locked vertical height */
+#view-pipeline {
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#view-pipeline.active {
+    display: flex !important;
 }
 
 .view-header {
