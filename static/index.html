@@ -568,12 +568,12 @@
                                     <div class="stepper-progress-fill" id="wizard-progress-fill"></div>
                                 </div>
                                 <div class="stepper-node active" data-step="1">
-                                    <div class="stepper-circle"><i data-lucide="users"></i></div>
-                                    <span class="stepper-label">Audience</span>
-                                </div>
-                                <div class="stepper-node" data-step="2">
                                     <div class="stepper-circle"><i data-lucide="database"></i></div>
                                     <span class="stepper-label">Sources</span>
+                                </div>
+                                <div class="stepper-node" data-step="2">
+                                    <div class="stepper-circle"><i data-lucide="users"></i></div>
+                                    <span class="stepper-label">Audience</span>
                                 </div>
                                 <div class="stepper-node" data-step="3">
                                     <div class="stepper-circle"><i data-lucide="sliders"></i></div>
@@ -587,54 +587,8 @@
 
                         <form id="search-form">
 
-                            <!-- Step 1: Define Audience -->
+                            <!-- Step 1: Select Platform Sources -->
                             <div class="wizard-step-panel active" data-step="1">
-                                <div class="step-heading">
-                                    <h3><i data-lucide="users"></i> Define Target Audience</h3>
-                                    <p>Specify the search keywords and industry context for our Llama-3.3 AI scanner.</p>
-                                </div>
-                                <div class="form-group">
-                                    <label for="keyword">Search Intent Query / Keyword</label>
-                                    <div class="input-wrapper">
-                                        <i data-lucide="search" class="input-icon"></i>
-                                        <input type="text" id="keyword" class="form-control"
-                                            placeholder="e.g. looking for ui/ux designer, contract react developer"
-                                            required>
-                                    </div>
-                                    <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
-                                </div>
-                                <div class="form-group">
-                                    <label for="search-type">Search Mode / Purpose</label>
-                                    <div class="input-wrapper">
-                                        <i data-lucide="user-check" class="input-icon"></i>
-                                        <select id="search-type" class="form-control">
-                                            <option value="sales" selected>Sales Mode (Find hiring companies/clients)</option>
-                                            <option value="recruiter">Recruiter Mode (Find job candidates/talent)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="wizard-grid-2">
-                                    <div class="form-group">
-                                        <label for="wizard-industry">Target Industry (Optional)</label>
-                                        <div class="input-wrapper">
-                                            <i data-lucide="building" class="input-icon"></i>
-                                            <input type="text" id="wizard-industry" class="form-control"
-                                                placeholder="e.g. E-commerce, FinTech">
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="wizard-location">Target Location (Optional)</label>
-                                        <div class="input-wrapper">
-                                            <i data-lucide="map-pin" class="input-icon"></i>
-                                            <input type="text" id="wizard-location" class="form-control"
-                                                placeholder="e.g. United States, London">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 2: Select Platform Sources -->
-                            <div class="wizard-step-panel" data-step="2">
                                 <div class="step-heading">
                                     <h3><i data-lucide="database"></i> Select Platform Sources</h3>
                                     <p>Choose target networks to crawl and parse for matching B2B intent signals.</p>
@@ -679,12 +633,56 @@
                                         </svg>
                                         <span class="platform-option-label">Twitter / X</span>
                                     </div>
-                                    <!-- <div class="platform-option-card" data-platform="reddit">
-                                        <i data-lucide="message-square"></i>
-                                        <span class="platform-option-label">Reddit</span>
-                                    </div> -->
                                 </div>
                                 <input type="hidden" id="platform" value="linkedin">
+                            </div>
+
+                            <!-- Step 2: Define Audience -->
+                            <div class="wizard-step-panel" data-step="2">
+                                <div class="step-heading">
+                                    <h3><i data-lucide="users"></i> Define Target Audience</h3>
+                                    <p>Specify the search keywords and industry context for our Llama-3.3 AI scanner.</p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="keyword">Search Intent Query / Keyword</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="search" class="input-icon"></i>
+                                        <input type="text" id="keyword" class="form-control"
+                                            placeholder="e.g. looking for ui/ux designer, contract react developer"
+                                            required>
+                                    </div>
+                                    <span class="wizard-help-text">Llama-3.3 will auto-expand this query to match varied social phrasing.</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="search-type">Search Mode / Purpose</label>
+                                    <div class="input-wrapper">
+                                        <i data-lucide="user-check" class="input-icon"></i>
+                                        <select id="search-type" class="form-control">
+                                            <option value="sales" selected>Sales Mode (Find hiring companies/clients)</option>
+                                            <option value="recruiter">Recruiter Mode (Find job candidates/talent)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="wizard-grid-2">
+                                    <div class="form-group">
+                                        <label for="wizard-industry">Target Industry (Optional)</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="building" class="input-icon"></i>
+                                            <input type="text" id="wizard-industry" class="form-control"
+                                                placeholder="e.g. E-commerce, FinTech">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="wizard-location">Target Location (Optional)</label>
+                                        <div class="input-wrapper">
+                                            <i data-lucide="map-pin" class="input-icon"></i>
+                                            <input type="text" id="wizard-location" class="form-control"
+                                                placeholder="e.g. United States, London">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             </div>
 
                             <!-- Step 3: Configure Intent Filters -->
