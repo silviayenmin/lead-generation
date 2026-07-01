@@ -1682,9 +1682,6 @@ function renderKanban() {
                         <img src="${avatarUrl}" class="card-avatar" alt="Avatar">
                         <span class="card-name">${lead.authorName || "Unknown Poster"}</span>
                     </div>
-                    <span class="platform-mini-badge" style="background: rgba(255,255,255,0.03); color: ${platformColor};">
-                        ${getPlatformIconSvg(platform, 10, "display: block;")}
-                    </span>
                 </div>
 
                 <div class="card-company-row">
@@ -1705,7 +1702,17 @@ function renderKanban() {
                         <span class="score-circle-text">${score}%</span>
                     </div>
 
-                    <span class="card-value">${estVal} Val</span>
+                    ${(lead.location && lead.location.trim() && lead.location !== "Unknown") ? `
+                        <span class="card-value" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: var(--text-secondary); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(lead.location)}">
+                            <i data-lucide="map-pin" style="width: 11px; height: 11px; flex-shrink: 0; color: var(--accent);"></i>
+                            <span>${escapeHTML(lead.location)}</span>
+                        </span>
+                    ` : `
+                        <span class="card-value" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: ${platformColor};">
+                            ${getPlatformIconSvg(platform, 11, "display: block; flex-shrink: 0;")}
+                            <span style="text-transform: capitalize;">${platform === 'google_maps' ? 'Google Maps' : platform}</span>
+                        </span>
+                    `}
                 </div>
             `;
 
