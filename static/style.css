@@ -3466,9 +3466,8 @@ textarea.form-control {
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-trans-2);
+    border: none;
+    background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
     transition: var(--transition-smooth);
@@ -3476,9 +3475,8 @@ textarea.form-control {
 }
 
 .action-btn:hover {
-    background: var(--bg-hover);
-    border-color: var(--primary);
-    color: var(--text-primary);
+    background: transparent;
+    color: var(--primary);
 }
 
 /* Mobile warning banner */
@@ -3866,8 +3864,8 @@ textarea.form-control {
 
 .action-btn.btn-row-delete:hover {
     color: var(--error) !important;
-    border-color: var(--error) !important;
-    background: var(--error-bg) !important;
+    border-color: transparent !important;
+    background: transparent !important;
 }
 
 /* Custom App-themed Dialogue Modals */

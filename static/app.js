@@ -1463,7 +1463,7 @@ function renderLeads() {
                 ${contactHtml}
             </td>
             <td>
-                <div style="display: flex; gap: 0.5rem;" onclick="event.stopPropagation()">
+                <div style="display: flex; gap: 0.5rem; align-items: center;" onclick="event.stopPropagation()">
                     <a href="${lead.sourceUrl}" class="action-btn" target="_blank" title="View Source Post">
                         <i data-lucide="external-link" style="width: 13px; height: 13px;"></i>
                     </a>
@@ -3089,7 +3089,7 @@ function renderArchiveLeads() {
                 ${contactHtml}
             </td>
             <td>
-                <div style="display: flex; gap: 0.5rem;" onclick="event.stopPropagation()">
+                <div style="display: flex; gap: 0.5rem; align-items: center;" onclick="event.stopPropagation()">
                     <a href="${lead.sourceUrl}" class="action-btn" target="_blank" title="View Source Post">
                         <i data-lucide="external-link" style="width: 13px; height: 13px;"></i>
                     </a>
