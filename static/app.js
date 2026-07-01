@@ -3165,7 +3165,10 @@ function initWizard() {
         if (progressFill) progressFill.style.width = `${pct}%`;
 
         // Buttons state
-        if (btnBack) btnBack.disabled = (wizardCurrentStep === 1);
+        if (btnBack) {
+            btnBack.disabled = (wizardCurrentStep === 1);
+            btnBack.style.visibility = (wizardCurrentStep === 1) ? "hidden" : "visible";
+        }
 
         if (wizardCurrentStep === 4) {
             if (btnContinue) btnContinue.style.display = "none";
