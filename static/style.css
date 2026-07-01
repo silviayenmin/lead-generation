@@ -257,7 +257,8 @@ body {
 /* Collapsible toggle btn */
 .sidebar-toggle {
     position: fixed;
-    left: 228px; /* 240px sidebar width - 12px half-width of toggle button */
+    left: 228px;
+    /* 240px sidebar width - 12px half-width of toggle button */
     top: 36px;
     transform: translateY(-50%);
     width: 24px;
@@ -274,9 +275,12 @@ body {
     transition: var(--transition-smooth);
     z-index: 1000;
 }
-.sidebar.collapsed ~ .sidebar-toggle {
-    left: 64px; /* 76px collapsed sidebar width - 12px half-width of toggle button */
+
+.sidebar.collapsed~.sidebar-toggle {
+    left: 64px;
+    /* 76px collapsed sidebar width - 12px half-width of toggle button */
 }
+
 .sidebar-toggle:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
@@ -486,7 +490,7 @@ body {
     height: 100vh;
 }
 
-.sidebar.collapsed ~ .content-view {
+.sidebar.collapsed~.content-view {
     margin-left: 76px;
     max-width: calc(100% - 76px);
 }
@@ -1145,7 +1149,8 @@ body {
 
 .stepper-line {
     position: absolute;
-    top: 18px; /* half of 36px circle height */
+    top: 18px;
+    /* half of 36px circle height */
     left: 40px;
     right: 40px;
     height: 3px;
@@ -1263,6 +1268,7 @@ body {
 }
 
 @media (max-width: 768px) {
+
     .wizard-grid-2,
     .wizard-grid-3 {
         grid-template-columns: 1fr;
@@ -1333,6 +1339,7 @@ body {
     box-shadow: 0 0 16px var(--primary-glow);
     color: var(--primary);
 }
+
 .platform-option-card.active i,
 .platform-option-card.active svg,
 .platform-option-card.active span {
@@ -1964,6 +1971,7 @@ body {
         display: flex;
         flex-direction: column;
     }
+
     .config-split-row {
         grid-template-columns: 1fr;
     }
@@ -1979,7 +1987,8 @@ body {
     display: flex;
     flex-direction: column;
     transition: var(--transition-smooth);
-    height: 440px; /* Aligns height-wise with the left IMAP card */
+    height: 440px;
+    /* Aligns height-wise with the left IMAP card */
 }
 
 .light-theme .unified-preview-browser {
@@ -2542,7 +2551,7 @@ th {
 
 textarea.form-control {
     height: auto;
-    min-height: 52px;
+    min-height: 150px;
     padding: 12px 16px;
 }
 
@@ -2574,6 +2583,8 @@ textarea.form-control {
     height: 80px;
     min-height: 80px;
     padding: 8px 12px;
+    resize: none;
+    overflow-y: auto;
 }
 
 .select-dense {
@@ -3668,7 +3679,8 @@ textarea.form-control {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: 2000;
-    display: none; /* flex when active */
+    display: none;
+    /* flex when active */
     align-items: center;
     justify-content: center;
 }
@@ -4511,6 +4523,7 @@ textarea.form-control {
 }
 
 @media (max-width: 992px) {
+
     .profile-main-grid,
     .profile-integrations-grid {
         grid-template-columns: 1fr;
@@ -4753,7 +4766,7 @@ textarea.form-control {
     flex-direction: column;
 }
 
-.settings-card .settings-body > div {
+.settings-card .settings-body>div {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -4763,7 +4776,7 @@ textarea.form-control {
 /* Push Save buttons and action button containers to the bottom of the card */
 .settings-card button.btn,
 .settings-card button.btn-primary,
-.settings-card .settings-body > div > div:not(.form-group):last-child {
+.settings-card .settings-body>div>div:not(.form-group):last-child {
     margin-top: auto !important;
 }
 
@@ -4836,10 +4849,12 @@ textarea.form-control {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(255, 94, 91, 0.7);
     }
+
     70% {
         transform: scale(1);
         box-shadow: 0 0 0 6px rgba(255, 94, 91, 0);
     }
+
     100% {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(255, 94, 91, 0);
@@ -4877,6 +4892,7 @@ textarea.form-control {
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -5107,6 +5123,7 @@ textarea.form-control {
         transform: translateX(120%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -5268,8 +5285,13 @@ textarea.form-control {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Tab Loader Overlay */
@@ -5279,7 +5301,8 @@ textarea.form-control {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(10, 15, 28, 0.75); /* --bg-main with transparency */
+    background: rgba(10, 15, 28, 0.75);
+    /* --bg-main with transparency */
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     display: flex;
@@ -5300,7 +5323,8 @@ textarea.form-control {
 }
 
 .light-theme .tab-loader {
-    background: rgba(245, 247, 250, 0.75); /* matches light theme background */
+    background: rgba(245, 247, 250, 0.75);
+    /* matches light theme background */
 }
 
 .tab-loader-text {
@@ -5312,8 +5336,15 @@ textarea.form-control {
 }
 
 @keyframes pulseText {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 /* Custom Select Dropdowns Styling */
@@ -5411,6 +5442,7 @@ textarea.form-control {
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
