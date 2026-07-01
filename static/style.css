@@ -3,7 +3,7 @@
 
 /* Redesigned Premium Color Palette & Design Tokens */
 :root {
-    font-size: 13.5px;
+    font-size: 14.7px;
     --bg-main: #0A0F1C;
     --bg-surface: #111827;
     --bg-card: #182233;
@@ -2328,7 +2328,7 @@ body {
 
 .custom-checkbox:checked::after {
     content: "✓";
-    font-size: 11px;
+    font-size: 12px;
     color: white;
     font-weight: 700;
 }
@@ -2786,7 +2786,7 @@ textarea.form-control {
 
 .detail-section label,
 .detail-section-row label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -2817,7 +2817,7 @@ textarea.form-control {
     align-items: center;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
 }
 
@@ -4906,7 +4906,7 @@ textarea.form-control {
     background: none;
     border: none;
     color: var(--primary);
-    font-size: 0.75rem;
+    font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
     padding: 2px 6px;
@@ -4942,7 +4942,7 @@ textarea.form-control {
 
 .notifications-empty-state p {
     margin: 0;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
 }
 
 .notification-item {
@@ -4952,7 +4952,7 @@ textarea.form-control {
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     cursor: pointer;
     transition: background 0.2s;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     position: relative;
 }
 
@@ -5031,7 +5031,7 @@ textarea.form-control {
 }
 
 .notification-time {
-    font-size: 0.68rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
     opacity: 0.6;
     margin-top: 4px;
@@ -5176,7 +5176,7 @@ textarea.form-control {
 }
 
 .toast-message {
-    font-size: 0.75rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
     line-height: 1.4;
     display: -webkit-box;
@@ -5213,7 +5213,7 @@ textarea.form-control {
 .notification-group-header {
     padding: 4px 10px;
     margin: 12px 14px 6px 14px;
-    font-size: 0.68rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: var(--primary);
     background: rgba(3, 113, 114, 0.1);
