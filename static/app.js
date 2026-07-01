@@ -216,6 +216,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize Lucide Icons
     lucide.createIcons();
 
+    // Initialize custom select dropdowns
+    initCustomSelects();
+
     // Initialize Collapsible Settings Cards (Accordion UX)
     const collapsibleCards = document.querySelectorAll(".collapsible-card");
     collapsibleCards.forEach(card => {
@@ -2161,11 +2164,14 @@ function copyLeadSummary() {
     copyToClipboard(getFormattedLeadSummary(activeLead));
 }
 
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showCustomAlert("Copied to clipboard!", "Copied", "primary");
+function copyToClipboard(text, notify = true) {
+    return navigator.clipboard.writeText(text).then(() => {
+        if (notify) {
+            showAppToast("Copied", "Copied to clipboard!", "success");
+        }
     }).catch(err => {
         console.error("Clipboard write error:", err);
+        showAppToast("Copy Failed", "Failed to copy text: " + err.message, "danger");
     });
 }
 
@@ -2664,7 +2670,10 @@ function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
 
         // Modal box HTML
         overlay.innerHTML = `
-            <div class="custom-confirm-box" onclick="event.stopPropagation()">
+            <div class="custom-confirm-box" onclick="event.stopPropagation()" style="position: relative;">
+                <button type="button" class="custom-confirm-close" id="custom-confirm-btn-close" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; cursor: pointer; color: var(--text-muted); opacity: 0.6; display: flex; align-items: center; justify-content: center; padding: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6" title="Close">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
                 <div class="custom-confirm-title">
                     <i data-lucide="${iconName}"></i>
                     <span>${title}</span>
@@ -2688,6 +2697,7 @@ function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
         overlay.offsetHeight; // force reflow
         overlay.classList.add("active");
 
+        const btnClose = overlay.querySelector("#custom-confirm-btn-close");
         const btnCancel = overlay.querySelector("#custom-confirm-btn-cancel");
         const btnOk = overlay.querySelector("#custom-confirm-btn-ok");
 
@@ -2699,6 +2709,7 @@ function showCustomConfirm(message, title = "Confirm Action", type = "danger") {
             resolve(result);
         };
 
+        btnClose.addEventListener("click", () => closeConfirm(false));
         btnCancel.addEventListener("click", () => closeConfirm(false));
         btnOk.addEventListener("click", () => closeConfirm(true));
 
@@ -2722,7 +2733,10 @@ function showCustomAlert(message, title = "Notification", type = "primary") {
         else if (type === "danger") iconName = "alert-circle";
 
         overlay.innerHTML = `
-            <div class="custom-confirm-box" onclick="event.stopPropagation()">
+            <div class="custom-confirm-box" onclick="event.stopPropagation()" style="position: relative;">
+                <button type="button" class="custom-confirm-close" id="custom-confirm-btn-close" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; cursor: pointer; color: var(--text-muted); opacity: 0.6; display: flex; align-items: center; justify-content: center; padding: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6" title="Close">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
                 <div class="custom-confirm-title">
                     <i data-lucide="${iconName}"></i>
                     <span>${title}</span>
@@ -2743,6 +2757,7 @@ function showCustomAlert(message, title = "Notification", type = "primary") {
         overlay.offsetHeight;
         overlay.classList.add("active");
 
+        const btnClose = overlay.querySelector("#custom-confirm-btn-close");
         const btnOk = overlay.querySelector("#custom-confirm-btn-ok");
 
         const closeAlert = () => {
@@ -2753,6 +2768,7 @@ function showCustomAlert(message, title = "Notification", type = "primary") {
             resolve();
         };
 
+        btnClose.addEventListener("click", closeAlert);
         btnOk.addEventListener("click", closeAlert);
 
         overlay.addEventListener("click", (e) => {
@@ -2761,6 +2777,48 @@ function showCustomAlert(message, title = "Notification", type = "primary") {
             }
         });
     });
+}
+
+/* Generic Application Toast Notifications */
+function showAppToast(title, message, type = "info") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const card = document.createElement("div");
+    card.className = `toast-card ${type}`;
+    
+    let iconName = "info";
+    if (type === "success" || type === "reply") {
+        iconName = "check-circle";
+    } else if (type === "hot_lead") {
+        iconName = "flame";
+    } else if (type === "danger" || type === "error") {
+        iconName = "alert-triangle";
+    }
+
+    card.innerHTML = `
+        <div class="toast-icon ${type}">
+            <i data-lucide="${iconName}"></i>
+        </div>
+        <div class="toast-body">
+            <div class="toast-title">${escapeHTML(title)}</div>
+            <div class="toast-message">${escapeHTML(message)}</div>
+        </div>
+        <button class="toast-close" onclick="event.stopPropagation(); this.parentElement.remove();">
+            <i data-lucide="x"></i>
+        </button>
+    `;
+
+    container.appendChild(card);
+    if (window.lucide) window.lucide.createIcons();
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (card.parentElement) {
+            card.classList.add("hide");
+            setTimeout(() => card.remove(), 300);
+        }
+    }, 4000);
 }
 
 // Confirm and delete a search query history item
@@ -5173,10 +5231,10 @@ async function copyProfileTokenToClipboard() {
     const rawToken = apiTokenInput.dataset.token || apiTokenInput.value;
 
     try {
-        await copyToClipboard(rawToken);
-        await showCustomAlert("Developer API Secret Key copied to clipboard!", "Key Copied", "success");
+        await copyToClipboard(rawToken, false);
+        showAppToast("Key Copied", "Developer API Secret Key copied to clipboard!", "success");
     } catch (err) {
-        await showCustomAlert("Failed to copy token: " + err.message, "Copy Failed", "danger");
+        showAppToast("Copy Failed", "Failed to copy token: " + err.message, "danger");
     }
 }
 
@@ -5648,6 +5706,107 @@ function showToastNotification(notif) {
             setTimeout(() => card.remove(), 300);
         }
     }, 6000);
+}
+
+/* Dynamic Custom Select Replacements */
+function initCustomSelects() {
+    const nativeSelects = document.querySelectorAll("select.filter-select");
+    
+    nativeSelects.forEach(select => {
+        // Avoid duplicate initialization
+        if (select.nextElementSibling && select.nextElementSibling.classList.contains("custom-select-wrapper")) {
+            return;
+        }
+        
+        // Hide native select element
+        select.style.display = "none";
+        
+        // Create wrapper container
+        const wrapper = document.createElement("div");
+        wrapper.className = "custom-select-wrapper";
+        if (select.classList.contains("select-dense")) {
+            wrapper.classList.add("select-dense");
+        }
+        wrapper.id = `custom-select-${select.id}`;
+        
+        // Get active label
+        const activeOption = select.options[select.selectedIndex] || select.options[0];
+        const activeLabel = activeOption ? activeOption.text : "";
+        
+        // Create custom trigger element
+        const trigger = document.createElement("div");
+        trigger.className = "custom-select-trigger";
+        trigger.innerHTML = `
+            <span class="custom-select-label">${activeLabel}</span>
+            <i class="custom-select-arrow" data-lucide="chevron-down"></i>
+        `;
+        wrapper.appendChild(trigger);
+        
+        // Create options menu container
+        const optionsContainer = document.createElement("div");
+        optionsContainer.className = "custom-select-options";
+        
+        // Add options divs
+        Array.from(select.options).forEach(opt => {
+            const optionDiv = document.createElement("div");
+            optionDiv.className = `custom-option ${opt.value === select.value ? "active" : ""}`;
+            optionDiv.setAttribute("data-value", opt.value);
+            optionDiv.innerText = opt.text;
+            
+            optionDiv.addEventListener("click", (e) => {
+                e.stopPropagation();
+                select.value = opt.value;
+                select.dispatchEvent(new Event("change"));
+                
+                optionsContainer.querySelectorAll(".custom-option").forEach(child => {
+                    child.classList.remove("active");
+                });
+                optionDiv.classList.add("active");
+                trigger.querySelector(".custom-select-label").innerText = opt.text;
+                wrapper.classList.remove("open");
+            });
+            
+            optionsContainer.appendChild(optionDiv);
+        });
+        
+        wrapper.appendChild(optionsContainer);
+        
+        // Open/close dropdown logic
+        trigger.addEventListener("click", (e) => {
+            e.stopPropagation();
+            document.querySelectorAll(".custom-select-wrapper").forEach(w => {
+                if (w !== wrapper) w.classList.remove("open");
+            });
+            wrapper.classList.toggle("open");
+        });
+        
+        // Listen for programmatic native select value updates
+        select.addEventListener("change", () => {
+            const currentOption = select.options[select.selectedIndex];
+            if (currentOption) {
+                trigger.querySelector(".custom-select-label").innerText = currentOption.text;
+                optionsContainer.querySelectorAll(".custom-option").forEach(child => {
+                    if (child.getAttribute("data-value") === select.value) {
+                        child.classList.add("active");
+                    } else {
+                        child.classList.remove("active");
+                    }
+                });
+            }
+        });
+        
+        // Insert custom select in DOM right after native element
+        select.parentNode.insertBefore(wrapper, select.nextSibling);
+    });
+    
+    // Close dropdowns on clicking outside
+    document.addEventListener("click", () => {
+        document.querySelectorAll(".custom-select-wrapper.open").forEach(w => {
+            w.classList.remove("open");
+        });
+    });
+    
+    if (window.lucide) window.lucide.createIcons();
 }
 
 

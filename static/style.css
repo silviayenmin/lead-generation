@@ -730,8 +730,8 @@ body {
 }
 
 .stat-revenue-card .stat-card-glow {
-    background: var(--highlight);
-    box-shadow: 0 0 10px var(--highlight);
+    background: var(--primary-gradient);
+    box-shadow: 0 0 10px var(--primary);
 }
 
 .stat-card-header {
@@ -750,15 +750,16 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     flex-shrink: 0;
 }
 
-.stat-icon-wrapper i {
-    width: 14px;
-    height: 14px;
+.stat-icon-wrapper i,
+.stat-icon-wrapper svg {
+    width: 15px;
+    height: 15px;
 }
 
 .stat-total-card .stat-icon-wrapper {
@@ -777,8 +778,8 @@ body {
 }
 
 .stat-revenue-card .stat-icon-wrapper {
-    background: rgba(77, 163, 255, 0.15);
-    color: var(--highlight);
+    background: rgba(3, 113, 114, 0.15);
+    color: var(--secondary);
 }
 
 .stat-label {
@@ -839,7 +840,7 @@ body {
 }
 
 .stat-revenue-card .sparkline-stroke {
-    stroke: var(--highlight);
+    stroke: var(--primary);
 }
 
 /* Dashboard Two-Column layout */
@@ -866,13 +867,13 @@ body {
     margin-top: 0.75rem;
     margin-bottom: 1.5rem;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    /* justify-content: center; */
     gap: 0.6rem;
 }
 
 .ai-insights-icon {
     color: var(--primary);
-    margin-top: 0.15rem;
     animation: pulse 2s infinite;
 }
 
@@ -897,7 +898,9 @@ body {
     height: 36px;
     border-radius: 6px;
     overflow: hidden;
-    border: 1px solid var(--bg-trans-2);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    background: var(--bg-trans-2);
 }
 
 .funnel-bar {
@@ -2415,6 +2418,12 @@ th {
     height: 1.1rem;
 }
 
+#btn-generate-pitch i,
+#btn-generate-pitch svg {
+    width: 15px !important;
+    height: 15px !important;
+}
+
 .btn-primary {
     background: var(--primary);
     border: 1px solid var(--border-color);
@@ -2457,6 +2466,18 @@ th {
     background: var(--primary-light);
     border-color: var(--primary-hover);
     box-shadow: var(--shadow-md);
+}
+
+.btn-view-more {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.btn-view-more:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
 }
 
 /* Form Controls styling */
@@ -3332,6 +3353,22 @@ textarea.form-control {
 .filter-select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(3, 113, 114, 0.2);
+}
+
+/* Dropdown option styles for proper white background and active/hover colors */
+.filter-select option {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.filter-select option:checked {
+    background-color: var(--primary) !important;
+    color: white !important;
+}
+
+.filter-select option:hover {
+    background-color: var(--primary-light) !important;
+    color: var(--primary) !important;
 }
 
 /* Leads Table Redesign & Animation Row Lift */
@@ -5048,6 +5085,23 @@ textarea.form-control {
     border-left-color: #27AE60;
 }
 
+.toast-card.success {
+    border-left-color: #2E7D32;
+}
+
+.toast-card.danger,
+.toast-card.error {
+    border-left-color: #D32F2F;
+}
+
+.toast-card.warning {
+    border-left-color: #EF6C00;
+}
+
+.toast-card.info {
+    border-left-color: var(--primary);
+}
+
 @keyframes toastSlideIn {
     from {
         transform: translateX(120%);
@@ -5084,6 +5138,27 @@ textarea.form-control {
 .toast-icon.reply {
     background: rgba(39, 174, 96, 0.1);
     color: #27AE60;
+}
+
+.toast-icon.success {
+    background: rgba(46, 125, 50, 0.1);
+    color: #2E7D32;
+}
+
+.toast-icon.danger,
+.toast-icon.error {
+    background: rgba(211, 47, 47, 0.1);
+    color: #D32F2F;
+}
+
+.toast-icon.warning {
+    background: rgba(239, 108, 0, 0.1);
+    color: #EF6C00;
+}
+
+.toast-icon.info {
+    background: rgba(3, 113, 114, 0.1);
+    color: var(--primary);
 }
 
 .toast-body {
@@ -5239,4 +5314,115 @@ textarea.form-control {
 @keyframes pulseText {
     0%, 100% { opacity: 0.6; }
     50% { opacity: 1; }
+}
+
+/* Custom Select Dropdowns Styling */
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+    display: inline-block;
+    width: auto;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 36px;
+    padding: 0.35rem 2rem 0.35rem 0.75rem;
+    border-radius: 6px;
+    background-color: var(--bg-trans-3);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    position: relative;
+}
+
+.custom-select-trigger:hover {
+    border-color: var(--primary);
+    background-color: var(--bg-hover);
+}
+
+.custom-select-wrapper.open .custom-select-trigger {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(3, 113, 114, 0.2);
+}
+
+.custom-select-arrow {
+    width: 11px;
+    height: 11px;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.custom-select-wrapper.open .custom-select-arrow {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-select-options {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 1000;
+    display: none;
+    min-width: 180px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    padding: 4px 0;
+    animation: slideDownFade 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-select-wrapper.open .custom-select-options {
+    display: block;
+}
+
+.custom-option {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+    text-align: left;
+}
+
+.custom-option:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.custom-option.active {
+    background-color: var(--primary);
+    color: white;
+}
+
+@keyframes slideDownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Width alignment styles for dense dropdown wrapper */
+.custom-select-wrapper.select-dense {
+    display: block;
+    width: 100%;
+}
+
+.custom-select-wrapper.select-dense .custom-select-trigger {
+    width: 100%;
 }

@@ -8,7 +8,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/favicon.png?v=20260629_v2">
     <!-- CSS Reference -->
-    <link rel="stylesheet" href="/static/style.css?v=20260701_v13">
+    <link rel="stylesheet" href="/static/style.css?v=20260701_v27">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -543,10 +543,10 @@
                         </div>
 
                         <!-- Pagination Controls -->
-                        <div class="pagination">
-                            <button class="pag-btn" disabled><i data-lucide="chevron-left"></i></button>
-                            <span class="pag-text">Showing Top 5 leads</span>
-                            <button class="pag-btn" disabled><i data-lucide="chevron-right"></i></button>
+                        <div class="pagination" style="justify-content: center; border-top: none; padding-top: 8px;">
+                            <button id="dashboard-view-more" class="btn btn-view-more" style="height: 32px; padding: 0 16px; font-size: 0.82rem; border-radius: 6px;" onclick="switchTab('archive')">
+                                View More
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1918,7 +1918,7 @@
                     <div class="pitch-label-wrapper">
                         <label class="label-small-bold">Outreach pitch draft</label>
                         <button id="btn-generate-pitch" class="btn btn-primary btn-generate">
-                            <i data-lucide="sparkles"></i> Generate AI pitch
+                            <i data-lucide="sparkles" ></i> Generate AI pitch
                         </button>
                     </div>
 
@@ -2015,7 +2015,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Reference -->
-    <script src="/static/app.js?v=20260701_v5"></script>
+    <script src="/static/app.js?v=20260701_v8"></script>
 </body>
 
 </html>
