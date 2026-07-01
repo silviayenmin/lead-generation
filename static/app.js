@@ -249,12 +249,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const themeToggleIcon = document.getElementById("theme-toggle-icon");
         if (!themeToggleIcon) return;
         const isLight = document.documentElement.classList.contains('light-theme');
-        
+
         const newIcon = document.createElement("i");
         newIcon.id = "theme-toggle-icon";
         newIcon.setAttribute("data-lucide", isLight ? "moon" : "sun");
         themeToggleIcon.parentNode.replaceChild(newIcon, themeToggleIcon);
-        
+
         if (window.lucide) {
             window.lucide.createIcons();
         }
@@ -520,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filterStatus) filterStatus.addEventListener("change", renderLeads);
     if (filterCrm) filterCrm.addEventListener("change", renderLeads);
     if (dashboardSearchInput) dashboardSearchInput.addEventListener("input", renderLeads);
-    
+
     const filterSearchType = document.getElementById("filter-search-type");
     if (filterSearchType) filterSearchType.addEventListener("change", renderLeads);
 
@@ -636,7 +636,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (modalLocation) modalLocation.addEventListener("change", saveLeadDetailsFromModal);
     if (modalNeedDescription) modalNeedDescription.addEventListener("change", saveLeadDetailsFromModal);
     if (modalContactInfo) modalContactInfo.addEventListener("change", saveLeadDetailsFromModal);
-    
+
     // Candidate details listeners
     const modalSkills = document.getElementById("modal-skills");
     const modalExperienceLevel = document.getElementById("modal-experience-level");
@@ -786,7 +786,7 @@ document.addEventListener("DOMContentLoaded", () => {
             btnRefreshArchive.disabled = true;
             const originalHTML = btnRefreshArchive.innerHTML;
             btnRefreshArchive.innerHTML = `<span class="spinner spinner-tiny"></span> Refreshing...`;
-            
+
             const container = document.querySelector(".archive-stacked-layout");
             if (container) container.classList.add("loading-fade");
 
@@ -859,7 +859,7 @@ function showTabLoader(viewElement, tabName = "") {
         "profile": "Loading User Profile..."
     };
     const labelText = labels[tabName] || "Loading page content...";
-    
+
     if (!loader) {
         loader = document.createElement("div");
         loader.className = "tab-loader";
@@ -1414,7 +1414,7 @@ function renderLeads() {
         }
 
         const recPlatformSvg = getPlatformIconSvg(platform, 13, `color: ${platformColor}; flex-shrink: 0;`);
-        
+
         let candidateBadges = "";
         if (lead.search_type === "recruiter") {
             if (lead.experienceLevel && lead.experienceLevel !== "Unknown") {
@@ -1518,7 +1518,7 @@ function renderKanban() {
     const colEmailed = document.querySelector('.kanban-column[data-stage="Emailed"] .header-left span:last-child');
     const colReplied = document.querySelector('.kanban-column[data-stage="Replied"] .header-left span:last-child');
     const colDisqualified = document.querySelector('.kanban-column[data-stage="Disqualified"] .header-left span:last-child');
-    
+
     if (colNew) colNew.innerText = isRecruiting ? "Discovered" : "New Leads";
     if (colDrafted) colDrafted.innerText = isRecruiting ? "Contacted" : "Drafted Pitch";
     if (colEmailed) colEmailed.innerText = isRecruiting ? "Screening" : "Emailed Out";
@@ -1560,7 +1560,7 @@ function renderKanban() {
         }
 
         const stage = lead.crmStatus || (isRecruiting ? "Discovered" : "New");
-        
+
         // Map recruiter-specific stage names to Sales kanban columns
         let mappedStage = stage;
         if (isRecruiting) {
@@ -1769,7 +1769,7 @@ function initDragAndDrop() {
                     else if (targetStage === "Replied") actualStage = "Interviewing";
                     else if (targetStage === "Disqualified") actualStage = "Rejected";
                 }
-                
+
                 if (lead.crmStatus !== actualStage) {
                     lead.crmStatus = actualStage;
 
@@ -1829,10 +1829,10 @@ function openDetailModal(lead) {
     if (modalCrmStatus) {
         modalCrmStatus.innerHTML = "";
         const isRecruiter = lead.search_type === "recruiter";
-        const stages = isRecruiter 
+        const stages = isRecruiter
             ? ["Discovered", "Contacted", "Screening", "Interviewing", "Offered", "Rejected"]
             : ["New", "New Discovery", "Drafted", "Emailed", "Replied", "Disqualified"];
-        
+
         stages.forEach(stg => {
             const opt = document.createElement("option");
             opt.value = stg;
@@ -2058,18 +2058,18 @@ async function generateAiPitch() {
 
     try {
         const profileBusInput = document.getElementById("profile-business-name");
-        const agencyName = (agencyNameInput ? agencyNameInput.value.trim() : "") || 
-                           (profileBusInput ? profileBusInput.value.trim() : "") || 
-                           localStorage.getItem("silvia_agency_name") || 
-                           "My Business";
+        const agencyName = (agencyNameInput ? agencyNameInput.value.trim() : "") ||
+            (profileBusInput ? profileBusInput.value.trim() : "") ||
+            localStorage.getItem("silvia_agency_name") ||
+            "My Business";
 
-        const agencyInfo = (agencyInfoInput ? agencyInfoInput.value.trim() : "") || 
-                           localStorage.getItem("silvia_agency_info") || 
-                           "premier design & development services";
+        const agencyInfo = (agencyInfoInput ? agencyInfoInput.value.trim() : "") ||
+            localStorage.getItem("silvia_agency_info") ||
+            "premier design & development services";
 
-        const emailTone = (emailToneSelect ? emailToneSelect.value : "") || 
-                          localStorage.getItem("silvia_email_tone") || 
-                          "Short & Conversational";
+        const emailTone = (emailToneSelect ? emailToneSelect.value : "") ||
+            localStorage.getItem("silvia_email_tone") ||
+            "Short & Conversational";
 
         const response = await fetch("/api/generate-pitch", {
             method: "POST",
@@ -2319,7 +2319,7 @@ async function saveLeadDetailsFromModal() {
     const modalSkills = document.getElementById("modal-skills");
     const modalExperienceLevel = document.getElementById("modal-experience-level");
     const modalWorkPreference = document.getElementById("modal-work-preference");
-    
+
     if (modalSkills) activeLead.skills = modalSkills.value;
     if (modalExperienceLevel) activeLead.experienceLevel = modalExperienceLevel.value;
     if (modalWorkPreference) activeLead.workPreference = modalWorkPreference.value;
@@ -2435,13 +2435,13 @@ function renderArchiveHistory() {
         }
 
         const platform = search.platform || "linkedin";
-        const capPlatform = platform === "linkedin" ? "LinkedIn" : 
-                            platform === "facebook" ? "Facebook" : 
-                            platform === "twitter" ? "Twitter / X" : 
-                            platform === "reddit" ? "Reddit" : 
-                            platform === "google_maps" || platform === "google-maps" ? "Google Maps" : 
-                            platform === "all" ? "All Web" : 
-                            (platform.charAt(0).toUpperCase() + platform.slice(1));
+        const capPlatform = platform === "linkedin" ? "LinkedIn" :
+            platform === "facebook" ? "Facebook" :
+                platform === "twitter" ? "Twitter / X" :
+                    platform === "reddit" ? "Reddit" :
+                        platform === "google_maps" || platform === "google-maps" ? "Google Maps" :
+                            platform === "all" ? "All Web" :
+                                (platform.charAt(0).toUpperCase() + platform.slice(1));
         const searchType = search.search_type || "sales";
         const typeBadgeHtml = searchType === "recruiter" ? `<span class="badge-recruiter" style="background: rgba(14, 165, 164, 0.1); color: var(--accent); padding: 0.1rem 0.35rem; font-size: 0.65rem; border-radius: 4px; font-weight: 600; line-height: 1; margin-left: 4px;">HR Mode</span>` : "";
 
@@ -2601,13 +2601,13 @@ function renderModalQueries() {
         const exactBadgeHtml = isExact ? `<span class="badge-exact">Exact</span>` : "";
 
         const platform = search.platform || "linkedin";
-        const capPlatform = platform === "linkedin" ? "LinkedIn" : 
-                            platform === "facebook" ? "Facebook" : 
-                            platform === "twitter" ? "Twitter / X" : 
-                            platform === "reddit" ? "Reddit" : 
-                            platform === "google_maps" || platform === "google-maps" ? "Google Maps" : 
-                            platform === "all" ? "All Web" : 
-                            (platform.charAt(0).toUpperCase() + platform.slice(1));
+        const capPlatform = platform === "linkedin" ? "LinkedIn" :
+            platform === "facebook" ? "Facebook" :
+                platform === "twitter" ? "Twitter / X" :
+                    platform === "reddit" ? "Reddit" :
+                        platform === "google_maps" || platform === "google-maps" ? "Google Maps" :
+                            platform === "all" ? "All Web" :
+                                (platform.charAt(0).toUpperCase() + platform.slice(1));
         const searchType = search.search_type || "sales";
         const typeBadgeHtml = searchType === "recruiter" ? `<span class="badge-recruiter" style="background: rgba(14, 165, 164, 0.1); color: var(--accent); padding: 0.1rem 0.35rem; font-size: 0.65rem; border-radius: 4px; font-weight: 600; line-height: 1; margin-left: 4px;">HR Mode</span>` : "";
 
@@ -2793,7 +2793,7 @@ function showAppToast(title, message, type = "info") {
 
     const card = document.createElement("div");
     card.className = `toast-card ${type}`;
-    
+
     let iconName = "info";
     if (type === "success" || type === "reply") {
         iconName = "check-circle";
@@ -3144,7 +3144,7 @@ function renderArchiveLeads() {
         }
 
         const leadPlatSvg = getPlatformIconSvg(platform, 13, `color: ${platformColor}; flex-shrink: 0;`);
-        
+
         let candidateBadges = "";
         if (lead.search_type === "recruiter") {
             if (lead.experienceLevel && lead.experienceLevel !== "Unknown") {
@@ -3320,7 +3320,7 @@ function initWizard() {
                 let audienceText = keyword;
                 if (industry) audienceText += ` in ${industry}`;
                 if (location) audienceText += ` (${location})`;
-                
+
                 const summaryAudience = document.getElementById("review-summary-audience");
                 if (summaryAudience) summaryAudience.innerText = audienceText || "Any";
 
@@ -3416,7 +3416,7 @@ function resetDiscoveryWizard() {
     if (searchForm) {
         searchForm.reset();
     }
-    
+
     // Reset platform option cards to default
     const platformCards = document.querySelectorAll(".platform-option-card");
     const platformHiddenInput = document.getElementById("platform");
@@ -4704,6 +4704,13 @@ async function submitProfilePasswordReset(e) {
 }
 
 async function logout() {
+    const confirmed = await showCustomConfirm(
+        "Are you sure you want to log out of your session?",
+        "Confirm Logout",
+        "danger"
+    );
+    if (!confirmed) return;
+
     const apiKey = localStorage.getItem("APP_SECRET_KEY");
     if (apiKey) {
         try {
@@ -4857,7 +4864,7 @@ async function loadPlacesConfig() {
         if (response.ok) {
             const data = await response.json();
             placesKeyInput.value = data.places_api_key || "";
-            
+
             if (placesPill) {
                 if (data.is_configured) {
                     placesPill.className = "status-pulse-pill status-active";
@@ -4920,7 +4927,7 @@ async function loadTwitterConfig() {
         if (response.ok) {
             const data = await response.json();
             twitterKeyInput.value = data.twitter_api_key || "";
-            
+
             if (twitterPill) {
                 if (data.is_configured) {
                     twitterPill.className = "status-pulse-pill status-active";
@@ -5294,7 +5301,7 @@ async function loadModelConfig() {
                 providerTypeSelect.value = pConf.provider_type || "groq";
                 modelNameInput.value = pConf.model || "";
                 ollamaHostInput.value = pConf.base_url || "http://localhost:11434";
-                
+
                 const temp = pConf.temperature !== undefined ? pConf.temperature : 0.7;
                 tempSlider.value = temp;
                 tempValLabel.innerText = temp;
@@ -5372,7 +5379,7 @@ async function saveModelConfig() {
 
     try {
         const secretKey = localStorage.getItem("APP_SECRET_KEY") || "";
-        
+
         // Update active provider in the cached config object
         cachedModelConfig.active_provider = presetSelect.value;
 
@@ -5452,7 +5459,7 @@ function renderNotifications() {
 
     const unreadNotifications = notificationsData.filter(n => !n.is_read);
     const unreadCount = unreadNotifications.length;
-    
+
     if (dotEl) {
         dotEl.style.display = unreadCount > 0 ? "block" : "none";
     }
@@ -5471,12 +5478,12 @@ function renderNotifications() {
     listEl.innerHTML = unreadNotifications.map(notif => {
         const typeClass = notif.type === "hot_lead" ? "hot_lead" : "reply";
         const iconName = notif.type === "hot_lead" ? "flame" : "message-square";
-        
+
         let displayTime = "";
         try {
             const date = new Date(notif.timestamp);
             displayTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " | " + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-        } catch(e) {
+        } catch (e) {
             displayTime = notif.timestamp;
         }
 
@@ -5506,7 +5513,7 @@ async function handleNotificationClick(notifId, leadUrl) {
             },
             body: JSON.stringify({ notification_id: notifId })
         });
-        
+
         // Hide dropdown
         const dropdown = document.getElementById("notifications-dropdown");
         if (dropdown) dropdown.classList.remove("active");
@@ -5525,7 +5532,7 @@ async function handleNotificationClick(notifId, leadUrl) {
                 // If on another tab, switch to Pipeline tab
                 const pipelineTab = document.querySelector('[data-view="pipeline"]');
                 if (pipelineTab) pipelineTab.click();
-                
+
                 // Open lead details panel
                 openDetailModal(lead);
             }
@@ -5561,7 +5568,7 @@ async function openNotificationsModal() {
         if (!data || data.status !== "success") return;
 
         const allNotifications = data.notifications || [];
-        
+
         // Filter notifications to last 2 days (48 hours)
         const twoDaysAgo = new Date();
         twoDaysAgo.setHours(twoDaysAgo.getHours() - 48);
@@ -5633,7 +5640,7 @@ function renderNotificationsHistory(groups) {
             try {
                 const date = new Date(notif.timestamp);
                 displayTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " | " + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-            } catch(e) {
+            } catch (e) {
                 displayTime = notif.timestamp;
             }
 
@@ -5704,7 +5711,7 @@ function showToastNotification(notif) {
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.35);
-    } catch(e) {}
+    } catch (e) { }
 
     // Auto-remove after 6 seconds
     setTimeout(() => {
@@ -5718,16 +5725,16 @@ function showToastNotification(notif) {
 /* Dynamic Custom Select Replacements */
 function initCustomSelects() {
     const nativeSelects = document.querySelectorAll("select.filter-select");
-    
+
     nativeSelects.forEach(select => {
         // Avoid duplicate initialization
         if (select.nextElementSibling && select.nextElementSibling.classList.contains("custom-select-wrapper")) {
             return;
         }
-        
+
         // Hide native select element
         select.style.display = "none";
-        
+
         // Create wrapper container
         const wrapper = document.createElement("div");
         wrapper.className = "custom-select-wrapper";
@@ -5735,11 +5742,11 @@ function initCustomSelects() {
             wrapper.classList.add("select-dense");
         }
         wrapper.id = `custom-select-${select.id}`;
-        
+
         // Get active label
         const activeOption = select.options[select.selectedIndex] || select.options[0];
         const activeLabel = activeOption ? activeOption.text : "";
-        
+
         // Create custom trigger element
         const trigger = document.createElement("div");
         trigger.className = "custom-select-trigger";
@@ -5748,23 +5755,23 @@ function initCustomSelects() {
             <i class="custom-select-arrow" data-lucide="chevron-down"></i>
         `;
         wrapper.appendChild(trigger);
-        
+
         // Create options menu container
         const optionsContainer = document.createElement("div");
         optionsContainer.className = "custom-select-options";
-        
+
         // Add options divs
         Array.from(select.options).forEach(opt => {
             const optionDiv = document.createElement("div");
             optionDiv.className = `custom-option ${opt.value === select.value ? "active" : ""}`;
             optionDiv.setAttribute("data-value", opt.value);
             optionDiv.innerText = opt.text;
-            
+
             optionDiv.addEventListener("click", (e) => {
                 e.stopPropagation();
                 select.value = opt.value;
                 select.dispatchEvent(new Event("change"));
-                
+
                 optionsContainer.querySelectorAll(".custom-option").forEach(child => {
                     child.classList.remove("active");
                 });
@@ -5772,12 +5779,12 @@ function initCustomSelects() {
                 trigger.querySelector(".custom-select-label").innerText = opt.text;
                 wrapper.classList.remove("open");
             });
-            
+
             optionsContainer.appendChild(optionDiv);
         });
-        
+
         wrapper.appendChild(optionsContainer);
-        
+
         // Open/close dropdown logic
         trigger.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -5786,7 +5793,7 @@ function initCustomSelects() {
             });
             wrapper.classList.toggle("open");
         });
-        
+
         // Listen for programmatic native select value updates
         select.addEventListener("change", () => {
             const currentOption = select.options[select.selectedIndex];
@@ -5801,18 +5808,18 @@ function initCustomSelects() {
                 });
             }
         });
-        
+
         // Insert custom select in DOM right after native element
         select.parentNode.insertBefore(wrapper, select.nextSibling);
     });
-    
+
     // Close dropdowns on clicking outside
     document.addEventListener("click", () => {
         document.querySelectorAll(".custom-select-wrapper.open").forEach(w => {
             w.classList.remove("open");
         });
     });
-    
+
     if (window.lucide) window.lucide.createIcons();
 }
 
