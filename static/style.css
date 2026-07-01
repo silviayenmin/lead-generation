@@ -669,8 +669,6 @@ body {
     align-items: center;
     gap: 0.4rem;
     color: var(--text-primary);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.5rem;
 }
 
 .card-title i {
@@ -2961,8 +2959,6 @@ textarea.form-control {
     align-items: center;
     gap: 16px;
     margin-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 12px;
 }
 
 @media (max-width: 576px) {
@@ -3054,7 +3050,7 @@ textarea.form-control {
 }
 
 .history-horizontal-list .history-item {
-    flex: 0 0 220px;
+    flex: 0 0 240px;
 }
 
 .history-item:hover {
@@ -3129,8 +3125,9 @@ textarea.form-control {
 }
 
 .history-item:hover .history-item-count {
+    background: var(--primary-hover);
     border-color: var(--primary-hover);
-    color: var(--text-primary);
+    color: white;
 }
 
 /* Custom Platform Pill Badges */
@@ -3144,6 +3141,7 @@ textarea.form-control {
     font-weight: 600;
     transition: var(--transition-smooth);
     border: 1px solid transparent;
+    white-space: nowrap;
 }
 
 .badge-platform svg,
@@ -3195,6 +3193,19 @@ textarea.form-control {
 .light-theme .badge-platform-twitter {
     background: rgba(0, 0, 0, 0.05);
     color: #0f1419;
+}
+
+.badge-platform-google_maps,
+.badge-platform-google-maps {
+    background: rgba(234, 67, 53, 0.12);
+    color: #EA4335;
+    border-color: rgba(234, 67, 53, 0.15);
+}
+
+.light-theme .badge-platform-google_maps,
+.light-theme .badge-platform-google-maps {
+    background: rgba(234, 67, 53, 0.08);
+    color: #C5221F;
 }
 
 .badge-platform-all {
@@ -5228,4 +5239,4 @@ textarea.form-control {
 @keyframes pulseText {
     0%, 100% { opacity: 0.6; }
     50% { opacity: 1; }
-}
+}

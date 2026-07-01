@@ -2422,7 +2422,13 @@ function renderArchiveHistory() {
         }
 
         const platform = search.platform || "linkedin";
-        const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
+        const capPlatform = platform === "linkedin" ? "LinkedIn" : 
+                            platform === "facebook" ? "Facebook" : 
+                            platform === "twitter" ? "Twitter / X" : 
+                            platform === "reddit" ? "Reddit" : 
+                            platform === "google_maps" || platform === "google-maps" ? "Google Maps" : 
+                            platform === "all" ? "All Web" : 
+                            (platform.charAt(0).toUpperCase() + platform.slice(1));
         const searchType = search.search_type || "sales";
         const typeBadgeHtml = searchType === "recruiter" ? `<span class="badge-recruiter" style="background: rgba(14, 165, 164, 0.1); color: var(--accent); padding: 0.1rem 0.35rem; font-size: 0.65rem; border-radius: 4px; font-weight: 600; line-height: 1; margin-left: 4px;">HR Mode</span>` : "";
 
@@ -2454,6 +2460,23 @@ function renderArchiveHistory() {
 
         archiveHistoryList.appendChild(item);
     });
+
+    if (visibleSearches.length === 0) {
+        const noDataEl = document.createElement("div");
+        noDataEl.style.display = "flex";
+        noDataEl.style.alignItems = "center";
+        noDataEl.style.justifyContent = "center";
+        noDataEl.style.padding = "1rem 2rem";
+        noDataEl.style.color = "var(--text-muted)";
+        noDataEl.style.fontSize = "0.82rem";
+        noDataEl.style.fontStyle = "italic";
+        noDataEl.style.border = "1.5px dashed var(--border-color)";
+        noDataEl.style.borderRadius = "8px";
+        noDataEl.style.margin = "0.25rem 0";
+        noDataEl.style.width = "100%";
+        noDataEl.innerHTML = filterVal ? `No queries matching "${filterVal}"` : `No search queries found`;
+        archiveHistoryList.appendChild(noDataEl);
+    }
 
     // Add "View More" card if searches exceed 10
     if (showMoreCard) {
@@ -2524,11 +2547,13 @@ function renderModalQueries() {
     const searchInput = document.getElementById("modal-queries-search");
     const filterVal = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
+    let hasItems = false;
     searchesData.forEach(search => {
         const displayKeyword = search.keyword || "Scan Query";
         if (filterVal && !displayKeyword.toLowerCase().includes(filterVal)) {
             return;
         }
+        hasItems = true;
 
         const card = document.createElement("div");
         card.className = `history-item ${activeSearchId === search.id ? "active" : ""}`;
@@ -2563,7 +2588,13 @@ function renderModalQueries() {
         const exactBadgeHtml = isExact ? `<span class="badge-exact">Exact</span>` : "";
 
         const platform = search.platform || "linkedin";
-        const capPlatform = platform === "all" ? "All Web" : platform.charAt(0).toUpperCase() + platform.slice(1);
+        const capPlatform = platform === "linkedin" ? "LinkedIn" : 
+                            platform === "facebook" ? "Facebook" : 
+                            platform === "twitter" ? "Twitter / X" : 
+                            platform === "reddit" ? "Reddit" : 
+                            platform === "google_maps" || platform === "google-maps" ? "Google Maps" : 
+                            platform === "all" ? "All Web" : 
+                            (platform.charAt(0).toUpperCase() + platform.slice(1));
         const searchType = search.search_type || "sales";
         const typeBadgeHtml = searchType === "recruiter" ? `<span class="badge-recruiter" style="background: rgba(14, 165, 164, 0.1); color: var(--accent); padding: 0.1rem 0.35rem; font-size: 0.65rem; border-radius: 4px; font-weight: 600; line-height: 1; margin-left: 4px;">HR Mode</span>` : "";
 
@@ -2596,6 +2627,20 @@ function renderModalQueries() {
 
         gridContainer.appendChild(card);
     });
+
+    if (!hasItems) {
+        const noDataEl = document.createElement("div");
+        noDataEl.style.gridColumn = "1 / -1";
+        noDataEl.style.textAlign = "center";
+        noDataEl.style.padding = "3rem 1.5rem";
+        noDataEl.style.color = "var(--text-muted)";
+        noDataEl.style.fontSize = "0.9rem";
+        noDataEl.style.fontStyle = "italic";
+        noDataEl.style.border = "1.5px dashed var(--border-color)";
+        noDataEl.style.borderRadius = "8px";
+        noDataEl.innerHTML = filterVal ? `No queries matching "${filterVal}"` : `No saved search queries found`;
+        gridContainer.appendChild(noDataEl);
+    }
 
     if (window.lucide) {
         window.lucide.createIcons();
