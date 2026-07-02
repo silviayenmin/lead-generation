@@ -355,6 +355,7 @@ async def run_search(payload: SearchRequest, request: Request):
                 lead["sourceUrl"] = source_url
                 lead["platform"] = determine_lead_platform(source_url)
                 lead["search_type"] = payload.search_type or "sales"
+                lead["createdAt"] = datetime.datetime.utcnow().isoformat()
                 
                 # Initialize candidate-specific fields
                 if "workPreference" not in lead:
@@ -480,7 +481,8 @@ async def run_search(payload: SearchRequest, request: Request):
                     "search_type": payload.search_type or "sales",
                     "workPreference": "Unknown",
                     "skills": "",
-                    "experienceLevel": "Unknown"
+                    "experienceLevel": "Unknown",
+                    "createdAt": datetime.datetime.utcnow().isoformat()
                 }
                 
                 # Print fallback debug info

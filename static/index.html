@@ -516,6 +516,26 @@
                                     <option value="Replied">Replied</option>
                                     <option value="Disqualified">Disqualified</option>
                                 </select>
+
+                                <div id="dashboard-cal-container" class="custom-calendar-container">
+                                    <button type="button" id="dashboard-cal-trigger" class="btn-date-picker-trigger">
+                                        <i data-lucide="calendar"></i>
+                                        <span class="trigger-label">Select Dates</span>
+                                        <span class="btn-clear-cal" style="display: none;" title="Clear Filter">✕</span>
+                                        <i data-lucide="chevron-down" class="chevron"></i>
+                                    </button>
+                                    <div id="dashboard-cal-popover" class="calendar-popover" style="display: none;">
+                                        <div class="calendar-header">
+                                            <button type="button" class="cal-nav-btn prev-month">❮</button>
+                                            <span class="current-month-year">July 2026</span>
+                                            <button type="button" class="cal-nav-btn next-month">❯</button>
+                                        </div>
+                                        <div class="calendar-weekdays">
+                                            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                        </div>
+                                        <div class="calendar-days"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -886,6 +906,28 @@
                             <option value="recruiter">Candidates Only</option>
                         </select>
                     </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Date:</span>
+                        <div id="pipeline-cal-container" class="custom-calendar-container">
+                            <button type="button" id="pipeline-cal-trigger" class="btn-date-picker-trigger">
+                                <i data-lucide="calendar"></i>
+                                <span class="trigger-label">Select Dates</span>
+                                <span class="btn-clear-cal" style="display: none;" title="Clear Filter">✕</span>
+                                <i data-lucide="chevron-down" class="chevron"></i>
+                            </button>
+                            <div id="pipeline-cal-popover" class="calendar-popover" style="display: none;">
+                                <div class="calendar-header">
+                                    <button type="button" class="cal-nav-btn prev-month">❮</button>
+                                    <span class="current-month-year">July 2026</span>
+                                    <button type="button" class="cal-nav-btn next-month">❯</button>
+                                </div>
+                                <div class="calendar-weekdays">
+                                    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                </div>
+                                <div class="calendar-days"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="kanban-board">
@@ -1076,6 +1118,26 @@
                                     <option value="Replied">Replied</option>
                                     <option value="Disqualified">Disqualified</option>
                                 </select>
+
+                                <div id="archive-cal-container" class="custom-calendar-container">
+                                    <button type="button" id="archive-cal-trigger" class="btn-date-picker-trigger">
+                                        <i data-lucide="calendar"></i>
+                                        <span class="trigger-label">Select Dates</span>
+                                        <span class="btn-clear-cal" style="display: none;" title="Clear Filter">✕</span>
+                                        <i data-lucide="chevron-down" class="chevron"></i>
+                                    </button>
+                                    <div id="archive-cal-popover" class="calendar-popover" style="display: none;">
+                                        <div class="calendar-header">
+                                            <button type="button" class="cal-nav-btn prev-month">❮</button>
+                                            <span class="current-month-year">July 2026</span>
+                                            <button type="button" class="cal-nav-btn next-month">❯</button>
+                                        </div>
+                                        <div class="calendar-weekdays">
+                                            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                        </div>
+                                        <div class="calendar-days"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

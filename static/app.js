@@ -92,6 +92,9 @@ const statConfidence = document.getElementById("stat-confidence");
 const filterPlatform = document.getElementById("filter-platform");
 const filterStatus = document.getElementById("filter-status");
 const filterCrm = document.getElementById("filter-crm");
+let dashboardDatePicker = null;
+let pipelineDatePicker = null;
+let archiveDatePicker = null;
 const globalSearch = document.getElementById("global-search");
 const dashboardSearchInput = document.getElementById("dashboard-search-input");
 const archiveSearchInput = document.getElementById("archive-search-input");
@@ -126,6 +129,7 @@ const archiveTableTitle = document.getElementById("archive-table-title");
 const archiveFilterPlatform = document.getElementById("archive-filter-platform");
 const archiveFilterStatus = document.getElementById("archive-filter-status");
 const archiveFilterCrm = document.getElementById("archive-filter-crm");
+// Placeholder for archive date picker state
 const archiveEmptyState = document.getElementById("archive-empty-state");
 const archiveTableWrapper = document.getElementById("archive-table-wrapper");
 
@@ -524,6 +528,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const filterSearchType = document.getElementById("filter-search-type");
     if (filterSearchType) filterSearchType.addEventListener("change", renderLeads);
 
+    // Initialize Dashboard Custom Date Picker
+    dashboardDatePicker = createCustomDatePicker(
+        "dashboard-cal-trigger",
+        "dashboard-cal-popover",
+        "dashboard-cal-container",
+        () => {
+            renderLeads();
+        }
+    );
+
     const pipelineSearchInput = document.getElementById("pipeline-search-input");
     const pipelineFilterPlatform = document.getElementById("pipeline-filter-platform");
     const pipelineFilterIntent = document.getElementById("pipeline-filter-intent");
@@ -533,6 +547,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pipelineFilterPlatform) pipelineFilterPlatform.addEventListener("change", renderKanban);
     if (pipelineFilterIntent) pipelineFilterIntent.addEventListener("change", renderKanban);
     if (pipelineFilterSearchType) pipelineFilterSearchType.addEventListener("change", renderKanban);
+
+    // Initialize Pipeline Custom Date Picker
+    pipelineDatePicker = createCustomDatePicker(
+        "pipeline-cal-trigger",
+        "pipeline-cal-popover",
+        "pipeline-cal-container",
+        () => {
+            renderKanban();
+        }
+    );
 
     const archiveFilterSearchType = document.getElementById("archive-filter-search-type");
     if (archiveFilterSearchType) archiveFilterSearchType.addEventListener("change", () => {
@@ -555,6 +579,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (typeof syncPillsToDropdowns === "function") syncPillsToDropdowns();
         renderArchiveLeads();
     });
+
+    // Initialize Archive Custom Date Picker
+    archiveDatePicker = createCustomDatePicker(
+        "archive-cal-trigger",
+        "archive-cal-popover",
+        "archive-cal-container",
+        () => {
+            archiveCurrentPage = 1;
+            renderArchiveLeads();
+        }
+    );
     if (archiveSearchInput) {
         archiveSearchInput.addEventListener("input", () => {
             archiveCurrentPage = 1;
@@ -1220,6 +1255,254 @@ function getCompanyLogoUrl(company) {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanComp)}&background=037172&color=F8FAFC&size=48&bold=true`;
 }
 
+function parseIsoDate(str) {
+    if (!str) return new Date(NaN);
+    if (!str.includes("Z") && !str.includes("+") && str.includes("T")) {
+        return new Date(str + "Z");
+    }
+    return new Date(str);
+}
+
+function createCustomDatePicker(triggerId, popoverId, containerId, onChange, defaultToYesterday = true) {
+    const trigger = document.getElementById(triggerId);
+    const popover = document.getElementById(popoverId);
+    const container = document.getElementById(containerId);
+    if (!trigger || !popover || !container) return null;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yyyy = yesterday.getFullYear();
+    const mm = String(yesterday.getMonth() + 1).padStart(2, "0");
+    const dd = String(yesterday.getDate()).padStart(2, "0");
+    const yesterdayStr = `${yyyy}-${mm}-${dd}`;
+
+    let state = {
+        rangeStart: defaultToYesterday ? yesterdayStr : null,
+        rangeEnd: defaultToYesterday ? yesterdayStr : null,
+        currentMonth: new Date().getMonth(),
+        currentYear: new Date().getFullYear(),
+        isDragging: false
+    };
+
+    function renderCalendar() {
+        const monthYearLabel = popover.querySelector(".current-month-year");
+        const daysContainer = popover.querySelector(".calendar-days");
+        if (!monthYearLabel || !daysContainer) return;
+
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        monthYearLabel.innerText = `${months[state.currentMonth]} ${state.currentYear}`;
+        daysContainer.innerHTML = "";
+
+        const firstDayIndex = new Date(state.currentYear, state.currentMonth, 1).getDay();
+        const totalDays = new Date(state.currentYear, state.currentMonth + 1, 0).getDate();
+        const prevTotalDays = new Date(state.currentYear, state.currentMonth, 0).getDate();
+
+        for (let i = firstDayIndex - 1; i >= 0; i--) {
+            const dayDiv = document.createElement("div");
+            dayDiv.className = "calendar-day empty";
+            dayDiv.innerText = prevTotalDays - i;
+            daysContainer.appendChild(dayDiv);
+        }
+
+        const today = new Date();
+        for (let day = 1; day <= totalDays; day++) {
+            const dayDiv = document.createElement("div");
+            dayDiv.className = "calendar-day active-day";
+            dayDiv.innerText = day;
+
+            const dateStr = `${state.currentYear}-${String(state.currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            dayDiv.dataset.date = dateStr;
+
+            const start = state.rangeStart;
+            const end = state.rangeEnd;
+            let minDate = start;
+            let maxDate = end;
+            if (start && end && end < start) {
+                minDate = end;
+                maxDate = start;
+            }
+
+            if (minDate === dateStr) {
+                dayDiv.classList.add("selected-start");
+            }
+            if (maxDate === dateStr) {
+                dayDiv.classList.add("selected-end");
+            }
+            if (minDate && maxDate && dateStr > minDate && dateStr < maxDate) {
+                dayDiv.classList.add("in-range");
+            }
+
+            if (today.getFullYear() === state.currentYear && today.getMonth() === state.currentMonth && today.getDate() === day) {
+                dayDiv.classList.add("today");
+            }
+
+            // Drag range mousedown handler
+            dayDiv.addEventListener("mousedown", (e) => {
+                state.isDragging = true;
+                state.rangeStart = dateStr;
+                state.rangeEnd = null;
+                renderCalendar();
+            });
+
+            // Drag range mouseenter handler
+            dayDiv.addEventListener("mouseenter", () => {
+                if (state.isDragging) {
+                    state.rangeEnd = dateStr;
+                    renderCalendar();
+                }
+            });
+
+            daysContainer.appendChild(dayDiv);
+        }
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = popover.style.display === "block";
+        document.querySelectorAll(".calendar-popover").forEach(p => p.style.display = "none");
+        popover.style.display = isOpen ? "none" : "block";
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!container.contains(e.target)) {
+            popover.style.display = "none";
+        }
+    });
+
+    // Document-level mouseup handler to stop dragging and apply filter instantly
+    document.addEventListener("mouseup", () => {
+        if (state.isDragging) {
+            state.isDragging = false;
+            
+            // If no rangeEnd hovered, treat it as single day selection
+            if (!state.rangeEnd) {
+                state.rangeEnd = state.rangeStart;
+            }
+            
+            // Swap boundaries if dragged backwards
+            if (state.rangeStart && state.rangeEnd && state.rangeEnd < state.rangeStart) {
+                const temp = state.rangeStart;
+                state.rangeStart = state.rangeEnd;
+                state.rangeEnd = temp;
+            }
+            updateTriggerAndApply();
+        }
+    });
+
+    // Inner clear button click behavior (does not toggle popover)
+    const nestedClearBtn = trigger.querySelector(".btn-clear-cal");
+    if (nestedClearBtn) {
+        nestedClearBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            state.rangeStart = null;
+            state.rangeEnd = null;
+            updateTriggerAndApply();
+        });
+    }
+
+    function updateTriggerAndApply() {
+        const label = trigger.querySelector(".trigger-label");
+        const clearIcon = trigger.querySelector(".btn-clear-cal");
+
+        if (state.rangeStart && state.rangeEnd) {
+            if (state.rangeStart === state.rangeEnd) {
+                label.innerText = formatDateString(state.rangeStart);
+            } else {
+                label.innerText = `${formatDateString(state.rangeStart)} - ${formatDateString(state.rangeEnd)}`;
+            }
+            trigger.classList.add("active-filter");
+            if (clearIcon) clearIcon.style.display = "inline-flex";
+        } else {
+            label.innerText = "Select Dates";
+            trigger.classList.remove("active-filter");
+            if (clearIcon) clearIcon.style.display = "none";
+        }
+
+        renderCalendar();
+        popover.style.display = "none";
+        onChange(state);
+    }
+
+    const prevBtn = popover.querySelector(".prev-month");
+    const nextBtn = popover.querySelector(".next-month");
+    if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            state.currentMonth--;
+            if (state.currentMonth < 0) {
+                state.currentMonth = 11;
+                state.currentYear--;
+            }
+            renderCalendar();
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            state.currentMonth++;
+            if (state.currentMonth > 11) {
+                state.currentMonth = 0;
+                state.currentYear++;
+            }
+            renderCalendar();
+        });
+    }
+
+    function formatDateString(dateStr) {
+        const parts = dateStr.split("-");
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const m = months[parseInt(parts[1]) - 1];
+        return `${m} ${parseInt(parts[2])}`;
+    }
+
+    // Set up trigger labels visually on load
+    if (state.rangeStart && state.rangeEnd) {
+        const label = trigger.querySelector(".trigger-label");
+        const clearIcon = trigger.querySelector(".btn-clear-cal");
+        if (state.rangeStart === state.rangeEnd) {
+            label.innerText = formatDateString(state.rangeStart);
+        } else {
+            label.innerText = `${formatDateString(state.rangeStart)} - ${formatDateString(state.rangeEnd)}`;
+        }
+        trigger.classList.add("active-filter");
+        if (clearIcon) clearIcon.style.display = "inline-flex";
+    }
+
+    renderCalendar();
+
+    return {
+        getState: () => state,
+        clear: () => {
+            state.rangeStart = null;
+            state.rangeEnd = null;
+            updateTriggerAndApply();
+        }
+    };
+}
+
+function matchCustomDateFilter(createdAtStr, state) {
+    if (!createdAtStr) return true;
+    if (!state) return true;
+
+    if (!state.rangeStart && !state.rangeEnd) return true;
+
+    const createdDate = parseIsoDate(createdAtStr);
+    if (isNaN(createdDate.getTime())) return true;
+
+    const year = createdDate.getFullYear();
+    const month = String(createdDate.getMonth() + 1).padStart(2, "0");
+    const day = String(createdDate.getDate()).padStart(2, "0");
+    const leadDateStr = `${year}-${month}-${day}`;
+
+    if (state.rangeStart && state.rangeEnd) {
+        return leadDateStr >= state.rangeStart && leadDateStr <= state.rangeEnd;
+    } else if (state.rangeStart) {
+        return leadDateStr === state.rangeStart;
+    }
+    return true;
+}
+
 // Grid rows list population matching proposal design
 function renderLeads() {
     const dashboardEmptyState = document.getElementById("dashboard-empty-state");
@@ -1247,6 +1530,7 @@ function renderLeads() {
     const searchVal = dashboardSearchInput ? dashboardSearchInput.value.trim().toLowerCase() : "";
     const filterSearchType = document.getElementById("filter-search-type");
     const searchTypeVal = filterSearchType ? filterSearchType.value.toLowerCase() : "all";
+    const state = dashboardDatePicker ? dashboardDatePicker.getState() : null;
 
     const filtered = leadsData.filter(lead => {
         const leadStatus = String(lead.leadStatus || "").toLowerCase().trim();
@@ -1294,8 +1578,9 @@ function renderLeads() {
 
         const leadSearchType = String(lead.search_type || "sales").toLowerCase();
         const searchTypeMatch = searchTypeVal === "all" || leadSearchType === searchTypeVal;
+        const dateMatch = matchCustomDateFilter(lead.createdAt, state);
 
-        return statusMatch && crmMatch && platformMatch && searchMatch && searchTypeMatch;
+        return statusMatch && crmMatch && platformMatch && searchMatch && searchTypeMatch && dateMatch;
     });
 
     // Keep stats updated based on table matching rows
@@ -1505,11 +1790,12 @@ function renderKanban() {
     const pipelineFilterPlatform = document.getElementById("pipeline-filter-platform");
     const pipelineFilterIntent = document.getElementById("pipeline-filter-intent");
     const pipelineFilterSearchType = document.getElementById("pipeline-filter-search-type");
-
     const searchVal = pipelineSearchInput ? pipelineSearchInput.value.trim().toLowerCase() : "";
     const platformVal = pipelineFilterPlatform ? pipelineFilterPlatform.value.toLowerCase() : "all";
     const intentVal = pipelineFilterIntent ? pipelineFilterIntent.value.toLowerCase() : "all";
     const pipelineSearchTypeVal = pipelineFilterSearchType ? pipelineFilterSearchType.value.toLowerCase() : "all";
+
+    const state = pipelineDatePicker ? pipelineDatePicker.getState() : null;
 
     // Dynamic renaming of headers
     const isRecruiting = pipelineSearchTypeVal === "recruiter";
@@ -1526,6 +1812,11 @@ function renderKanban() {
     if (colDisqualified) colDisqualified.innerText = isRecruiting ? "Rejected" : "Disqualified";
 
     leadsData.forEach(lead => {
+        // Apply date filter
+        if (!matchCustomDateFilter(lead.createdAt, state)) {
+            return;
+        }
+
         // Apply search filter (name or company name)
         if (searchVal) {
             const author = String(lead.authorName || "").toLowerCase();
@@ -2917,6 +3208,7 @@ function renderArchiveLeads() {
     const searchVal = archiveSearchInput ? archiveSearchInput.value.trim().toLowerCase() : "";
     const filterArchiveSearchType = document.getElementById("archive-filter-search-type");
     const searchTypeVal = filterArchiveSearchType ? filterArchiveSearchType.value.toLowerCase() : "all";
+    const state = archiveDatePicker ? archiveDatePicker.getState() : null;
 
     let leadsToRender = [];
     if (activeSearchId === "all") {
@@ -2984,8 +3276,9 @@ function renderArchiveLeads() {
 
         const leadSearchType = String(lead.search_type || "sales").toLowerCase();
         const searchTypeMatch = searchTypeVal === "all" || leadSearchType === searchTypeVal;
+        const dateMatch = matchCustomDateFilter(lead.createdAt, state);
 
-        return statusMatch && crmMatch && platformMatch && searchMatch && searchTypeMatch;
+        return statusMatch && crmMatch && platformMatch && searchMatch && searchTypeMatch && dateMatch;
     });
 
     // Update dynamic dashboard metrics
@@ -3513,11 +3806,13 @@ function initArchiveViews() {
             if (archiveFilterPlatform) archiveFilterPlatform.value = "all";
             if (archiveFilterCrm) archiveFilterCrm.value = "all";
             if (archiveFilterStatus) archiveFilterStatus.value = "all";
+            if (archiveDatePicker) archiveDatePicker.clear();
             if (archiveSearchInput) archiveSearchInput.value = "";
         } else if (mode === "high") {
             if (archiveFilterPlatform) archiveFilterPlatform.value = "all";
             if (archiveFilterCrm) archiveFilterCrm.value = "all";
             if (archiveFilterStatus) archiveFilterStatus.value = "all";
+            if (archiveDatePicker) archiveDatePicker.clear();
         }
 
         viewsPills.forEach(btn => {

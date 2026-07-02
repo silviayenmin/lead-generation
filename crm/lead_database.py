@@ -57,6 +57,10 @@ def check_and_save_lead(lead: dict, db: dict) -> str:
     if "platform" not in lead or not lead.get("platform"):
         lead["platform"] = determine_lead_platform(lead.get("sourceUrl", ""))
 
+    # Ensure createdAt is set
+    if "createdAt" not in lead or not lead.get("createdAt"):
+        lead["createdAt"] = datetime.datetime.utcnow().isoformat()
+
     author = lead.get("authorName")
     company = lead.get("companyName")
     
@@ -259,7 +263,20 @@ def load_db(user_email: str):
             leads = {}
             for doc in leads_col.find({"user_email": user_email}):
                 if "_id" in doc:
-                    doc["_id"] = str(doc["_id"])
+                    doc_id_str = str(doc["_id"])
+                    doc["_id"] = doc_id_str
+                    # Backfill createdAt if missing
+                    if "createdAt" not in doc or not doc.get("createdAt"):
+                        try:
+                            from bson import ObjectId
+                            if ObjectId.is_valid(doc_id_str):
+                                doc["createdAt"] = ObjectId(doc_id_str).generation_time.isoformat()
+                            else:
+                                doc["createdAt"] = datetime.datetime.utcnow().isoformat()
+                        except Exception:
+                            doc["createdAt"] = datetime.datetime.utcnow().isoformat()
+                        from bson import ObjectId
+                        leads_col.update_one({"_id": ObjectId(doc_id_str)}, {"$set": {"createdAt": doc["createdAt"]}})
                 url = doc.get("sourceUrl")
                 if url:
                     leads[url] = doc
@@ -276,12 +293,21 @@ def load_db(user_email: str):
                                     row["crmStatus"] = row.get("crmStatus") or "New"
                                     row["draftEmail"] = row.get("draftEmail") or ""
                                     row["user_email"] = user_email
+                                    row["createdAt"] = row.get("createdAt") or datetime.datetime.utcnow().isoformat()
                                     leads[url] = row
                                     leads_col.replace_one({"sourceUrl": url, "user_email": user_email}, row, upsert=True)
                     except Exception as e:
                         print(f"Error migrating CSV to MongoDB: {e}")
                         
             for url, lead in leads.items():
+                if "createdAt" not in lead or not lead.get("createdAt"):
+                    lead["createdAt"] = datetime.datetime.utcnow().isoformat()
+                    try:
+                        from bson import ObjectId
+                        leads_col.update_one({"sourceUrl": url, "user_email": user_email}, {"$set": {"createdAt": lead["createdAt"]}})
+                    except Exception:
+                        pass
+
                 if "platform" not in lead or not lead.get("platform"):
                     lead["platform"] = determine_lead_platform(url)
                     leads_col.update_one({"sourceUrl": url, "user_email": user_email}, {"$set": {"platform": lead["platform"]}})
